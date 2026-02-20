@@ -1,0 +1,38 @@
+2026-02-20
+- Initialized addon structure at `ElysianFramework/` with `ElysianFramework.toc` and `ElysianFramework.lua`.
+- Implemented a centered 110x30 frame titled "Elysian Framework" using Dracula colors.
+- Added Game Menu theming on login and on-show hook for consistent coloring.
+- Added `codex.md` with current status and research reminders.
+- Updated `## Interface` to 120001 based on in-game build info.
+- Made the main frame draggable and expanded it to host navigation + content.
+- Added QOL navigation with a "Scrap Seller" entry and toggle UI.
+- Implemented auto-sell of gray-quality items on vendor open when enabled.
+- Refactored Lua into modules (`Modules/Core.lua`, `Modules/UI.lua`, `Modules/Features/ScrapSeller.lua`).
+- Added folder structure for `Fonts/`, `Assets/`, and `Sounds/`.
+- Added `/elysianframe` slash command to toggle the main menu.
+- Extracted Hack regular font into `Fonts/` and applied it to custom UI text.
+- Added SavedVariables (`ElysianDB`) and a bottom-left "Do not show at start" checkbox.
+- Main frame now shows on login by default and respects the saved checkbox state.
+- Located Retail AddOns folder at `/home/lars/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_retail_/Interface/AddOns`.
+- Deployed addon to `/home/lars/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_retail_/Interface/AddOns/ElysianFramework`.
+- Added `scripts/deploy.sh` to sync the addon to the Retail AddOns folder with rsync.
+- Increased main window size to 780x480 (3x width/height).
+- Removed Retail Edit Mode cache files to reset layout (account + character).
+- Restyled tabs to square buttons with darker nav background and selected-state highlight.
+- Added Cursor Ring feature module with enable toggle, size slider, and color picker.
+- Added content panel color picker to adjust the area under the tab menu.
+- Reworked the main menu layout to match the provided reference image (top tabs, sub-tabs, header bar, centered title).
+- Fixed tab label overlap and added a close button plus top-right logo.
+- Added a minimap toggle button using the eframe icon.
+- Default tab now starts on General; sub-tabs appear under QOL Tools.
+- Themed the close button and cursor ring color button to match Dracula.
+- Improved cursor ring visibility and fixed color picker behavior.
+- Added custom `Assets/cursor_ring.tga` and switched the ring to use it.
+- Forced QOL feature defaults off on migration (SavedVariables version bump).
+- Styled all checkboxes to be smaller with Dracula green check marks.
+- Increased main window height to 600 and added a scrollable content area.
+- Added default visibility settings for cursor ring and ensured initialization on login.
+- Improved minimap button layering to ensure it appears above the minimap.
+- Removed cursor ring sparkles and fixed the color picker interaction.
+- Added a General tab Reset Settings button to restore defaults (features off).
+- Replaced the default close button with a Dracula-styled “X”.

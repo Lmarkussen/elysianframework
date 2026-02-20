@@ -1,0 +1,21 @@
+## Interface: 120001
+## Title: Elysian Framework
+## Notes: Minimal UI frame and menu theming for the Elysian Framework addon.
+## Author: Elysian
+## Version: 0.1.0
+## SavedVariables: ElysianDB
+
+Modules/Core.lua
+Modules/Features/FontScaleSlider.lua
+Modules/Features/ScrapSeller.lua
+Modules/Features/CursorRing.lua
+Modules/Features/AutoRepair.lua
+Modules/Features/InfoBar.lua
+Modules/Features/RepairReminder.lua
+Modules/Features/DungeonReminder.lua
+Modules/Features/WarlockReminders.lua
+Modules/Features/AutoKeystone.lua
+Modules/Features/PortalData.lua
+Modules/MinimapButton.lua
+Modules/UI.lua
+ElysianFramework.lua

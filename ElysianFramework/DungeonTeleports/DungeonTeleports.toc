@@ -1,0 +1,60 @@
+## Interface: 120000, 120001
+## Title: Mythic Dungeon Teleports
+## Notes: Adds teleport buttons for M+ Dungeons & Raids
+## Notes-ruRU: Добавляет кнопки телепортации для M+ подземелий и рейдов
+## Author: Lanni-Alonsus
+## Version: 1.24.4
+
+## X-Curse-Project-ID: 1194926
+## X-Wago-ID: BNBeblGx
+## IconTexture: Interface\AddOns\DungeonTeleports\Images\DungeonTeleportsLogo.tga
+## DefaultState: Enabled
+## SavedVariables: DungeonTeleportsDB
+## OptionalDeps: LibDataBroker-1.1, LibDBIcon-1.0, LibStub, CallbackHandler-1.0, WagoAnalytics
+
+## Category-enUS: Dungeons & Raids
+## Category-deDE: Dungeons & Schlachtzüge
+## Category-esES: Mazmorras y bandas
+## Category-esMX: Calabozos y bandas
+## Category-frFR: Donjons et raids
+## Category-itIT: Spedizioni e incursioni
+## Category-koKR: 던전 및 공격대
+## Category-ptBR: Masmorras e Raides
+## Category-ruRU: Подземелья и рейды
+## Category-zhCN: 地下城和团队副本
+## Category-zhTW: 地城與團隊
+
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\WagoAnalytics\Shim.lua
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+
+# Localisation Files
+Locales/Locales.lua
+Locales/enUS.lua
+Locales/deDE.lua
+Locales/frFR.lua
+Locales/esES.lua
+Locales/ruRU.lua
+Locales/koKR.lua
+Locales/ptBR.lua
+Locales/itIT.lua
+Locales/esMX.lua
+
+# Core Files
+TeleportData.lua
+TeleportData-12.lua
+MinimapButton.lua
+Modules\LDB_QuickCastMenu.lua
+Modules\GroupReminder.lua
+DungeonTeleports.lua
+Config\config.lua
+
+
+
+
+
+
+
+
