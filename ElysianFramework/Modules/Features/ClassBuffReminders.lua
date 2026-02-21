@@ -5,7 +5,7 @@ local ClassBuffReminders = {}
 Elysian.Features.ClassBuffReminders = ClassBuffReminders
 
 local BUFFS = {
-  WARRIOR = { key = "warrior", buff = "Battle Shout", label = "MISSING BATTLE SHOUT" },
+  WARRIOR = { key = "warrior", buff = "Battle Shout", spellId = 6673, label = "MISSING BATTLE SHOUT" },
   MAGE = { key = "mage", buff = "Arcane Intellect", label = "MISSING ARCANE INTELLECT" },
   PRIEST = { key = "priest", buff = "Power Word: Fortitude", label = "MISSING FORTITUDE" },
   DRUID = { key = "druid", buff = "Mark of the Wild", label = "MISSING MARK OF THE WILD" },
@@ -13,15 +13,23 @@ local BUFFS = {
   EVOKER = { key = "evoker", buff = "Blessing of the Bronze", label = "MISSING BRONZE" },
 }
 
-local function HasBuff(name)
+local function HasBuff(name, spellId)
+  if spellId and AuraUtil and AuraUtil.FindAuraBySpellId then
+    if AuraUtil.FindAuraBySpellId(spellId, "player") then
+      return true
+    end
+  end
   if AuraUtil and AuraUtil.FindAuraByName then
     return AuraUtil.FindAuraByName(name, "player") ~= nil
   end
   local i = 1
   while true do
-    local auraName = UnitAura("player", i)
+    local auraName, _, _, _, _, _, _, _, _, auraSpellId = UnitAura("player", i)
     if not auraName then
       break
+    end
+    if spellId and auraSpellId == spellId then
+      return true
     end
     if auraName == name then
       return true
@@ -90,7 +98,8 @@ function ClassBuffReminders:EnsureFrame(prefix, label)
   end
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianClassBuff" .. prefix, UIParent, template)
-  frame:SetSize(420, 52)
+  local w, h = Elysian.GetBannerSize(420, 52)
+  frame:SetSize(w, h)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY() - 120)
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
@@ -115,7 +124,7 @@ function ClassBuffReminders:EnsureFrame(prefix, label)
   text:SetPoint("CENTER")
   text:SetJustifyH("CENTER")
   text:SetJustifyV("MIDDLE")
-  text:SetWidth(380)
+  text:SetWidth(w - 40)
   text:SetWordWrap(true)
   Elysian.ApplyFont(text, 14, "OUTLINE")
   text:SetText(label or "")
@@ -152,13 +161,31 @@ function ClassBuffReminders:ApplyPosition(prefix)
   end
 end
 
+function ClassBuffReminders:ApplySize(prefix)
+  local frame = self.frames and self.frames[prefix]
+  if not frame then
+    return
+  end
+  local w, h = Elysian.GetBannerSize(420, 52)
+  frame:SetSize(w, h)
+  if frame.text then
+    frame.text:SetWidth(w - 40)
+  end
+end
+
 function ClassBuffReminders:UpdateFrameText(prefix, message)
   local frame = self.frames and self.frames[prefix]
   if not frame then
     return
   end
-  frame.text:SetText(message)
-  local height = math.max(52, (frame.text:GetStringHeight() or 32) + 20)
+  local override = Elysian.GetBannerOverride()
+  if override then
+    frame.text:SetText(override)
+  else
+    frame.text:SetText(message)
+  end
+  local _, baseHeight = Elysian.GetBannerSize(420, 52)
+  local height = math.max(baseHeight, (frame.text:GetStringHeight() or 32) + 20)
   frame:SetHeight(height)
 end
 
@@ -180,7 +207,7 @@ function ClassBuffReminders:UpdateBuff(prefix)
     frame:Show()
     return
   end
-  if buff and not HasBuff(buff.buff) then
+  if buff and not HasBuff(buff.buff, buff.spellId) then
     self:UpdateFrameText(prefix, buff.label)
     frame:Show()
   else
@@ -246,6 +273,7 @@ function ClassBuffReminders:EnsureFrames()
     self.buffLookup[entry.key] = entry
     local frame = self:EnsureFrame(entry.key, entry.label)
     self:ApplyColors(entry.key)
+    self:ApplySize(entry.key)
     self:ApplyPosition(entry.key)
     frame:Hide()
   end
@@ -253,6 +281,7 @@ function ClassBuffReminders:EnsureFrames()
   self.keys.rogue = self:GetPoisonKeys()
   local rogueFrame = self:EnsureFrame("rogue", "MISSING POISONS")
   self:ApplyColors("rogue")
+  self:ApplySize("rogue")
   self:ApplyPosition("rogue")
   rogueFrame:Hide()
 end
@@ -286,6 +315,7 @@ function ClassBuffReminders:Refresh()
   self:EnsureFrames()
   for key in pairs(self.keys) do
     self:ApplyColors(key)
+    self:ApplySize(key)
   end
   self:UpdateVisibility()
 end
