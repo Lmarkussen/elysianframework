@@ -703,6 +703,9 @@ function Elysian.InitSavedVariables()
   local profileName = Elysian.GetActiveProfile()
   local profile = ElysianDB.profiles[profileName] or ElysianDB.profiles.Default or Elysian.GetDefaultState()
   Elysian.state = MergeProfile(profile)
+  if ElysianDB.minimapButtonAngle ~= nil then
+    Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
+  end
   Elysian.state.scrapSellerEnabled = Elysian.state.scrapSellerEnabled or false
   Elysian.state.showOnStart = Elysian.state.showOnStart ~= false
   Elysian.state.navBg = EnsureColorTable(Elysian.state.navBg, defaultNav)
@@ -769,6 +772,9 @@ function Elysian.SaveState()
   ElysianDB.charProfiles = ElysianDB.charProfiles or {}
   local active = Elysian.GetActiveProfile()
   ElysianDB.profiles[active] = CopyTable(Elysian.state or {})
+  if Elysian.state and Elysian.state.minimapButtonAngle ~= nil then
+    ElysianDB.minimapButtonAngle = Elysian.state.minimapButtonAngle
+  end
 end
 
 function Elysian.HexToRGB(hex)

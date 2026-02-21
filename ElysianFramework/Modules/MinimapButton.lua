@@ -122,6 +122,9 @@ function Elysian.MinimapButton:Create()
       if Elysian.SaveState then
         Elysian.SaveState()
       end
+      if ElysianDB then
+        ElysianDB.minimapButtonAngle = angle
+      end
       PositionButton(selfUpdate, angle, minimap)
     end)
   end)
