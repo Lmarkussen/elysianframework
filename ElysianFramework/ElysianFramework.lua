@@ -31,6 +31,9 @@ local function ApplySavedSettings()
   if Elysian.Features and Elysian.Features.BuffWatch then
     Elysian.Features.BuffWatch:Initialize()
   end
+  if Elysian.Features and Elysian.Features.DungeonConsumables then
+    Elysian.Features.DungeonConsumables:Initialize()
+  end
   if Elysian.Features and Elysian.Features.ClassBuffReminders then
     Elysian.Features.ClassBuffReminders:Initialize()
   end

@@ -33,6 +33,8 @@ local function HookButtonPressFeedback(button)
   button:HookScript("OnHide", function() SetActive(false) end)
 end
 
+Elysian.UI.HookButtonPressFeedback = HookButtonPressFeedback
+
 local function SkinDropDown(dropdown)
   if not dropdown then
     return
@@ -1171,6 +1173,110 @@ function Elysian.UI:CreateMainFrame()
         end
       end)
       HookButtonPressFeedback(buffTest)
+
+      local consumableToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+      consumableToggle:SetPoint("TOPLEFT", buffColor, "BOTTOMLEFT", 0, -18)
+      consumableToggle.text = consumableToggle.text or _G[consumableToggle:GetName() .. "Text"]
+      consumableToggle.text:SetText("Enable consumable reminders")
+      Elysian.ApplyFont(consumableToggle.text, 12)
+      Elysian.ApplyTextColor(consumableToggle.text)
+      Elysian.StyleCheckbox(consumableToggle)
+      consumableToggle:SetChecked(Elysian.state.dungeonConsumablesEnabled)
+      consumableToggle:SetScript("OnClick", function(selfButton)
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        if Elysian.Features and Elysian.Features.DungeonConsumables then
+          Elysian.Features.DungeonConsumables:SetEnabled(selfButton:GetChecked())
+          Elysian.Features.DungeonConsumables:UpdateVisibility(true)
+        end
+      end)
+
+      local consumableColor = CreateFrame("Button", nil, panel, template)
+      consumableColor:SetPoint("TOPLEFT", consumableToggle, "BOTTOMLEFT", 0, -12)
+      consumableColor:SetSize(180, 22)
+      Elysian.SetBackdrop(consumableColor)
+      Elysian.SetBackdropColors(consumableColor, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local consumableColorText = consumableColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableColorText:SetPoint("CENTER")
+      consumableColorText:SetText("Text Color")
+      Elysian.ApplyFont(consumableColorText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(consumableColorText)
+
+      local consumableSwatch = consumableColor:CreateTexture(nil, "OVERLAY")
+      consumableSwatch:SetSize(12, 12)
+      consumableSwatch:SetPoint("RIGHT", -8, 0)
+      local consumableStart = Elysian.state.dungeonConsumablesTextColor or { 1, 1, 1 }
+      consumableSwatch:SetColorTexture(consumableStart[1], consumableStart[2], consumableStart[3], 1)
+
+      consumableColor:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.dungeonConsumablesTextColor or { 1, 1, 1 }
+        local function apply(r, g, b)
+          Elysian.state.dungeonConsumablesTextColor = { r, g, b }
+          consumableSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.DungeonConsumables then
+            Elysian.Features.DungeonConsumables:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(consumableColor)
+
+      local consumableTest = CreateFrame("Button", nil, panel, template)
+      consumableTest:SetPoint("LEFT", consumableColor, "RIGHT", 10, 0)
+      consumableTest:SetSize(120, 22)
+      Elysian.SetBackdrop(consumableTest)
+      Elysian.SetBackdropColors(consumableTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local consumableTestText = consumableTest:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableTestText:SetPoint("CENTER")
+      consumableTestText:SetText("Test Banner")
+      Elysian.ApplyFont(consumableTestText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(consumableTestText)
+
+      local function UpdateConsumableTestStyle(active)
+        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+        Elysian.SetBackdropColors(consumableTest, bg, Elysian.GetThemeBorder(), 0.9)
+      end
+      UpdateConsumableTestStyle(Elysian.state.dungeonConsumablesTest)
+
+      consumableTest:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        if Elysian.Features and Elysian.Features.DungeonConsumables then
+          local enabled = not Elysian.state.dungeonConsumablesTest
+          Elysian.Features.DungeonConsumables:SetTestEnabled(enabled)
+          UpdateConsumableTestStyle(enabled)
+        end
+      end)
+      HookButtonPressFeedback(consumableTest)
+
     end
 
     table.insert(alertPanels, panel)
@@ -1907,6 +2013,26 @@ function Elysian.UI:CreateMainFrame()
   end
 
   function self.SetAllQolEnabled(enabled)
+    if enabled then
+      Elysian.state.cursorRingClassColor = true
+      Elysian.state.cursorRingCastProgress = true
+      Elysian.state.cursorRingShowInCombat = true
+      Elysian.state.cursorRingShowOutCombat = true
+      Elysian.state.cursorRingShowInInstances = true
+      Elysian.state.cursorRingShowInWorld = true
+      Elysian.state.cursorRingTrailEnabled = true
+    end
+
+    Elysian.state.infoBarEnabled = enabled and true or false
+    Elysian.state.infoBarShowTime = enabled and true or Elysian.state.infoBarShowTime
+    Elysian.state.infoBarShowGold = enabled and true or Elysian.state.infoBarShowGold
+    Elysian.state.infoBarShowDurability = enabled and true or Elysian.state.infoBarShowDurability
+    Elysian.state.infoBarShowFPS = enabled and true or Elysian.state.infoBarShowFPS
+    Elysian.state.infoBarShowMS = enabled and true or Elysian.state.infoBarShowMS
+    Elysian.state.infoBarShowPortalButton = enabled and true or Elysian.state.infoBarShowPortalButton
+    Elysian.state.infoBarUnlocked = false
+    Elysian.SaveState()
+
     if Elysian.Features and Elysian.Features.ScrapSeller then
       Elysian.Features.ScrapSeller:SetEnabled(enabled)
       if Elysian.Features.ScrapSeller.Refresh then
@@ -1936,6 +2062,10 @@ function Elysian.UI:CreateMainFrame()
       if Elysian.Features.AutoKeystone.Refresh then
         Elysian.Features.AutoKeystone:Refresh()
       end
+    end
+    if Elysian.Features and Elysian.Features.DungeonRoleMarkers then
+      Elysian.Features.DungeonRoleMarkers:SetEnabled(enabled)
+      Elysian.Features.DungeonRoleMarkers:UpdateMarks(true)
     end
   end
 

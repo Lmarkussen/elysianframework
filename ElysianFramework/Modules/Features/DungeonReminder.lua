@@ -43,7 +43,7 @@ function DungeonReminder:EnsureFrame()
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianDungeonReminder", UIParent, template)
   frame:SetSize(360, 46)
-  frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY())
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
   frame:EnableMouse(false)

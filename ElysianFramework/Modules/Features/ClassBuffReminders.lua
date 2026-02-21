@@ -91,7 +91,7 @@ function ClassBuffReminders:EnsureFrame(prefix, label)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianClassBuff" .. prefix, UIParent, template)
   frame:SetSize(420, 52)
-  frame:SetPoint("CENTER", UIParent, "CENTER", 0, -120)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY() - 120)
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
   frame:EnableMouse(true)

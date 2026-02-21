@@ -1,65 +1,75 @@
 local _, Elysian = ...
 
 Elysian.Features = Elysian.Features or {}
-local BuffWatch = {}
-Elysian.Features.BuffWatch = BuffWatch
+local DungeonConsumables = {}
+Elysian.Features.DungeonConsumables = DungeonConsumables
 
-local CLASS_BUFFS = {
-  WARRIOR = { "Battle Shout" },
-  MAGE = { "Arcane Intellect" },
-  PRIEST = { "Power Word: Fortitude" },
-  DRUID = { "Mark of the Wild" },
-  EVOKER = { "Blessing of the Bronze" },
-  SHAMAN = { "Skyfury" },
+local FLASK_BUFFS = {
+  "Flask of Alchemical Chaos",
+  "Flask of Saving Graces",
+  "Flask of Tempered Aggression",
+  "Flask of Tempered Mastery",
+  "Flask of Tempered Swiftness",
+  "Flask of Tempered Versatility",
+  "Vicious Flask of Honor",
+  "Vicious Flask of Classical Spirits",
+  "Vicious Flask of the Wrecking Ball",
 }
 
-local function HasBuff(name)
-  if AuraUtil and AuraUtil.FindAuraByName then
-    return AuraUtil.FindAuraByName(name, "player") ~= nil
+local function ForEachPlayerAura(callback)
+  if AuraUtil and AuraUtil.ForEachAura then
+    AuraUtil.ForEachAura("player", "HELPFUL", nil, callback)
+    return
   end
   local i = 1
   while true do
-    local auraName = UnitAura("player", i)
-    if not auraName then
+    local name = UnitAura("player", i)
+    if not name then
       break
     end
-    if auraName == name then
-      return true
-    end
+    callback(name)
     i = i + 1
   end
-  return false
 end
 
-local function GetGroupClasses()
-  local classes = {}
-  local n = GetNumGroupMembers()
-  if n and n > 0 then
-    local prefix = IsInRaid() and "raid" or "party"
-    for i = 1, n do
-      local unit = prefix .. i
-      if UnitExists(unit) then
-        local _, class = UnitClass(unit)
-        if class then
-          classes[class] = true
-        end
+local function HasWellFed()
+  local found = false
+  ForEachPlayerAura(function(name)
+    if name and name:lower():find("well fed", 1, true) then
+      found = true
+      return true
+    end
+  end)
+  return found
+end
+
+local function HasFlask()
+  local found = false
+  ForEachPlayerAura(function(name)
+    if not name then
+      return
+    end
+    for _, buff in ipairs(FLASK_BUFFS) do
+      if name == buff then
+        found = true
+        return true
       end
     end
-  else
-    local _, class = UnitClass("player")
-    if class then
-      classes[class] = true
+    local lower = name:lower()
+    if lower:find("flask", 1, true) or lower:find("phial", 1, true) then
+      found = true
+      return true
     end
-  end
-  return classes
+  end)
+  return found
 end
 
-function BuffWatch:IsEnabled()
-  return Elysian.state.buffWatchEnabled and true or false
+function DungeonConsumables:IsEnabled()
+  return Elysian.state.dungeonConsumablesEnabled and true or false
 end
 
-function BuffWatch:SetEnabled(enabled)
-  Elysian.state.buffWatchEnabled = enabled and true or false
+function DungeonConsumables:SetEnabled(enabled)
+  Elysian.state.dungeonConsumablesEnabled = enabled and true or false
   if Elysian.SaveState then
     Elysian.SaveState()
   end
@@ -67,8 +77,8 @@ function BuffWatch:SetEnabled(enabled)
   self:UpdateVisibility(true)
 end
 
-function BuffWatch:SetTestEnabled(enabled)
-  Elysian.state.buffWatchTest = enabled and true or false
+function DungeonConsumables:SetTestEnabled(enabled)
+  Elysian.state.dungeonConsumablesTest = enabled and true or false
   if Elysian.SaveState then
     Elysian.SaveState()
   end
@@ -76,15 +86,15 @@ function BuffWatch:SetTestEnabled(enabled)
   self:UpdateVisibility(true)
 end
 
-function BuffWatch:EnsureFrame()
+function DungeonConsumables:EnsureFrame()
   if self.frame then
     return
   end
 
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
-  local frame = CreateFrame("Frame", "ElysianBuffWatchReminder", UIParent, template)
+  local frame = CreateFrame("Frame", "ElysianDungeonConsumables", UIParent, template)
   frame:SetSize(420, 52)
-  frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY() - 60)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY() - 120)
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
   frame:EnableMouse(true)
@@ -96,7 +106,7 @@ function BuffWatch:EnsureFrame()
       local px, py = UIParent:GetCenter()
       local fx, fy = selfFrame:GetCenter()
       if px and py and fx and fy then
-        Elysian.state.buffWatchPos = { "CENTER", "CENTER", fx - px, fy - py }
+        Elysian.state.dungeonConsumablesPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
       Elysian.SaveState()
     end
@@ -120,22 +130,22 @@ function BuffWatch:EnsureFrame()
   self:EnsureEvents()
 end
 
-function BuffWatch:ApplyPosition()
+function DungeonConsumables:ApplyPosition()
   if not self.frame then
     return
   end
-  local pos = Elysian.state.buffWatchPos
+  local pos = Elysian.state.dungeonConsumablesPos
   if type(pos) == "table" and #pos >= 4 then
     self.frame:ClearAllPoints()
     self.frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
   end
 end
 
-function BuffWatch:ApplyColors()
+function DungeonConsumables:ApplyColors()
   if not self.frame then
     return
   end
-  local textColor = Elysian.state.buffWatchTextColor or { 1, 1, 1 }
+  local textColor = Elysian.state.dungeonConsumablesTextColor or { 1, 1, 1 }
   if self.text then
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3])
   end
@@ -143,35 +153,31 @@ function BuffWatch:ApplyColors()
   Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), 0.95)
 end
 
-function BuffWatch:BuildMissingList()
-  local classes = GetGroupClasses()
+function DungeonConsumables:BuildMissingList()
   local missing = {}
-  for class, buffs in pairs(CLASS_BUFFS) do
-    if classes[class] then
-      for _, buff in ipairs(buffs) do
-        if not HasBuff(buff) then
-          table.insert(missing, buff)
-        end
-      end
-    end
+  if not HasFlask() then
+    table.insert(missing, "Flask")
+  end
+  if not HasWellFed() then
+    table.insert(missing, "Well Fed")
   end
   return missing
 end
 
-function BuffWatch:UpdateText(missing)
+function DungeonConsumables:UpdateText(missing)
   if not self.text or not self.frame then
     return
   end
-  local message = "Missing buffs"
+  local message = "Missing consumables"
   if missing and #missing > 0 then
-    message = "Missing buffs: " .. table.concat(missing, ", ")
+    message = "Missing consumables: " .. table.concat(missing, ", ")
   end
   self.text:SetText(message)
   local height = math.max(52, (self.text:GetStringHeight() or 32) + 20)
   self.frame:SetHeight(height)
 end
 
-function BuffWatch:UpdateVisibility(force)
+function DungeonConsumables:UpdateVisibility(force)
   if not self.frame then
     return
   end
@@ -181,14 +187,14 @@ function BuffWatch:UpdateVisibility(force)
   end
   local inInstance, instanceType = IsInInstance()
   local validInstance = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
-  if not validInstance and not Elysian.state.buffWatchTest then
+  if not validInstance and not Elysian.state.dungeonConsumablesTest then
     self.frame:Hide()
     return
   end
 
   local missing = self:BuildMissingList()
-  if Elysian.state.buffWatchTest then
-    missing = { "Battle Shout", "Arcane Intellect", "Skyfury" }
+  if Elysian.state.dungeonConsumablesTest then
+    missing = { "Flask", "Well Fed" }
   end
 
   if missing and #missing > 0 then
@@ -199,16 +205,14 @@ function BuffWatch:UpdateVisibility(force)
   end
 end
 
-function BuffWatch:EnsureEvents()
+function DungeonConsumables:EnsureEvents()
   if self.eventFrame then
     return
   end
   local events = CreateFrame("Frame")
   events:RegisterEvent("PLAYER_ENTERING_WORLD")
-  events:RegisterEvent("GROUP_ROSTER_UPDATE")
   events:RegisterEvent("UNIT_AURA")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-  events:RegisterEvent("PLAYER_REGEN_ENABLED")
   events:SetScript("OnEvent", function(_, event, unit)
     if event == "UNIT_AURA" and unit ~= "player" then
       return
@@ -218,14 +222,14 @@ function BuffWatch:EnsureEvents()
   self.eventFrame = events
 end
 
-function BuffWatch:Initialize()
+function DungeonConsumables:Initialize()
   self:EnsureFrame()
   self:ApplyColors()
   self:UpdateVisibility(true)
   self:EnsureEvents()
 end
 
-function BuffWatch:Refresh()
+function DungeonConsumables:Refresh()
   if self.frame then
     self:ApplyColors()
     self:UpdateVisibility(true)

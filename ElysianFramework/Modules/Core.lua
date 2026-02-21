@@ -14,14 +14,14 @@ Elysian.fonts = {
 }
 
 Elysian.state = Elysian.state or {
-  scrapSellerEnabled = false,
+  scrapSellerEnabled = true,
   showOnStart = true,
   navBg = nil,
   contentBg = nil,
-  cursorRingEnabled = false,
-  cursorRingSize = 18,
+  cursorRingEnabled = true,
+  cursorRingSize = 14,
   cursorRingColor = nil,
-  cursorRingClassColor = false,
+  cursorRingClassColor = true,
   cursorRingShape = "RING",
   cursorRingCastProgress = true,
   cursorRingCastColor = nil,
@@ -29,20 +29,20 @@ Elysian.state = Elysian.state or {
   cursorRingShowOutCombat = true,
   cursorRingShowInInstances = true,
   cursorRingShowInWorld = true,
-  cursorRingTrailEnabled = false,
+  cursorRingTrailEnabled = true,
   cursorRingTrailLength = 12,
   cursorRingTrailSpacing = 0.02,
   cursorRingTrailFade = 0.6,
   cursorRingTrailColor = nil,
   cursorRingTrailFadeTime = 0.25,
   cursorRingTrailShape = "SPARK",
-  autoRepairEnabled = false,
+  autoRepairEnabled = true,
   minimapButtonAngle = nil,
   minimapButtonHidden = false,
   uiFontScale = 1.1,
   uiTextUseClassColor = true,
   uiTextColor = nil,
-  infoBarEnabled = false,
+  infoBarEnabled = true,
   infoBarShowTime = true,
   infoBarShowGold = true,
   infoBarShowDurability = true,
@@ -52,7 +52,7 @@ Elysian.state = Elysian.state or {
   infoBarOpacity = 0.35,
   infoBarTextColor = nil,
   infoBarBgColor = nil,
-  infoBarShowPortalButton = false,
+  infoBarShowPortalButton = true,
   repairReminderEnabled = false,
   repairReminderUnlocked = false,
   repairReminderTextColor = nil,
@@ -67,6 +67,13 @@ Elysian.state = Elysian.state or {
   buffWatchTextColor = nil,
   buffWatchTest = false,
   buffWatchPos = nil,
+  dungeonConsumablesEnabled = false,
+  dungeonConsumablesTextColor = nil,
+  dungeonConsumablesTest = false,
+  dungeonConsumablesPos = nil,
+  dungeonRoleMarksEnabled = true,
+  dungeonTankMark = 6,
+  dungeonHealerMark = 2,
   warlockPetReminderEnabled = false,
   warlockPetReminderTextColor = nil,
   warlockPetReminderTest = false,
@@ -75,7 +82,7 @@ Elysian.state = Elysian.state or {
   warlockStoneReminderTextColor = nil,
   warlockStoneReminderTest = false,
   warlockStoneReminderPos = nil,
-  autoKeystoneEnabled = false,
+  autoKeystoneEnabled = true,
   warriorBuffEnabled = false,
   warriorBuffTextColor = nil,
   warriorBuffTest = false,
@@ -134,14 +141,14 @@ end
 
 function Elysian.GetDefaultState()
   return {
-    scrapSellerEnabled = false,
+    scrapSellerEnabled = true,
     showOnStart = true,
     navBg = { Elysian.HexToRGB("#21222c") },
     contentBg = { Elysian.HexToRGB(Elysian.theme.bg) },
-    cursorRingEnabled = false,
-    cursorRingSize = 18,
+    cursorRingEnabled = true,
+    cursorRingSize = 14,
     cursorRingColor = { Elysian.HexToRGB(Elysian.theme.accent) },
-    cursorRingClassColor = false,
+    cursorRingClassColor = true,
     cursorRingShape = "RING",
     cursorRingCastProgress = true,
     cursorRingCastColor = { Elysian.HexToRGB(Elysian.theme.accent) },
@@ -149,20 +156,20 @@ function Elysian.GetDefaultState()
     cursorRingShowOutCombat = true,
     cursorRingShowInInstances = true,
     cursorRingShowInWorld = true,
-    cursorRingTrailEnabled = false,
+    cursorRingTrailEnabled = true,
     cursorRingTrailLength = 12,
     cursorRingTrailSpacing = 0.02,
     cursorRingTrailFade = 0.6,
     cursorRingTrailColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     cursorRingTrailFadeTime = 0.25,
     cursorRingTrailShape = "SPARK",
-    autoRepairEnabled = false,
+    autoRepairEnabled = true,
     minimapButtonAngle = 225,
     minimapButtonHidden = false,
     uiFontScale = 1.1,
     uiTextUseClassColor = true,
     uiTextColor = { Elysian.HexToRGB(Elysian.theme.fg) },
-    infoBarEnabled = false,
+    infoBarEnabled = true,
     infoBarShowTime = true,
     infoBarShowGold = true,
     infoBarShowDurability = true,
@@ -172,7 +179,7 @@ function Elysian.GetDefaultState()
     infoBarOpacity = 0.35,
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     infoBarBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
-    infoBarShowPortalButton = false,
+    infoBarShowPortalButton = true,
     repairReminderEnabled = false,
     repairReminderUnlocked = false,
     repairReminderTextColor = { 1, 1, 1 },
@@ -187,6 +194,13 @@ function Elysian.GetDefaultState()
     buffWatchTextColor = { 1, 1, 1 },
     buffWatchTest = false,
     buffWatchPos = nil,
+    dungeonConsumablesEnabled = false,
+    dungeonConsumablesTextColor = { 1, 1, 1 },
+    dungeonConsumablesTest = false,
+    dungeonConsumablesPos = nil,
+    dungeonRoleMarksEnabled = true,
+    dungeonTankMark = 6,
+    dungeonHealerMark = 2,
     warlockPetReminderEnabled = false,
     warlockPetReminderTextColor = { 1, 1, 1 },
     warlockPetReminderTest = false,
@@ -195,7 +209,7 @@ function Elysian.GetDefaultState()
     warlockStoneReminderTextColor = { 1, 1, 1 },
     warlockStoneReminderTest = false,
     warlockStoneReminderPos = nil,
-    autoKeystoneEnabled = false,
+    autoKeystoneEnabled = true,
     warriorBuffEnabled = false,
     warriorBuffTextColor = { 1, 1, 1 },
     warriorBuffTest = false,
@@ -240,6 +254,8 @@ local function BuildClassProfile(class)
   state.repairReminderEnabled = true
   state.dungeonReminderEnabled = true
   state.buffWatchEnabled = true
+  state.dungeonConsumablesEnabled = true
+  state.dungeonRoleMarksEnabled = true
 
   -- Class-specific alerts
   if class == "WARLOCK" then
@@ -449,7 +465,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.version = 1
   end
   if ElysianDB.scrapSellerEnabled == nil then
-    ElysianDB.scrapSellerEnabled = false
+    ElysianDB.scrapSellerEnabled = true
   end
   if ElysianDB.profiles == nil then
     ElysianDB.profiles = {}
@@ -481,16 +497,16 @@ function Elysian.InitSavedVariables()
     ElysianDB.contentBg = defaultContent
   end
   if ElysianDB.cursorRingEnabled == nil then
-    ElysianDB.cursorRingEnabled = false
+    ElysianDB.cursorRingEnabled = true
   end
   if ElysianDB.cursorRingSize == nil then
-    ElysianDB.cursorRingSize = 18
+    ElysianDB.cursorRingSize = 14
   end
   if ElysianDB.cursorRingColor == nil then
     ElysianDB.cursorRingColor = { Elysian.HexToRGB(Elysian.theme.accent) }
   end
   if ElysianDB.cursorRingClassColor == nil then
-    ElysianDB.cursorRingClassColor = false
+    ElysianDB.cursorRingClassColor = true
   end
   if ElysianDB.cursorRingShape == nil then
     ElysianDB.cursorRingShape = "RING"
@@ -514,7 +530,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.cursorRingShowInWorld = true
   end
   if ElysianDB.cursorRingTrailEnabled == nil then
-    ElysianDB.cursorRingTrailEnabled = false
+    ElysianDB.cursorRingTrailEnabled = true
   end
   if ElysianDB.cursorRingTrailLength == nil then
     ElysianDB.cursorRingTrailLength = 12
@@ -535,13 +551,13 @@ function Elysian.InitSavedVariables()
     ElysianDB.cursorRingTrailShape = "SPARK"
   end
   if ElysianDB.autoRepairEnabled == nil then
-    ElysianDB.autoRepairEnabled = false
+    ElysianDB.autoRepairEnabled = true
   end
   if ElysianDB.uiFontScale == nil then
     ElysianDB.uiFontScale = 1.1
   end
   if ElysianDB.infoBarEnabled == nil then
-    ElysianDB.infoBarEnabled = false
+    ElysianDB.infoBarEnabled = true
   end
   if ElysianDB.infoBarShowTime == nil then
     ElysianDB.infoBarShowTime = true
@@ -571,7 +587,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.infoBarBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
   end
   if ElysianDB.infoBarShowPortalButton == nil then
-    ElysianDB.infoBarShowPortalButton = false
+    ElysianDB.infoBarShowPortalButton = true
   end
   if ElysianDB.repairReminderEnabled == nil then
     ElysianDB.repairReminderEnabled = false
@@ -603,6 +619,39 @@ function Elysian.InitSavedVariables()
   if ElysianDB.dungeonReminderPos == nil then
     ElysianDB.dungeonReminderPos = nil
   end
+  if ElysianDB.buffWatchEnabled == nil then
+    ElysianDB.buffWatchEnabled = false
+  end
+  if ElysianDB.buffWatchTextColor == nil then
+    ElysianDB.buffWatchTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.buffWatchTest == nil then
+    ElysianDB.buffWatchTest = false
+  end
+  if ElysianDB.buffWatchPos == nil then
+    ElysianDB.buffWatchPos = nil
+  end
+  if ElysianDB.dungeonConsumablesEnabled == nil then
+    ElysianDB.dungeonConsumablesEnabled = false
+  end
+  if ElysianDB.dungeonConsumablesTextColor == nil then
+    ElysianDB.dungeonConsumablesTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.dungeonConsumablesTest == nil then
+    ElysianDB.dungeonConsumablesTest = false
+  end
+  if ElysianDB.dungeonConsumablesPos == nil then
+    ElysianDB.dungeonConsumablesPos = nil
+  end
+  if ElysianDB.dungeonRoleMarksEnabled == nil then
+    ElysianDB.dungeonRoleMarksEnabled = true
+  end
+  if ElysianDB.dungeonTankMark == nil then
+    ElysianDB.dungeonTankMark = 6
+  end
+  if ElysianDB.dungeonHealerMark == nil then
+    ElysianDB.dungeonHealerMark = 2
+  end
   if ElysianDB.warlockPetReminderEnabled == nil then
     ElysianDB.warlockPetReminderEnabled = false
   end
@@ -628,7 +677,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.warlockStoneReminderPos = nil
   end
   if ElysianDB.autoKeystoneEnabled == nil then
-    ElysianDB.autoKeystoneEnabled = false
+    ElysianDB.autoKeystoneEnabled = true
   end
   if ElysianDB.minimapButtonAngle == nil then
     ElysianDB.minimapButtonAngle = 225
@@ -688,6 +737,14 @@ function Elysian.InitSavedVariables()
   )
   Elysian.state.dungeonReminderTextColor = EnsureColorTable(
     Elysian.state.dungeonReminderTextColor,
+    { 1, 1, 1 }
+  )
+  Elysian.state.buffWatchTextColor = EnsureColorTable(
+    Elysian.state.buffWatchTextColor,
+    { 1, 1, 1 }
+  )
+  Elysian.state.dungeonConsumablesTextColor = EnsureColorTable(
+    Elysian.state.dungeonConsumablesTextColor,
     { 1, 1, 1 }
   )
   Elysian.state.warlockPetReminderTextColor = EnsureColorTable(
@@ -762,6 +819,13 @@ end
 
 function Elysian.GetNavBg()
   return EnsureColorTable(Elysian.state.navBg, { Elysian.HexToRGB("#21222c") })
+end
+
+function Elysian.GetBannerOffsetY()
+  if UIParent and UIParent.GetHeight then
+    return (UIParent:GetHeight() or 0) * 0.25
+  end
+  return 0
 end
 
 function Elysian.ApplyTextColor(fontString)

@@ -87,6 +87,7 @@ end
 function AutoKeystone:CreatePanel(parent)
   local panel = CreateFrame("Frame", nil, parent)
   panel:SetAllPoints()
+  local template = BackdropTemplateMixin and "BackdropTemplate" or nil
 
   local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   title:SetPoint("TOPLEFT", 8, -8)
