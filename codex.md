@@ -53,3 +53,16 @@ Build a World of Warcraft addon for the Midnight expansion. Initial milestone: d
 - Version: v0.00.16.
 - Snapshot created: ElysianFramework_0.00.16.zip (older snapshots removed).
 - Profiles added (per character) with Default profile, save/load in General tab.
+- Version: v0.00.17.
+- Snapshot created: ElysianFramework_0.00.17.zip.
+- Profile persistence fixed; profile Save/Load now sticks across relog.
+- Buttons provide pressed-state feedback (lighter shade).
+- Snapshot stored in /home/lars/code/snapshots/ElysianFramework_0.00.17.zip.
+- Version: v0.00.18.
+- Snapshot created: /home/lars/code/snapshots/ElysianFramework_0.00.18.zip.
+- Version: v0.00.19.
+- Snapshot created: /home/lars/code/snapshots/ElysianFramework_0.00.19.zip.
+- Version: v0.00.20.
+- Snapshot created: /home/lars/code/snapshots/ElysianFramework_0.00.20.zip.
+- Version: v0.00.21 BETA.
+- Snapshot created: /home/lars/code/snapshots/ElysianFramework_0.00.20.zip.

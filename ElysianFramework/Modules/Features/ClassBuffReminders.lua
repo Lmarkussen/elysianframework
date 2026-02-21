@@ -1,0 +1,315 @@
+local _, Elysian = ...
+
+Elysian.Features = Elysian.Features or {}
+local ClassBuffReminders = {}
+Elysian.Features.ClassBuffReminders = ClassBuffReminders
+
+local BUFFS = {
+  WARRIOR = { key = "warrior", buff = "Battle Shout", label = "MISSING BATTLE SHOUT" },
+  MAGE = { key = "mage", buff = "Arcane Intellect", label = "MISSING ARCANE INTELLECT" },
+  PRIEST = { key = "priest", buff = "Power Word: Fortitude", label = "MISSING FORTITUDE" },
+  DRUID = { key = "druid", buff = "Mark of the Wild", label = "MISSING MARK OF THE WILD" },
+  SHAMAN = { key = "shaman", buff = "Skyfury", label = "MISSING SKYFURY" },
+  EVOKER = { key = "evoker", buff = "Blessing of the Bronze", label = "MISSING BRONZE" },
+}
+
+local function HasBuff(name)
+  if AuraUtil and AuraUtil.FindAuraByName then
+    return AuraUtil.FindAuraByName(name, "player") ~= nil
+  end
+  local i = 1
+  while true do
+    local auraName = UnitAura("player", i)
+    if not auraName then
+      break
+    end
+    if auraName == name then
+      return true
+    end
+    i = i + 1
+  end
+  return false
+end
+
+local function HasAnyPoisonAura()
+  local poisons = {
+    "Deadly Poison",
+    "Instant Poison",
+    "Wound Poison",
+    "Crippling Poison",
+    "Numbing Poison",
+    "Atrophic Poison",
+  }
+  for _, name in ipairs(poisons) do
+    if HasBuff(name) then
+      return true
+    end
+  end
+  return false
+end
+
+local function GetPlayerClass()
+  local _, class = UnitClass("player")
+  return class
+end
+
+local function GetStateKey(prefix, suffix)
+  return string.format("%s%s", prefix, suffix)
+end
+
+local function GetColor(key)
+  local value = Elysian.state[key]
+  if type(value) == "table" then
+    return value
+  end
+  return { 1, 1, 1 }
+end
+
+function ClassBuffReminders:GetKeys(prefix)
+  return {
+    enabled = GetStateKey(prefix, "BuffEnabled"),
+    text = GetStateKey(prefix, "BuffTextColor"),
+    test = GetStateKey(prefix, "BuffTest"),
+    pos = GetStateKey(prefix, "BuffPos"),
+  }
+end
+
+function ClassBuffReminders:GetPoisonKeys()
+  return {
+    enabled = "roguePoisonEnabled",
+    text = "roguePoisonTextColor",
+    test = "roguePoisonTest",
+    pos = "roguePoisonPos",
+  }
+end
+
+function ClassBuffReminders:EnsureFrame(prefix, label)
+  self.frames = self.frames or {}
+  if self.frames[prefix] then
+    return self.frames[prefix]
+  end
+  local template = BackdropTemplateMixin and "BackdropTemplate" or nil
+  local frame = CreateFrame("Frame", "ElysianClassBuff" .. prefix, UIParent, template)
+  frame:SetSize(420, 52)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, -120)
+  frame:SetFrameStrata("DIALOG")
+  frame:SetMovable(true)
+  frame:EnableMouse(true)
+  frame:RegisterForDrag("LeftButton")
+  frame:SetScript("OnDragStart", frame.StartMoving)
+  frame:SetScript("OnDragStop", function(selfFrame)
+    selfFrame:StopMovingOrSizing()
+    local keys = self.keys[prefix]
+    if keys and Elysian.SaveState then
+      local px, py = UIParent:GetCenter()
+      local fx, fy = selfFrame:GetCenter()
+      if px and py and fx and fy then
+        Elysian.state[keys.pos] = { "CENTER", "CENTER", fx - px, fy - py }
+      end
+      Elysian.SaveState()
+    end
+  end)
+
+  Elysian.SetBackdrop(frame)
+  local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+  text:SetPoint("CENTER")
+  text:SetJustifyH("CENTER")
+  text:SetJustifyV("MIDDLE")
+  text:SetWidth(380)
+  text:SetWordWrap(true)
+  Elysian.ApplyFont(text, 14, "OUTLINE")
+  text:SetText(label or "")
+  frame.text = text
+  self.frames[prefix] = frame
+  return frame
+end
+
+function ClassBuffReminders:ApplyColors(prefix)
+  local frame = self.frames and self.frames[prefix]
+  if not frame then
+    return
+  end
+  local keys = self.keys[prefix]
+  if not keys then
+    return
+  end
+  local color = GetColor(keys.text)
+  frame.text:SetTextColor(color[1], color[2], color[3])
+  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
+  Elysian.SetBackdropColors(frame, bg, Elysian.GetThemeBorder(), 0.95)
+end
+
+function ClassBuffReminders:ApplyPosition(prefix)
+  local frame = self.frames and self.frames[prefix]
+  if not frame then
+    return
+  end
+  local keys = self.keys[prefix]
+  local pos = keys and Elysian.state[keys.pos]
+  if type(pos) == "table" and #pos >= 4 then
+    frame:ClearAllPoints()
+    frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+  end
+end
+
+function ClassBuffReminders:UpdateFrameText(prefix, message)
+  local frame = self.frames and self.frames[prefix]
+  if not frame then
+    return
+  end
+  frame.text:SetText(message)
+  local height = math.max(52, (frame.text:GetStringHeight() or 32) + 20)
+  frame:SetHeight(height)
+end
+
+function ClassBuffReminders:UpdateBuff(prefix)
+  local keys = self.keys[prefix]
+  if not keys then
+    return
+  end
+  local enabled = Elysian.state[keys.enabled]
+  local test = Elysian.state[keys.test]
+  local frame = self.frames[prefix]
+  if not enabled then
+    frame:Hide()
+    return
+  end
+  local buff = self.buffLookup[prefix]
+  if test then
+    self:UpdateFrameText(prefix, "MISSING " .. (buff.label or "BUFF"))
+    frame:Show()
+    return
+  end
+  if buff and not HasBuff(buff.buff) then
+    self:UpdateFrameText(prefix, buff.label)
+    frame:Show()
+  else
+    frame:Hide()
+  end
+end
+
+function ClassBuffReminders:UpdatePoison()
+  local keys = self.keys.rogue
+  local frame = self.frames.rogue
+  if not keys or not frame then
+    return
+  end
+  if not Elysian.state[keys.enabled] then
+    frame:Hide()
+    return
+  end
+  if Elysian.state[keys.test] then
+    self:UpdateFrameText("rogue", "MISSING POISONS: MH, OH")
+    frame:Show()
+    return
+  end
+  local hasMain, _, _, hasOff = GetWeaponEnchantInfo()
+  local hasAura = HasAnyPoisonAura()
+  local missing = {}
+  if not hasMain then
+    table.insert(missing, "MH")
+  end
+  if not hasOff then
+    table.insert(missing, "OH")
+  end
+  if #missing == 2 and hasAura then
+    frame:Hide()
+    return
+  end
+  if #missing > 0 then
+    self:UpdateFrameText("rogue", "MISSING POISONS: " .. table.concat(missing, ", "))
+    frame:Show()
+  else
+    frame:Hide()
+  end
+end
+
+function ClassBuffReminders:UpdateVisibility()
+  local class = GetPlayerClass()
+  if class == "ROGUE" then
+    self:UpdatePoison()
+    return
+  end
+  local entry = BUFFS[class]
+  if entry then
+    self:UpdateBuff(entry.key)
+  end
+end
+
+function ClassBuffReminders:EnsureFrames()
+  self.frames = self.frames or {}
+  self.keys = self.keys or {}
+  self.buffLookup = self.buffLookup or {}
+
+  for class, entry in pairs(BUFFS) do
+    self.keys[entry.key] = self:GetKeys(entry.key)
+    self.buffLookup[entry.key] = entry
+    local frame = self:EnsureFrame(entry.key, entry.label)
+    self:ApplyColors(entry.key)
+    self:ApplyPosition(entry.key)
+    frame:Hide()
+  end
+
+  self.keys.rogue = self:GetPoisonKeys()
+  local rogueFrame = self:EnsureFrame("rogue", "MISSING POISONS")
+  self:ApplyColors("rogue")
+  self:ApplyPosition("rogue")
+  rogueFrame:Hide()
+end
+
+function ClassBuffReminders:EnsureEvents()
+  if self.eventFrame then
+    return
+  end
+  local events = CreateFrame("Frame")
+  events:RegisterEvent("PLAYER_ENTERING_WORLD")
+  events:RegisterEvent("UNIT_AURA")
+  events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+  events:RegisterEvent("PLAYER_REGEN_ENABLED")
+  events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+  events:SetScript("OnEvent", function(_, event, unit)
+    if event == "UNIT_AURA" and unit ~= "player" then
+      return
+    end
+    self:UpdateVisibility()
+  end)
+  self.eventFrame = events
+end
+
+function ClassBuffReminders:Initialize()
+  self:EnsureFrames()
+  self:EnsureEvents()
+  self:UpdateVisibility()
+end
+
+function ClassBuffReminders:Refresh()
+  self:EnsureFrames()
+  for key in pairs(self.keys) do
+    self:ApplyColors(key)
+  end
+  self:UpdateVisibility()
+end
+
+function ClassBuffReminders:SetEnabled(prefix, enabled)
+  local keys = self.keys[prefix]
+  if not keys then
+    return
+  end
+  Elysian.state[keys.enabled] = enabled and true or false
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  self:UpdateVisibility()
+end
+
+function ClassBuffReminders:SetTestEnabled(prefix, enabled)
+  local keys = self.keys[prefix]
+  if not keys then
+    return
+  end
+  Elysian.state[keys.test] = enabled and true or false
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  self:UpdateVisibility()
+end

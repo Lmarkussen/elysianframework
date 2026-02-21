@@ -743,6 +743,9 @@ function CursorRing:CreatePanel(parent)
   end)
 
   UIDropDownMenu_SetText(shapeDrop, Elysian.state.cursorRingShape or "RING")
+  if Elysian.UI and Elysian.UI.SkinDropDown then
+    Elysian.UI.SkinDropDown(shapeDrop)
+  end
 
   shapeDropButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then
@@ -814,6 +817,9 @@ function CursorRing:CreatePanel(parent)
   end)
 
   UIDropDownMenu_SetText(trailShapeDrop, Elysian.state.cursorRingTrailShape or "SPARK")
+  if Elysian.UI and Elysian.UI.SkinDropDown then
+    Elysian.UI.SkinDropDown(trailShapeDrop)
+  end
 
   trailShapeButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then

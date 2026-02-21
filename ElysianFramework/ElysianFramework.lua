@@ -28,6 +28,12 @@ local function ApplySavedSettings()
   if Elysian.Features and Elysian.Features.DungeonReminder then
     Elysian.Features.DungeonReminder:Initialize()
   end
+  if Elysian.Features and Elysian.Features.BuffWatch then
+    Elysian.Features.BuffWatch:Initialize()
+  end
+  if Elysian.Features and Elysian.Features.ClassBuffReminders then
+    Elysian.Features.ClassBuffReminders:Initialize()
+  end
   if Elysian.Features and Elysian.Features.WarlockReminders then
     Elysian.Features.WarlockReminders:Initialize()
   end

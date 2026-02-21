@@ -63,6 +63,10 @@ Elysian.state = Elysian.state or {
   dungeonReminderTextColor = nil,
   dungeonReminderTest = false,
   dungeonReminderPos = nil,
+  buffWatchEnabled = false,
+  buffWatchTextColor = nil,
+  buffWatchTest = false,
+  buffWatchPos = nil,
   warlockPetReminderEnabled = false,
   warlockPetReminderTextColor = nil,
   warlockPetReminderTest = false,
@@ -72,6 +76,34 @@ Elysian.state = Elysian.state or {
   warlockStoneReminderTest = false,
   warlockStoneReminderPos = nil,
   autoKeystoneEnabled = false,
+  warriorBuffEnabled = false,
+  warriorBuffTextColor = nil,
+  warriorBuffTest = false,
+  warriorBuffPos = nil,
+  mageBuffEnabled = false,
+  mageBuffTextColor = nil,
+  mageBuffTest = false,
+  mageBuffPos = nil,
+  priestBuffEnabled = false,
+  priestBuffTextColor = nil,
+  priestBuffTest = false,
+  priestBuffPos = nil,
+  druidBuffEnabled = false,
+  druidBuffTextColor = nil,
+  druidBuffTest = false,
+  druidBuffPos = nil,
+  shamanBuffEnabled = false,
+  shamanBuffTextColor = nil,
+  shamanBuffTest = false,
+  shamanBuffPos = nil,
+  evokerBuffEnabled = false,
+  evokerBuffTextColor = nil,
+  evokerBuffTest = false,
+  evokerBuffPos = nil,
+  roguePoisonEnabled = false,
+  roguePoisonTextColor = nil,
+  roguePoisonTest = false,
+  roguePoisonPos = nil,
 }
 
 local function CopyTable(value)
@@ -151,6 +183,10 @@ function Elysian.GetDefaultState()
     dungeonReminderTextColor = { 1, 1, 1 },
     dungeonReminderTest = false,
     dungeonReminderPos = nil,
+    buffWatchEnabled = false,
+    buffWatchTextColor = { 1, 1, 1 },
+    buffWatchTest = false,
+    buffWatchPos = nil,
     warlockPetReminderEnabled = false,
     warlockPetReminderTextColor = { 1, 1, 1 },
     warlockPetReminderTest = false,
@@ -160,7 +196,99 @@ function Elysian.GetDefaultState()
     warlockStoneReminderTest = false,
     warlockStoneReminderPos = nil,
     autoKeystoneEnabled = false,
+    warriorBuffEnabled = false,
+    warriorBuffTextColor = { 1, 1, 1 },
+    warriorBuffTest = false,
+    warriorBuffPos = nil,
+    mageBuffEnabled = false,
+    mageBuffTextColor = { 1, 1, 1 },
+    mageBuffTest = false,
+    mageBuffPos = nil,
+    priestBuffEnabled = false,
+    priestBuffTextColor = { 1, 1, 1 },
+    priestBuffTest = false,
+    priestBuffPos = nil,
+    druidBuffEnabled = false,
+    druidBuffTextColor = { 1, 1, 1 },
+    druidBuffTest = false,
+    druidBuffPos = nil,
+    shamanBuffEnabled = false,
+    shamanBuffTextColor = { 1, 1, 1 },
+    shamanBuffTest = false,
+    shamanBuffPos = nil,
+    evokerBuffEnabled = false,
+    evokerBuffTextColor = { 1, 1, 1 },
+    evokerBuffTest = false,
+    evokerBuffPos = nil,
+    roguePoisonEnabled = false,
+    roguePoisonTextColor = { 1, 1, 1 },
+    roguePoisonTest = false,
+    roguePoisonPos = nil,
   }
+end
+
+local function BuildClassProfile(class)
+  local state = Elysian.GetDefaultState()
+  -- Turn on all QOL features by default
+  state.scrapSellerEnabled = true
+  state.cursorRingEnabled = true
+  state.autoRepairEnabled = true
+  state.infoBarEnabled = true
+  state.autoKeystoneEnabled = true
+
+  -- Alerts defaults
+  state.repairReminderEnabled = true
+  state.dungeonReminderEnabled = true
+  state.buffWatchEnabled = true
+
+  -- Class-specific alerts
+  if class == "WARLOCK" then
+    state.warlockPetReminderEnabled = true
+    state.warlockStoneReminderEnabled = true
+  elseif class == "WARRIOR" then
+    state.warriorBuffEnabled = true
+  elseif class == "MAGE" then
+    state.mageBuffEnabled = true
+  elseif class == "PRIEST" then
+    state.priestBuffEnabled = true
+  elseif class == "DRUID" then
+    state.druidBuffEnabled = true
+  elseif class == "SHAMAN" then
+    state.shamanBuffEnabled = true
+  elseif class == "EVOKER" then
+    state.evokerBuffEnabled = true
+  elseif class == "ROGUE" then
+    state.roguePoisonEnabled = true
+  end
+
+  return state
+end
+
+local function EnsureClassProfiles()
+  if not ElysianDB then
+    return
+  end
+  ElysianDB.profiles = ElysianDB.profiles or {}
+  local classes = {
+    "WARRIOR",
+    "PALADIN",
+    "HUNTER",
+    "ROGUE",
+    "PRIEST",
+    "DEATHKNIGHT",
+    "SHAMAN",
+    "MAGE",
+    "WARLOCK",
+    "DRUID",
+    "MONK",
+    "DEMONHUNTER",
+    "EVOKER",
+  }
+  for _, class in ipairs(classes) do
+    if not ElysianDB.profiles[class] then
+      ElysianDB.profiles[class] = BuildClassProfile(class)
+    end
+  end
 end
 
 function Elysian.GetCharacterKey()
@@ -265,6 +393,27 @@ function Elysian.SaveProfile(name)
   end
 end
 
+function Elysian.DeleteProfile(name)
+  if not ElysianDB or not ElysianDB.profiles or not name or name == "" then
+    return
+  end
+  if name == "Default" then
+    return
+  end
+  ElysianDB.profiles[name] = nil
+  if Elysian.GetActiveProfile and Elysian.GetActiveProfile() == name then
+    Elysian.SetActiveProfile("Default")
+    Elysian.state = MergeProfile(ElysianDB.profiles.Default or Elysian.GetDefaultState())
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.UI and Elysian.UI.Rebuild then
+      Elysian.UI:Rebuild()
+      Elysian.UI:Show()
+    end
+    Elysian.RefreshFeatures()
+  end
+end
 function Elysian.LoadProfile(name)
   if not ElysianDB or not ElysianDB.profiles or not ElysianDB.profiles[name] then
     return
@@ -311,8 +460,14 @@ function Elysian.InitSavedVariables()
   if not ElysianDB.profiles.Default then
     ElysianDB.profiles.Default = CopyTable(Elysian.GetDefaultState())
   end
+  EnsureClassProfiles()
   if not ElysianDB.charProfiles[Elysian.GetCharacterKey()] then
-    ElysianDB.charProfiles[Elysian.GetCharacterKey()] = "Default"
+    local _, class = UnitClass("player")
+    if class and ElysianDB.profiles[class] then
+      ElysianDB.charProfiles[Elysian.GetCharacterKey()] = class
+    else
+      ElysianDB.charProfiles[Elysian.GetCharacterKey()] = "Default"
+    end
   end
   if ElysianDB.showOnStart == nil then
     ElysianDB.showOnStart = true
@@ -553,94 +708,10 @@ function Elysian.SaveState()
   if type(ElysianDB) ~= "table" then
     ElysianDB = {}
   end
-  ElysianDB.scrapSellerEnabled = Elysian.state.scrapSellerEnabled
-  ElysianDB.showOnStart = Elysian.state.showOnStart
-  ElysianDB.navBg = EnsureColorTable(Elysian.state.navBg, { Elysian.HexToRGB("#21222c") })
-  ElysianDB.contentBg = EnsureColorTable(Elysian.state.contentBg, { Elysian.HexToRGB(Elysian.theme.bg) })
-  ElysianDB.cursorRingEnabled = Elysian.state.cursorRingEnabled
-  ElysianDB.cursorRingSize = Elysian.state.cursorRingSize
-  ElysianDB.cursorRingColor = EnsureColorTable(
-    Elysian.state.cursorRingColor,
-    { Elysian.HexToRGB(Elysian.theme.accent) }
-  )
-  ElysianDB.cursorRingClassColor = Elysian.state.cursorRingClassColor
-  ElysianDB.cursorRingShape = Elysian.state.cursorRingShape
-  ElysianDB.cursorRingCastProgress = Elysian.state.cursorRingCastProgress
-  ElysianDB.cursorRingCastColor = EnsureColorTable(
-    Elysian.state.cursorRingCastColor,
-    { Elysian.HexToRGB(Elysian.theme.accent) }
-  )
-  ElysianDB.cursorRingShowInCombat = Elysian.state.cursorRingShowInCombat
-  ElysianDB.cursorRingShowOutCombat = Elysian.state.cursorRingShowOutCombat
-  ElysianDB.cursorRingShowInInstances = Elysian.state.cursorRingShowInInstances
-  ElysianDB.cursorRingShowInWorld = Elysian.state.cursorRingShowInWorld
-  ElysianDB.cursorRingTrailEnabled = Elysian.state.cursorRingTrailEnabled
-  ElysianDB.cursorRingTrailLength = Elysian.state.cursorRingTrailLength
-  ElysianDB.cursorRingTrailSpacing = Elysian.state.cursorRingTrailSpacing
-  ElysianDB.cursorRingTrailFade = Elysian.state.cursorRingTrailFade
-  ElysianDB.cursorRingTrailFadeTime = Elysian.state.cursorRingTrailFadeTime
-  ElysianDB.cursorRingTrailColor = EnsureColorTable(
-    Elysian.state.cursorRingTrailColor,
-    { Elysian.HexToRGB(Elysian.theme.accent) }
-  )
-  ElysianDB.cursorRingTrailShape = Elysian.state.cursorRingTrailShape
-  ElysianDB.autoRepairEnabled = Elysian.state.autoRepairEnabled
-  ElysianDB.minimapButtonAngle = Elysian.state.minimapButtonAngle
-  ElysianDB.minimapButtonHidden = Elysian.state.minimapButtonHidden
-  ElysianDB.uiFontScale = Elysian.state.uiFontScale
-  ElysianDB.uiTextUseClassColor = Elysian.state.uiTextUseClassColor
-  ElysianDB.uiTextColor = EnsureColorTable(
-    Elysian.state.uiTextColor,
-    { Elysian.HexToRGB(Elysian.theme.fg) }
-  )
-  ElysianDB.infoBarEnabled = Elysian.state.infoBarEnabled
-  ElysianDB.infoBarShowTime = Elysian.state.infoBarShowTime
-  ElysianDB.infoBarShowGold = Elysian.state.infoBarShowGold
-  ElysianDB.infoBarShowDurability = Elysian.state.infoBarShowDurability
-  ElysianDB.infoBarShowFPS = Elysian.state.infoBarShowFPS
-  ElysianDB.infoBarShowMS = Elysian.state.infoBarShowMS
-  ElysianDB.infoBarUnlocked = Elysian.state.infoBarUnlocked
-  ElysianDB.infoBarOpacity = Elysian.state.infoBarOpacity
-  ElysianDB.infoBarTextColor = EnsureColorTable(
-    Elysian.state.infoBarTextColor,
-    { Elysian.HexToRGB(Elysian.theme.accent) }
-  )
-  ElysianDB.infoBarBgColor = EnsureColorTable(
-    Elysian.state.infoBarBgColor,
-    { Elysian.HexToRGB(Elysian.theme.bg) }
-  )
-  ElysianDB.infoBarShowPortalButton = Elysian.state.infoBarShowPortalButton
-  ElysianDB.repairReminderEnabled = Elysian.state.repairReminderEnabled
-  ElysianDB.repairReminderUnlocked = Elysian.state.repairReminderUnlocked
-  ElysianDB.repairReminderTextColor = EnsureColorTable(
-    Elysian.state.repairReminderTextColor,
-    { 1, 1, 1 }
-  )
-  ElysianDB.repairReminderTest = Elysian.state.repairReminderTest
-  ElysianDB.repairReminderPos = Elysian.state.repairReminderPos
-  ElysianDB.dungeonReminderEnabled = Elysian.state.dungeonReminderEnabled
-  ElysianDB.dungeonReminderUnlocked = Elysian.state.dungeonReminderUnlocked
-  ElysianDB.dungeonReminderTextColor = EnsureColorTable(
-    Elysian.state.dungeonReminderTextColor,
-    { 1, 1, 1 }
-  )
-  ElysianDB.dungeonReminderTest = Elysian.state.dungeonReminderTest
-  ElysianDB.dungeonReminderPos = Elysian.state.dungeonReminderPos
-  ElysianDB.warlockPetReminderEnabled = Elysian.state.warlockPetReminderEnabled
-  ElysianDB.warlockPetReminderTextColor = EnsureColorTable(
-    Elysian.state.warlockPetReminderTextColor,
-    { 1, 1, 1 }
-  )
-  ElysianDB.warlockPetReminderTest = Elysian.state.warlockPetReminderTest
-  ElysianDB.warlockPetReminderPos = Elysian.state.warlockPetReminderPos
-  ElysianDB.warlockStoneReminderEnabled = Elysian.state.warlockStoneReminderEnabled
-  ElysianDB.warlockStoneReminderTextColor = EnsureColorTable(
-    Elysian.state.warlockStoneReminderTextColor,
-    { 1, 1, 1 }
-  )
-  ElysianDB.warlockStoneReminderTest = Elysian.state.warlockStoneReminderTest
-  ElysianDB.warlockStoneReminderPos = Elysian.state.warlockStoneReminderPos
-  ElysianDB.autoKeystoneEnabled = Elysian.state.autoKeystoneEnabled
+  ElysianDB.profiles = ElysianDB.profiles or {}
+  ElysianDB.charProfiles = ElysianDB.charProfiles or {}
+  local active = Elysian.GetActiveProfile()
+  ElysianDB.profiles[active] = CopyTable(Elysian.state or {})
 end
 
 function Elysian.HexToRGB(hex)

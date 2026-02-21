@@ -58,3 +58,22 @@
 - Removed older snapshots per request.
 - Added per-character profiles: save/load profiles and default profile support.
 - General tab now has profile dropdown, name field, and Save/Load buttons.
+- Themed dropdowns with framed backdrop for clearer affordance.
+- Bumped addon version to 0.00.17.
+- Snapshot: ElysianFramework_0.00.17.zip.
+- Profile persistence fixed: active profile now saved/restored per character.
+- Added Profile name label and button press feedback (lighter on press).
+- Snapshot stored in /home/lars/code/snapshots/ElysianFramework_0.00.17.zip (excluded .git).
+- Fixed profile dropdown text update and selection state.
+- Bumped addon version to 0.00.18.
+- Snapshot: /home/lars/code/snapshots/ElysianFramework_0.00.18.zip.
+- Added dungeon Buffwatch alert (missing group buffs) with color and test banner.
+- Bumped addon version to 0.00.19.
+- Snapshot: /home/lars/code/snapshots/ElysianFramework_0.00.19.zip.
+- Profile UI: removed inline name label/box, added New button to create profiles.
+- New button shows name input; pressing New again saves and hides input.
+- Moved Delete to the right of New.
+- Bumped addon version to 0.00.20.
+- Snapshot: /home/lars/code/snapshots/ElysianFramework_0.00.20.zip.
+- Bumped addon version to 0.00.21 BETA.
+- Snapshot created: /home/lars/code/snapshots/ElysianFramework_0.00.20.zip.

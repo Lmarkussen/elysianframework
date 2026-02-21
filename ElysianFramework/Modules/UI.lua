@@ -1,6 +1,7 @@
 local _, Elysian = ...
 
 Elysian.UI = Elysian.UI or {}
+Elysian.UI.SkinDropDown = nil
 
 local function CreateTabButton(parent, label, width, height)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
@@ -16,6 +17,160 @@ local function CreateTabButton(parent, label, width, height)
   button.text = text
   return button
 end
+
+local function HookButtonPressFeedback(button)
+  if not button or not button.SetBackdropColor then
+    return
+  end
+  local function SetActive(active)
+    local bg = active and Elysian.GetNavBg() or Elysian.GetNavBg()
+    local shade = active and 1.18 or 1
+    local r, g, b = bg[1], bg[2], bg[3]
+    button:SetBackdropColor(r * shade, g * shade, b * shade, 0.95)
+  end
+  button:HookScript("OnMouseDown", function() SetActive(true) end)
+  button:HookScript("OnMouseUp", function() SetActive(false) end)
+  button:HookScript("OnHide", function() SetActive(false) end)
+end
+
+local function SkinDropDown(dropdown)
+  if not dropdown then
+    return
+  end
+  local bg = Elysian.GetNavBg()
+  local border = Elysian.GetThemeBorder()
+
+  if dropdown.SetBackdrop then
+    Elysian.SetBackdrop(dropdown)
+    Elysian.SetBackdropColors(dropdown, bg, border, 0.9)
+  end
+
+  if not dropdown.efFrame then
+    local frame = CreateFrame("Frame", nil, dropdown, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    frame:SetPoint("TOPLEFT", 6, -4)
+    frame:SetPoint("BOTTOMRIGHT", -6, 4)
+    Elysian.SetBackdrop(frame)
+    Elysian.SetBackdropColors(frame, bg, border, 0.95)
+    frame:EnableMouse(false)
+    frame:SetFrameStrata(dropdown:GetFrameStrata() or "MEDIUM")
+    local level = (dropdown.GetFrameLevel and dropdown:GetFrameLevel() or 1) - 1
+    if level < 0 then
+      level = 0
+    end
+    frame:SetFrameLevel(level)
+    dropdown.efFrame = frame
+  else
+    Elysian.SetBackdropColors(dropdown.efFrame, bg, border, 0.95)
+  end
+
+  local name = dropdown.GetName and dropdown:GetName() or nil
+  if name then
+    local left = _G[name .. "Left"]
+    local middle = _G[name .. "Middle"]
+    local right = _G[name .. "Right"]
+    local button = _G[name .. "Button"]
+    if left then left:Hide() end
+    if middle then middle:Hide() end
+    if right then right:Hide() end
+    if left then
+      left:SetTexture("")
+      left:SetAlpha(0)
+      left.Show = function() end
+    end
+    if middle then
+      middle:SetTexture("")
+      middle:SetAlpha(0)
+      middle.Show = function() end
+    end
+    if right then
+      right:SetTexture("")
+      right:SetAlpha(0)
+      right.Show = function() end
+    end
+    if button then
+      button:ClearAllPoints()
+      button:SetPoint("RIGHT", -2, 0)
+      button:SetSize(20, 20)
+      if button.SetNormalTexture then
+        button:SetNormalTexture("")
+      end
+      if button.SetPushedTexture then
+        button:SetPushedTexture("")
+      end
+      if button.SetDisabledTexture then
+        button:SetDisabledTexture("")
+      end
+      if button.SetHighlightTexture then
+        button:SetHighlightTexture("")
+      end
+    end
+    local normal = _G[name .. "ButtonNormalTexture"]
+    local pushed = _G[name .. "ButtonPressedTexture"]
+    local disabled = _G[name .. "ButtonDisabledTexture"]
+    local highlight = _G[name .. "ButtonHighlightTexture"]
+    if normal then normal:Hide() end
+    if pushed then pushed:Hide() end
+    if disabled then disabled:Hide() end
+    if highlight then highlight:Hide() end
+    if normal then
+      normal:SetTexture("")
+      normal:SetAlpha(0)
+      normal.Show = function() end
+    end
+    if pushed then
+      pushed:SetTexture("")
+      pushed:SetAlpha(0)
+      pushed.Show = function() end
+    end
+    if disabled then
+      disabled:SetTexture("")
+      disabled:SetAlpha(0)
+      disabled.Show = function() end
+    end
+    if highlight then
+      highlight:SetTexture("")
+      highlight:SetAlpha(0)
+      highlight.Show = function() end
+    end
+  end
+
+  if not dropdown.efArrow then
+    local arrow = dropdown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    arrow:SetPoint("RIGHT", -8, 0)
+    arrow:SetText("▼")
+    Elysian.ApplyFont(arrow, 10, "OUTLINE")
+    Elysian.ApplyAccentColor(arrow)
+    dropdown.efArrow = arrow
+  else
+    Elysian.ApplyAccentColor(dropdown.efArrow)
+  end
+
+  if dropdown.Text then
+    Elysian.ApplyFont(dropdown.Text, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(dropdown.Text)
+  elseif dropdown.GetName and name and _G[name .. "Text"] then
+    local text = _G[name .. "Text"]
+    Elysian.ApplyFont(text, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(text)
+  end
+
+  local function SkinList(listFrame)
+    if not listFrame then
+      return
+    end
+    if listFrame.Backdrop then
+      Elysian.SetBackdropColors(listFrame.Backdrop, bg, border, 0.95)
+    end
+    if listFrame.MenuBackdrop then
+      Elysian.SetBackdropColors(listFrame.MenuBackdrop, bg, border, 0.95)
+    end
+  end
+
+  SkinList(_G.DropDownList1)
+  SkinList(_G.DropDownList2)
+end
+
+Elysian.UI.SkinDropDown = SkinDropDown
 
 local function StyleTopTab(button, selected)
   local border = Elysian.GetThemeBorder()
@@ -62,7 +217,7 @@ function Elysian.UI:CreateMainFrame()
 
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianFrameworkMainFrame", UIParent, template)
-  frame:SetSize(780, 600)
+  frame:SetSize(860, 690)
   if self.mainFrame then
     frame:SetPoint("CENTER", self.mainFrame, "CENTER", 0, 0)
   else
@@ -99,6 +254,7 @@ function Elysian.UI:CreateMainFrame()
   closeButton:SetScript("OnClick", function()
     frame:Hide()
   end)
+  HookButtonPressFeedback(closeButton)
 
   -- logo moved to General tab
 
@@ -126,9 +282,22 @@ function Elysian.UI:CreateMainFrame()
   local subHeader = CreateFrame("Frame", nil, frame, template)
   subHeader:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -6)
   subHeader:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, -6)
-  subHeader:SetHeight(30)
+  subHeader:SetHeight(62)
   Elysian.SetBackdrop(subHeader)
   Elysian.SetBackdropColors(subHeader, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.96)
+  local function SetSubHeaderBackground(visible)
+    if visible then
+      Elysian.SetBackdrop(subHeader)
+      Elysian.SetBackdropColors(subHeader, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.96)
+    else
+      if subHeader.SetBackdropColor then
+        subHeader:SetBackdropColor(0, 0, 0, 0)
+      end
+      if subHeader.SetBackdropBorderColor then
+        subHeader:SetBackdropBorderColor(0, 0, 0, 0)
+      end
+    end
+  end
 
   local content = CreateFrame("Frame", nil, frame, template)
   content:SetPoint("TOPLEFT", subHeader, "BOTTOMLEFT", 0, -8)
@@ -218,7 +387,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v0.00.16")
+  versionText:SetText("v0.00.21 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -240,6 +409,7 @@ function Elysian.UI:CreateMainFrame()
     end
     ReloadUI()
   end)
+  HookButtonPressFeedback(reloadButton)
 
   local resetButton = CreateFrame("Button", nil, generalPanel, template)
   resetButton:SetPoint("BOTTOMLEFT", 8, 16)
@@ -287,6 +457,7 @@ function Elysian.UI:CreateMainFrame()
       end
     end
   end)
+  HookButtonPressFeedback(resetButton)
 
   local fontLabel = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   fontLabel:SetPoint("TOPLEFT", generalText, "BOTTOMLEFT", 0, -18)
@@ -323,6 +494,7 @@ function Elysian.UI:CreateMainFrame()
     end
     SetFontScale(1.1)
   end)
+  HookButtonPressFeedback(fontButtonDefault)
 
   local fontButtonMedium = CreateFrame("Button", nil, generalPanel, template)
   fontButtonMedium:SetPoint("LEFT", fontButtonDefault, "RIGHT", 8, 0)
@@ -342,6 +514,7 @@ function Elysian.UI:CreateMainFrame()
     end
     SetFontScale(1.2)
   end)
+  HookButtonPressFeedback(fontButtonMedium)
 
   local fontButtonLarge = CreateFrame("Button", nil, generalPanel, template)
   fontButtonLarge:SetPoint("LEFT", fontButtonMedium, "RIGHT", 8, 0)
@@ -361,6 +534,7 @@ function Elysian.UI:CreateMainFrame()
     end
     SetFontScale(1.35)
   end)
+  HookButtonPressFeedback(fontButtonLarge)
 
   local textColorToggle = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
   textColorToggle:SetPoint("TOPLEFT", fontButtonDefault, "BOTTOMLEFT", 0, -12)
@@ -436,6 +610,7 @@ function Elysian.UI:CreateMainFrame()
       })
     end
   end)
+  HookButtonPressFeedback(textColorButton)
 
   local profileLabel = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   profileLabel:SetPoint("TOPLEFT", textColorButton, "BOTTOMLEFT", 0, -18)
@@ -451,33 +626,29 @@ function Elysian.UI:CreateMainFrame()
 
   local function RefreshProfileDropdown()
     local names = Elysian.GetProfileNames and Elysian.GetProfileNames() or { "Default" }
+    selectedProfile = Elysian.GetActiveProfile and Elysian.GetActiveProfile() or selectedProfile or "Default"
     UIDropDownMenu_Initialize(profileDrop, function(self, level)
       local info = UIDropDownMenu_CreateInfo()
-      info.func = function(item)
-        selectedProfile = item.value
-        UIDropDownMenu_SetText(profileDrop, selectedProfile)
+      info.func = function(selfButton)
+        selectedProfile = selfButton.value
+        UIDropDownMenu_SetText(profileDrop, string.upper(selectedProfile))
+        UIDropDownMenu_SetSelectedValue(profileDrop, selectedProfile)
+        if Elysian.LoadProfile then
+          Elysian.LoadProfile(selectedProfile)
+        end
       end
       for _, name in ipairs(names) do
-        info.text = name
+        info.text = string.upper(name)
         info.value = name
+        info.checked = (name == selectedProfile)
         UIDropDownMenu_AddButton(info, level)
       end
     end)
-    UIDropDownMenu_SetText(profileDrop, selectedProfile)
+    UIDropDownMenu_SetText(profileDrop, string.upper(selectedProfile))
+    UIDropDownMenu_SetSelectedValue(profileDrop, selectedProfile)
   end
 
   RefreshProfileDropdown()
-
-  local profileNameBox = CreateFrame("EditBox", nil, generalPanel, BackdropTemplateMixin and "BackdropTemplate" or nil)
-  profileNameBox:SetPoint("LEFT", profileDrop, "RIGHT", 6, 0)
-  profileNameBox:SetSize(140, 22)
-  profileNameBox:SetAutoFocus(false)
-  Elysian.SetBackdrop(profileNameBox)
-  Elysian.SetBackdropColors(profileNameBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
-  profileNameBox:SetTextInsets(6, 6, 2, 2)
-  profileNameBox:SetText("")
-  Elysian.ApplyFont(profileNameBox, 11, "OUTLINE")
-  Elysian.ApplyTextColor(profileNameBox)
 
   local saveProfileButton = CreateFrame("Button", nil, generalPanel, template)
   saveProfileButton:SetPoint("TOPLEFT", profileDrop, "BOTTOMLEFT", 12, -8)
@@ -490,42 +661,92 @@ function Elysian.UI:CreateMainFrame()
   Elysian.ApplyFont(saveText, 11, "OUTLINE")
   Elysian.ApplyAccentColor(saveText)
 
+  local profileNameBox = CreateFrame("EditBox", nil, generalPanel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  profileNameBox:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", 0, -8)
+  profileNameBox:SetSize(180, 22)
+  profileNameBox:SetAutoFocus(false)
+  Elysian.SetBackdrop(profileNameBox)
+  Elysian.SetBackdropColors(profileNameBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  profileNameBox:SetTextInsets(6, 6, 2, 2)
+  profileNameBox:SetText("")
+  Elysian.ApplyFont(profileNameBox, 11, "OUTLINE")
+  Elysian.ApplyTextColor(profileNameBox)
+  profileNameBox:Hide()
+
   saveProfileButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then
       Elysian.ClickFeedback()
     end
-    local name = profileNameBox:GetText() or ""
-    name = name:gsub("^%s+", ""):gsub("%s+$", "")
-    if name ~= "" and Elysian.SaveProfile then
-      Elysian.SaveProfile(name)
-      selectedProfile = name
+    local name = ""
+    if profileNameBox:IsShown() then
+      name = profileNameBox:GetText() or ""
+      name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    end
+    local target = name
+    if target == "" then
+      target = selectedProfile or (Elysian.GetActiveProfile and Elysian.GetActiveProfile()) or "Default"
+    end
+    if target ~= "" and Elysian.SaveProfile then
+      Elysian.SaveProfile(target)
+      selectedProfile = target
       RefreshProfileDropdown()
       profileNameBox:SetText("")
+      profileNameBox:Hide()
     end
   end)
+  HookButtonPressFeedback(saveProfileButton)
 
-  local loadProfileButton = CreateFrame("Button", nil, generalPanel, template)
-  loadProfileButton:SetPoint("LEFT", saveProfileButton, "RIGHT", 8, 0)
-  loadProfileButton:SetSize(90, 22)
-  Elysian.SetBackdrop(loadProfileButton)
-  Elysian.SetBackdropColors(loadProfileButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
-  local loadText = loadProfileButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  loadText:SetPoint("CENTER")
-  loadText:SetText("Load")
-  Elysian.ApplyFont(loadText, 11, "OUTLINE")
-  Elysian.ApplyAccentColor(loadText)
+  local newProfileButton = CreateFrame("Button", nil, generalPanel, template)
+  newProfileButton:SetPoint("LEFT", saveProfileButton, "RIGHT", 8, 0)
+  newProfileButton:SetSize(90, 22)
+  Elysian.SetBackdrop(newProfileButton)
+  Elysian.SetBackdropColors(newProfileButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local newText = newProfileButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  newText:SetPoint("CENTER")
+  newText:SetText("New")
+  Elysian.ApplyFont(newText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(newText)
 
-  loadProfileButton:SetScript("OnClick", function()
+  newProfileButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then
       Elysian.ClickFeedback()
     end
-    if selectedProfile and Elysian.LoadProfile then
-      Elysian.LoadProfile(selectedProfile)
+    if profileNameBox:IsShown() then
+      saveProfileButton:Click()
+    else
+      profileNameBox:Show()
+      profileNameBox:SetText("")
+      profileNameBox:SetFocus()
     end
   end)
+  HookButtonPressFeedback(newProfileButton)
+
+  local deleteProfileButton = CreateFrame("Button", nil, generalPanel, template)
+  deleteProfileButton:SetPoint("LEFT", newProfileButton, "RIGHT", 8, 0)
+  deleteProfileButton:SetSize(90, 22)
+  Elysian.SetBackdrop(deleteProfileButton)
+  Elysian.SetBackdropColors(deleteProfileButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local deleteText = deleteProfileButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  deleteText:SetPoint("CENTER")
+  deleteText:SetText("Delete")
+  Elysian.ApplyFont(deleteText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(deleteText)
+
+  deleteProfileButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    if selectedProfile and Elysian.DeleteProfile then
+      Elysian.DeleteProfile(selectedProfile)
+      selectedProfile = Elysian.GetActiveProfile and Elysian.GetActiveProfile() or "Default"
+      RefreshProfileDropdown()
+    end
+  end)
+  HookButtonPressFeedback(deleteProfileButton)
+
 
   local generalQolToggle = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
-  generalQolToggle:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", -12, -14)
+  generalQolToggle:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", -12, -44)
   generalQolToggle.text = generalQolToggle.text or _G[generalQolToggle:GetName() .. "Text"]
   generalQolToggle.text:SetText("Toggle ON all QOL Features")
   Elysian.ApplyFont(generalQolToggle.text, 12)
@@ -711,6 +932,7 @@ function Elysian.UI:CreateMainFrame()
           })
         end
       end)
+      HookButtonPressFeedback(colorButton)
 
       local testBanner = CreateFrame("Button", nil, panel, template)
       testBanner:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
@@ -740,6 +962,7 @@ function Elysian.UI:CreateMainFrame()
           UpdateTestButtonStyle(enabled)
         end
       end)
+      HookButtonPressFeedback(testBanner)
     end
 
     if className == "DUNGEONS" then
@@ -814,6 +1037,7 @@ function Elysian.UI:CreateMainFrame()
           })
         end
       end)
+      HookButtonPressFeedback(dungeonColor)
 
       local dungeonTest = CreateFrame("Button", nil, panel, template)
       dungeonTest:SetPoint("LEFT", dungeonColor, "RIGHT", 10, 0)
@@ -843,6 +1067,110 @@ function Elysian.UI:CreateMainFrame()
           UpdateDungeonTestStyle(enabled)
         end
       end)
+      HookButtonPressFeedback(dungeonTest)
+
+      local buffToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+      buffToggle:SetPoint("TOPLEFT", dungeonColor, "BOTTOMLEFT", 0, -18)
+      buffToggle.text = buffToggle.text or _G[buffToggle:GetName() .. "Text"]
+      buffToggle.text:SetText("Enable Buffwatch")
+      Elysian.ApplyFont(buffToggle.text, 12)
+      Elysian.ApplyTextColor(buffToggle.text)
+      Elysian.StyleCheckbox(buffToggle)
+      buffToggle:SetChecked(Elysian.state.buffWatchEnabled)
+      buffToggle:SetScript("OnClick", function(selfButton)
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        if Elysian.Features and Elysian.Features.BuffWatch then
+          Elysian.Features.BuffWatch:SetEnabled(selfButton:GetChecked())
+          Elysian.Features.BuffWatch:UpdateVisibility(true)
+        end
+      end)
+
+      local buffColor = CreateFrame("Button", nil, panel, template)
+      buffColor:SetPoint("TOPLEFT", buffToggle, "BOTTOMLEFT", 0, -12)
+      buffColor:SetSize(180, 22)
+      Elysian.SetBackdrop(buffColor)
+      Elysian.SetBackdropColors(buffColor, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local buffColorText = buffColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffColorText:SetPoint("CENTER")
+      buffColorText:SetText("Text Color")
+      Elysian.ApplyFont(buffColorText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(buffColorText)
+
+      local buffSwatch = buffColor:CreateTexture(nil, "OVERLAY")
+      buffSwatch:SetSize(12, 12)
+      buffSwatch:SetPoint("RIGHT", -8, 0)
+      local buffStart = Elysian.state.buffWatchTextColor or { 1, 1, 1 }
+      buffSwatch:SetColorTexture(buffStart[1], buffStart[2], buffStart[3], 1)
+
+      buffColor:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.buffWatchTextColor or { 1, 1, 1 }
+        local function apply(r, g, b)
+          Elysian.state.buffWatchTextColor = { r, g, b }
+          buffSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.BuffWatch then
+            Elysian.Features.BuffWatch:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(buffColor)
+
+      local buffTest = CreateFrame("Button", nil, panel, template)
+      buffTest:SetPoint("LEFT", buffColor, "RIGHT", 10, 0)
+      buffTest:SetSize(120, 22)
+      Elysian.SetBackdrop(buffTest)
+      Elysian.SetBackdropColors(buffTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local buffTestText = buffTest:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffTestText:SetPoint("CENTER")
+      buffTestText:SetText("Test Banner")
+      Elysian.ApplyFont(buffTestText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(buffTestText)
+
+      local function UpdateBuffTestStyle(active)
+        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+        Elysian.SetBackdropColors(buffTest, bg, Elysian.GetThemeBorder(), 0.9)
+      end
+      UpdateBuffTestStyle(Elysian.state.buffWatchTest)
+
+      buffTest:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        if Elysian.Features and Elysian.Features.BuffWatch then
+          local enabled = not Elysian.state.buffWatchTest
+          Elysian.Features.BuffWatch:SetTestEnabled(enabled)
+          UpdateBuffTestStyle(enabled)
+        end
+      end)
+      HookButtonPressFeedback(buffTest)
     end
 
     table.insert(alertPanels, panel)
@@ -854,15 +1182,50 @@ function Elysian.UI:CreateMainFrame()
   local classAlertTabs = {}
   local classAlertPanels = {}
 
-  local warlockTab = CreateTabButton(subHeader, "WARLOCK", 110, 20)
-  warlockTab:SetPoint("LEFT", 10, 0)
-  table.insert(classAlertTabs, warlockTab)
+  local classTabOrder = {
+    "WARLOCK",
+    "WARRIOR",
+    "PALADIN",
+    "HUNTER",
+    "ROGUE",
+    "PRIEST",
+    "DEATHKNIGHT",
+    "SHAMAN",
+    "MAGE",
+    "DRUID",
+    "MONK",
+    "DEMONHUNTER",
+    "EVOKER",
+  }
 
-  local warlockPanel = CreateFrame("Frame", nil, contentBody)
-  warlockPanel:SetPoint("TOPLEFT", 12, -12)
-  warlockPanel:SetPoint("TOPRIGHT", -12, -12)
-  warlockPanel:SetHeight(880)
-  table.insert(classAlertPanels, warlockPanel)
+  local row1Count = 6
+  local tabWidth = 110
+  local tabHeight = 20
+  local tabSpacing = 8
+  local rowYOffset = -24
+
+  local function CreateClassTab(name, index)
+    local tab = CreateTabButton(subHeader, name, tabWidth, tabHeight)
+    local row = index <= row1Count and 1 or 2
+    local col = row == 1 and index or (index - row1Count)
+    local x = 10 + (col - 1) * (tabWidth + tabSpacing)
+    local y = (row == 1) and 8 or rowYOffset
+    tab:SetPoint("LEFT", x, y)
+    table.insert(classAlertTabs, tab)
+    return tab
+  end
+
+  local function CreateClassPanel()
+    local panel = CreateFrame("Frame", nil, contentBody)
+    panel:SetPoint("TOPLEFT", 12, -12)
+    panel:SetPoint("TOPRIGHT", -12, -12)
+    panel:SetHeight(880)
+    table.insert(classAlertPanels, panel)
+    return panel
+  end
+
+  local warlockTab = CreateClassTab("WARLOCK", 1)
+  local warlockPanel = CreateClassPanel()
 
   local classAlertsTitle = warlockPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   classAlertsTitle:SetPoint("TOPLEFT", 8, -8)
@@ -946,6 +1309,7 @@ function Elysian.UI:CreateMainFrame()
       })
     end
   end)
+  HookButtonPressFeedback(petColorButton)
 
   local petTest = CreateFrame("Button", nil, warlockPanel, template)
   petTest:SetPoint("LEFT", petColorButton, "RIGHT", 10, 0)
@@ -975,6 +1339,7 @@ function Elysian.UI:CreateMainFrame()
       UpdatePetTestStyle(enabled)
     end
   end)
+  HookButtonPressFeedback(petTest)
 
   local stoneToggle = CreateFrame("CheckButton", nil, warlockPanel, "UICheckButtonTemplate")
   stoneToggle:SetPoint("TOPLEFT", petToggle, "BOTTOMLEFT", 0, -70)
@@ -1046,6 +1411,7 @@ function Elysian.UI:CreateMainFrame()
       })
     end
   end)
+  HookButtonPressFeedback(stoneColorButton)
 
   local stoneTest = CreateFrame("Button", nil, warlockPanel, template)
   stoneTest:SetPoint("LEFT", stoneColorButton, "RIGHT", 10, 0)
@@ -1075,6 +1441,260 @@ function Elysian.UI:CreateMainFrame()
       UpdateStoneTestStyle(enabled)
     end
   end)
+  HookButtonPressFeedback(stoneTest)
+
+  local function BuildSimpleBuffPanel(panel, className, prefix, labelText)
+    local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 8, -8)
+    title:SetText(className .. " Alerts")
+    Elysian.ApplyFont(title, 13, "OUTLINE")
+    Elysian.ApplyTextColor(title)
+
+    local toggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    toggle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+    toggle.text = toggle.text or _G[toggle:GetName() .. "Text"]
+    toggle.text:SetText(labelText)
+    Elysian.ApplyFont(toggle.text, 12)
+    Elysian.ApplyTextColor(toggle.text)
+    Elysian.StyleCheckbox(toggle)
+    toggle:SetChecked(Elysian.state[prefix .. "BuffEnabled"])
+    toggle:SetScript("OnClick", function(selfButton)
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.ClassBuffReminders then
+        Elysian.Features.ClassBuffReminders:SetEnabled(prefix, selfButton:GetChecked())
+      end
+    end)
+
+    local colorButton = CreateFrame("Button", nil, panel, template)
+    colorButton:SetPoint("TOPLEFT", toggle, "BOTTOMLEFT", 0, -12)
+    colorButton:SetSize(180, 22)
+    Elysian.SetBackdrop(colorButton)
+    Elysian.SetBackdropColors(colorButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local colorText = colorButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    colorText:SetPoint("CENTER")
+    colorText:SetText("Text Color")
+    Elysian.ApplyFont(colorText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(colorText)
+
+    local swatch = colorButton:CreateTexture(nil, "OVERLAY")
+    swatch:SetSize(12, 12)
+    swatch:SetPoint("RIGHT", -8, 0)
+    local start = Elysian.state[prefix .. "BuffTextColor"] or { 1, 1, 1 }
+    swatch:SetColorTexture(start[1], start[2], start[3], 1)
+
+    colorButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      local color = Elysian.state[prefix .. "BuffTextColor"] or { 1, 1, 1 }
+      local function apply(r, g, b)
+        Elysian.state[prefix .. "BuffTextColor"] = { r, g, b }
+        swatch:SetColorTexture(r, g, b, 1)
+        if Elysian.Features and Elysian.Features.ClassBuffReminders then
+          Elysian.Features.ClassBuffReminders:ApplyColors(prefix)
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end
+      if Elysian.OpenColorPicker then
+        Elysian.OpenColorPicker({
+          r = color[1],
+          g = color[2],
+          b = color[3],
+          opacity = 1,
+          hasOpacity = false,
+          swatchFunc = function()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            apply(r, g, b)
+          end,
+          cancelFunc = function(prev)
+            local pr = prev.r or prev[1] or color[1]
+            local pg = prev.g or prev[2] or color[2]
+            local pb = prev.b or prev[3] or color[3]
+            apply(pr, pg, pb)
+          end,
+        })
+      end
+    end)
+    HookButtonPressFeedback(colorButton)
+
+    local testButton = CreateFrame("Button", nil, panel, template)
+    testButton:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
+    testButton:SetSize(120, 22)
+    Elysian.SetBackdrop(testButton)
+    Elysian.SetBackdropColors(testButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local testText = testButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    testText:SetPoint("CENTER")
+    testText:SetText("Test Banner")
+    Elysian.ApplyFont(testText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(testText)
+
+    local function UpdateTestStyle(active)
+      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+    end
+    UpdateTestStyle(Elysian.state[prefix .. "BuffTest"])
+
+    testButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.ClassBuffReminders then
+        local enabled = not Elysian.state[prefix .. "BuffTest"]
+        Elysian.Features.ClassBuffReminders:SetTestEnabled(prefix, enabled)
+        UpdateTestStyle(enabled)
+      end
+    end)
+    HookButtonPressFeedback(testButton)
+  end
+
+  local function BuildRoguePanel(panel)
+    local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 8, -8)
+    title:SetText("Rogue Alerts")
+    Elysian.ApplyFont(title, 13, "OUTLINE")
+    Elysian.ApplyTextColor(title)
+
+    local toggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    toggle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+    toggle.text = toggle.text or _G[toggle:GetName() .. "Text"]
+    toggle.text:SetText("Enable poison reminder")
+    Elysian.ApplyFont(toggle.text, 12)
+    Elysian.ApplyTextColor(toggle.text)
+    Elysian.StyleCheckbox(toggle)
+    toggle:SetChecked(Elysian.state.roguePoisonEnabled)
+    toggle:SetScript("OnClick", function(selfButton)
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.ClassBuffReminders then
+        Elysian.Features.ClassBuffReminders:SetEnabled("rogue", selfButton:GetChecked())
+      end
+    end)
+
+    local colorButton = CreateFrame("Button", nil, panel, template)
+    colorButton:SetPoint("TOPLEFT", toggle, "BOTTOMLEFT", 0, -12)
+    colorButton:SetSize(180, 22)
+    Elysian.SetBackdrop(colorButton)
+    Elysian.SetBackdropColors(colorButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local colorText = colorButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    colorText:SetPoint("CENTER")
+    colorText:SetText("Text Color")
+    Elysian.ApplyFont(colorText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(colorText)
+
+    local swatch = colorButton:CreateTexture(nil, "OVERLAY")
+    swatch:SetSize(12, 12)
+    swatch:SetPoint("RIGHT", -8, 0)
+    local start = Elysian.state.roguePoisonTextColor or { 1, 1, 1 }
+    swatch:SetColorTexture(start[1], start[2], start[3], 1)
+
+    colorButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      local color = Elysian.state.roguePoisonTextColor or { 1, 1, 1 }
+      local function apply(r, g, b)
+        Elysian.state.roguePoisonTextColor = { r, g, b }
+        swatch:SetColorTexture(r, g, b, 1)
+        if Elysian.Features and Elysian.Features.ClassBuffReminders then
+          Elysian.Features.ClassBuffReminders:ApplyColors("rogue")
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end
+      if Elysian.OpenColorPicker then
+        Elysian.OpenColorPicker({
+          r = color[1],
+          g = color[2],
+          b = color[3],
+          opacity = 1,
+          hasOpacity = false,
+          swatchFunc = function()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            apply(r, g, b)
+          end,
+          cancelFunc = function(prev)
+            local pr = prev.r or prev[1] or color[1]
+            local pg = prev.g or prev[2] or color[2]
+            local pb = prev.b or prev[3] or color[3]
+            apply(pr, pg, pb)
+          end,
+        })
+      end
+    end)
+    HookButtonPressFeedback(colorButton)
+
+    local testButton = CreateFrame("Button", nil, panel, template)
+    testButton:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
+    testButton:SetSize(120, 22)
+    Elysian.SetBackdrop(testButton)
+    Elysian.SetBackdropColors(testButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local testText = testButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    testText:SetPoint("CENTER")
+    testText:SetText("Test Banner")
+    Elysian.ApplyFont(testText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(testText)
+
+    local function UpdateTestStyle(active)
+      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+    end
+    UpdateTestStyle(Elysian.state.roguePoisonTest)
+
+    testButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.ClassBuffReminders then
+        local enabled = not Elysian.state.roguePoisonTest
+        Elysian.Features.ClassBuffReminders:SetTestEnabled("rogue", enabled)
+        UpdateTestStyle(enabled)
+      end
+    end)
+    HookButtonPressFeedback(testButton)
+  end
+
+  for i = 2, #classTabOrder do
+    local className = classTabOrder[i]
+    CreateClassTab(className, i)
+    local panel = CreateClassPanel()
+    if className == "WARRIOR" then
+      BuildSimpleBuffPanel(panel, "Warrior", "warrior", "Enable Battle Shout reminder")
+    elseif className == "MAGE" then
+      BuildSimpleBuffPanel(panel, "Mage", "mage", "Enable Arcane Intellect reminder")
+    elseif className == "PRIEST" then
+      BuildSimpleBuffPanel(panel, "Priest", "priest", "Enable Fortitude reminder")
+    elseif className == "DRUID" then
+      BuildSimpleBuffPanel(panel, "Druid", "druid", "Enable Mark of the Wild reminder")
+    elseif className == "SHAMAN" then
+      BuildSimpleBuffPanel(panel, "Shaman", "shaman", "Enable Skyfury reminder")
+    elseif className == "EVOKER" then
+      BuildSimpleBuffPanel(panel, "Evoker", "evoker", "Enable Blessing of the Bronze reminder")
+    elseif className == "ROGUE" then
+      BuildRoguePanel(panel)
+    else
+      local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+      title:SetPoint("TOPLEFT", 8, -8)
+      title:SetText(className .. " Alerts")
+      Elysian.ApplyFont(title, 13, "OUTLINE")
+      Elysian.ApplyTextColor(title)
+
+      local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+      hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+      hint:SetText("Coming soon.")
+      Elysian.ApplyFont(hint, 10)
+      Elysian.ApplyTextColor(hint)
+    end
+  end
 
   local function SelectTopTab(active)
     for _, tab in ipairs(topTabs) do
@@ -1091,6 +1711,7 @@ function Elysian.UI:CreateMainFrame()
   local function SetSubHeaderMode(mode)
     if mode == "qol" then
       subHeader:Show()
+      SetSubHeaderBackground(true)
       for _, t in ipairs(subTabs) do
         t:Show()
       end
@@ -1102,6 +1723,7 @@ function Elysian.UI:CreateMainFrame()
       end
     elseif mode == "alerts" then
       subHeader:Show()
+      SetSubHeaderBackground(true)
       for _, t in ipairs(subTabs) do
         t:Hide()
       end
@@ -1113,6 +1735,7 @@ function Elysian.UI:CreateMainFrame()
       end
     elseif mode == "classalerts" then
       subHeader:Show()
+      SetSubHeaderBackground(false)
       for _, t in ipairs(subTabs) do
         t:Hide()
       end
@@ -1459,6 +2082,7 @@ function Elysian.UI:ShowConfirm(titleText, bodyText, onYes)
       onYes()
     end
   end)
+  HookButtonPressFeedback(yesButton)
 
   noButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then
@@ -1466,6 +2090,7 @@ function Elysian.UI:ShowConfirm(titleText, bodyText, onYes)
     end
     frame:Hide()
   end)
+  HookButtonPressFeedback(noButton)
 
   self.confirmFrame = frame
   frame:Show()
