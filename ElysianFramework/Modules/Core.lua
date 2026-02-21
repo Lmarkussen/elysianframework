@@ -34,8 +34,11 @@ Elysian.state = Elysian.state or {
   cursorRingTrailSpacing = 0.02,
   cursorRingTrailFade = 0.6,
   cursorRingTrailColor = nil,
+  cursorRingTrailFadeTime = 0.25,
+  cursorRingTrailShape = "SPARK",
   autoRepairEnabled = false,
   minimapButtonAngle = nil,
+  minimapButtonHidden = false,
   uiFontScale = 1.1,
   uiTextUseClassColor = true,
   uiTextColor = nil,
@@ -71,6 +74,21 @@ Elysian.state = Elysian.state or {
   autoKeystoneEnabled = false,
 }
 
+local function CopyTable(value)
+  if type(value) ~= "table" then
+    return value
+  end
+  local out = {}
+  for k, v in pairs(value) do
+    if type(v) == "table" then
+      out[k] = CopyTable(v)
+    else
+      out[k] = v
+    end
+  end
+  return out
+end
+
 local function EnsureColorTable(value, fallback)
   if type(value) == "table" and #value >= 3 then
     return { value[1], value[2], value[3] }
@@ -80,6 +98,7 @@ local function EnsureColorTable(value, fallback)
   end
   return { Elysian.HexToRGB(Elysian.theme.bg) }
 end
+
 
 function Elysian.GetDefaultState()
   return {
@@ -103,8 +122,11 @@ function Elysian.GetDefaultState()
     cursorRingTrailSpacing = 0.02,
     cursorRingTrailFade = 0.6,
     cursorRingTrailColor = { Elysian.HexToRGB(Elysian.theme.accent) },
+    cursorRingTrailFadeTime = 0.25,
+    cursorRingTrailShape = "SPARK",
     autoRepairEnabled = false,
     minimapButtonAngle = 225,
+    minimapButtonHidden = false,
     uiFontScale = 1.1,
     uiTextUseClassColor = true,
     uiTextColor = { Elysian.HexToRGB(Elysian.theme.fg) },
@@ -141,6 +163,124 @@ function Elysian.GetDefaultState()
   }
 end
 
+function Elysian.GetCharacterKey()
+  local name = UnitName and UnitName("player") or "Unknown"
+  local realm = GetRealmName and GetRealmName() or ""
+  if realm == "" then
+    realm = "Unknown"
+  end
+  return string.format("%s-%s", name or "Unknown", realm)
+end
+
+function Elysian.GetProfileNames()
+  local names = {}
+  if ElysianDB and ElysianDB.profiles then
+    for name in pairs(ElysianDB.profiles) do
+      table.insert(names, name)
+    end
+  end
+  table.sort(names)
+  return names
+end
+
+function Elysian.GetActiveProfile()
+  if not ElysianDB or not ElysianDB.charProfiles then
+    return "Default"
+  end
+  local key = Elysian.GetCharacterKey()
+  return ElysianDB.charProfiles[key] or "Default"
+end
+
+function Elysian.SetActiveProfile(name)
+  if not ElysianDB then
+    return
+  end
+  ElysianDB.charProfiles = ElysianDB.charProfiles or {}
+  local key = Elysian.GetCharacterKey()
+  ElysianDB.charProfiles[key] = name
+end
+
+local function MergeProfile(profile)
+  local state = Elysian.GetDefaultState()
+  if type(profile) == "table" then
+    for k, v in pairs(profile) do
+      if type(v) == "table" then
+        state[k] = CopyTable(v)
+      else
+        state[k] = v
+      end
+    end
+  end
+  return state
+end
+
+function Elysian.RefreshFeatures()
+  if Elysian.Features and Elysian.Features.CursorRing then
+    Elysian.Features.CursorRing:Initialize()
+    Elysian.Features.CursorRing:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.InfoBar then
+    Elysian.Features.InfoBar:Initialize()
+    Elysian.Features.InfoBar:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.RepairReminder then
+    Elysian.Features.RepairReminder:Initialize()
+    Elysian.Features.RepairReminder:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.DungeonReminder then
+    Elysian.Features.DungeonReminder:Initialize()
+    Elysian.Features.DungeonReminder:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.WarlockReminders then
+    Elysian.Features.WarlockReminders:Initialize()
+    Elysian.Features.WarlockReminders:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.AutoKeystone then
+    Elysian.Features.AutoKeystone:Initialize()
+    if Elysian.Features.AutoKeystone.Refresh then
+      Elysian.Features.AutoKeystone:Refresh()
+    end
+  end
+  if Elysian.Features and Elysian.Features.AutoRepair then
+    if Elysian.Features.AutoRepair.Refresh then
+      Elysian.Features.AutoRepair:Refresh()
+    end
+  end
+  if Elysian.Features and Elysian.Features.ScrapSeller then
+    if Elysian.Features.ScrapSeller.Refresh then
+      Elysian.Features.ScrapSeller:Refresh()
+    end
+  end
+end
+
+function Elysian.SaveProfile(name)
+  if not ElysianDB or not name or name == "" then
+    return
+  end
+  ElysianDB.profiles = ElysianDB.profiles or {}
+  ElysianDB.profiles[name] = CopyTable(Elysian.state or {})
+  Elysian.SetActiveProfile(name)
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+end
+
+function Elysian.LoadProfile(name)
+  if not ElysianDB or not ElysianDB.profiles or not ElysianDB.profiles[name] then
+    return
+  end
+  Elysian.state = MergeProfile(ElysianDB.profiles[name])
+  Elysian.SetActiveProfile(name)
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  if Elysian.UI and Elysian.UI.Rebuild then
+    Elysian.UI:Rebuild()
+    Elysian.UI:Show()
+  end
+  Elysian.RefreshFeatures()
+end
+
 function Elysian.ResetSettings()
   local defaults = Elysian.GetDefaultState()
   for key, value in pairs(defaults) do
@@ -161,6 +301,18 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.scrapSellerEnabled == nil then
     ElysianDB.scrapSellerEnabled = false
+  end
+  if ElysianDB.profiles == nil then
+    ElysianDB.profiles = {}
+  end
+  if ElysianDB.charProfiles == nil then
+    ElysianDB.charProfiles = {}
+  end
+  if not ElysianDB.profiles.Default then
+    ElysianDB.profiles.Default = CopyTable(Elysian.GetDefaultState())
+  end
+  if not ElysianDB.charProfiles[Elysian.GetCharacterKey()] then
+    ElysianDB.charProfiles[Elysian.GetCharacterKey()] = "Default"
   end
   if ElysianDB.showOnStart == nil then
     ElysianDB.showOnStart = true
@@ -218,8 +370,14 @@ function Elysian.InitSavedVariables()
   if ElysianDB.cursorRingTrailFade == nil then
     ElysianDB.cursorRingTrailFade = 0.6
   end
+  if ElysianDB.cursorRingTrailFadeTime == nil then
+    ElysianDB.cursorRingTrailFadeTime = 0.25
+  end
   if ElysianDB.cursorRingTrailColor == nil then
     ElysianDB.cursorRingTrailColor = { Elysian.HexToRGB(Elysian.theme.accent) }
+  end
+  if ElysianDB.cursorRingTrailShape == nil then
+    ElysianDB.cursorRingTrailShape = "SPARK"
   end
   if ElysianDB.autoRepairEnabled == nil then
     ElysianDB.autoRepairEnabled = false
@@ -320,6 +478,9 @@ function Elysian.InitSavedVariables()
   if ElysianDB.minimapButtonAngle == nil then
     ElysianDB.minimapButtonAngle = 225
   end
+  if ElysianDB.minimapButtonHidden == nil then
+    ElysianDB.minimapButtonHidden = false
+  end
 
   if ElysianDB.version < 2 then
     ElysianDB.scrapSellerEnabled = false
@@ -335,91 +496,53 @@ function Elysian.InitSavedVariables()
     ElysianDB.version = 3
   end
 
-  Elysian.state.scrapSellerEnabled = ElysianDB.scrapSellerEnabled
-  Elysian.state.showOnStart = ElysianDB.showOnStart
-  Elysian.state.navBg = EnsureColorTable(ElysianDB.navBg, defaultNav)
-  Elysian.state.contentBg = EnsureColorTable(ElysianDB.contentBg, defaultContent)
-  Elysian.state.cursorRingEnabled = ElysianDB.cursorRingEnabled
-  Elysian.state.cursorRingSize = ElysianDB.cursorRingSize
+  local profileName = Elysian.GetActiveProfile()
+  local profile = ElysianDB.profiles[profileName] or ElysianDB.profiles.Default or Elysian.GetDefaultState()
+  Elysian.state = MergeProfile(profile)
+  Elysian.state.scrapSellerEnabled = Elysian.state.scrapSellerEnabled or false
+  Elysian.state.showOnStart = Elysian.state.showOnStart ~= false
+  Elysian.state.navBg = EnsureColorTable(Elysian.state.navBg, defaultNav)
+  Elysian.state.contentBg = EnsureColorTable(Elysian.state.contentBg, defaultContent)
   Elysian.state.cursorRingColor = EnsureColorTable(
-    ElysianDB.cursorRingColor,
+    Elysian.state.cursorRingColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
-  Elysian.state.cursorRingClassColor = ElysianDB.cursorRingClassColor
-  Elysian.state.cursorRingShape = ElysianDB.cursorRingShape
-  Elysian.state.cursorRingCastProgress = ElysianDB.cursorRingCastProgress
   Elysian.state.cursorRingCastColor = EnsureColorTable(
-    ElysianDB.cursorRingCastColor,
+    Elysian.state.cursorRingCastColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
-  Elysian.state.cursorRingShowInCombat = ElysianDB.cursorRingShowInCombat
-  Elysian.state.cursorRingShowOutCombat = ElysianDB.cursorRingShowOutCombat
-  Elysian.state.cursorRingShowInInstances = ElysianDB.cursorRingShowInInstances
-  Elysian.state.cursorRingShowInWorld = ElysianDB.cursorRingShowInWorld
-  Elysian.state.cursorRingTrailEnabled = ElysianDB.cursorRingTrailEnabled
-  Elysian.state.cursorRingTrailLength = ElysianDB.cursorRingTrailLength
-  Elysian.state.cursorRingTrailSpacing = ElysianDB.cursorRingTrailSpacing
-  Elysian.state.cursorRingTrailFade = ElysianDB.cursorRingTrailFade
   Elysian.state.cursorRingTrailColor = EnsureColorTable(
-    ElysianDB.cursorRingTrailColor,
+    Elysian.state.cursorRingTrailColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
-  Elysian.state.autoRepairEnabled = ElysianDB.autoRepairEnabled
-  Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
-  Elysian.state.uiFontScale = ElysianDB.uiFontScale
-  Elysian.state.uiTextUseClassColor = ElysianDB.uiTextUseClassColor
   Elysian.state.uiTextColor = EnsureColorTable(
-    ElysianDB.uiTextColor,
+    Elysian.state.uiTextColor,
     { Elysian.HexToRGB(Elysian.theme.fg) }
   )
-  Elysian.state.infoBarEnabled = ElysianDB.infoBarEnabled
-  Elysian.state.infoBarShowTime = ElysianDB.infoBarShowTime
-  Elysian.state.infoBarShowGold = ElysianDB.infoBarShowGold
-  Elysian.state.infoBarShowDurability = ElysianDB.infoBarShowDurability
-  Elysian.state.infoBarShowFPS = ElysianDB.infoBarShowFPS
-  Elysian.state.infoBarShowMS = ElysianDB.infoBarShowMS
-  Elysian.state.infoBarUnlocked = ElysianDB.infoBarUnlocked
-  Elysian.state.infoBarOpacity = ElysianDB.infoBarOpacity
   Elysian.state.infoBarTextColor = EnsureColorTable(
-    ElysianDB.infoBarTextColor,
+    Elysian.state.infoBarTextColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
   Elysian.state.infoBarBgColor = EnsureColorTable(
-    ElysianDB.infoBarBgColor,
+    Elysian.state.infoBarBgColor,
     { Elysian.HexToRGB(Elysian.theme.bg) }
   )
-  Elysian.state.infoBarShowPortalButton = ElysianDB.infoBarShowPortalButton
-  Elysian.state.repairReminderEnabled = ElysianDB.repairReminderEnabled
-  Elysian.state.repairReminderUnlocked = ElysianDB.repairReminderUnlocked
   Elysian.state.repairReminderTextColor = EnsureColorTable(
-    ElysianDB.repairReminderTextColor,
+    Elysian.state.repairReminderTextColor,
     { 1, 1, 1 }
   )
-  Elysian.state.repairReminderTest = ElysianDB.repairReminderTest
-  Elysian.state.repairReminderPos = ElysianDB.repairReminderPos
-  Elysian.state.dungeonReminderEnabled = ElysianDB.dungeonReminderEnabled
-  Elysian.state.dungeonReminderUnlocked = ElysianDB.dungeonReminderUnlocked
   Elysian.state.dungeonReminderTextColor = EnsureColorTable(
-    ElysianDB.dungeonReminderTextColor,
+    Elysian.state.dungeonReminderTextColor,
     { 1, 1, 1 }
   )
-  Elysian.state.dungeonReminderTest = ElysianDB.dungeonReminderTest
-  Elysian.state.dungeonReminderPos = ElysianDB.dungeonReminderPos
-  Elysian.state.warlockPetReminderEnabled = ElysianDB.warlockPetReminderEnabled
   Elysian.state.warlockPetReminderTextColor = EnsureColorTable(
-    ElysianDB.warlockPetReminderTextColor,
+    Elysian.state.warlockPetReminderTextColor,
     { 1, 1, 1 }
   )
-  Elysian.state.warlockPetReminderTest = ElysianDB.warlockPetReminderTest
-  Elysian.state.warlockPetReminderPos = ElysianDB.warlockPetReminderPos
-  Elysian.state.warlockStoneReminderEnabled = ElysianDB.warlockStoneReminderEnabled
   Elysian.state.warlockStoneReminderTextColor = EnsureColorTable(
-    ElysianDB.warlockStoneReminderTextColor,
+    Elysian.state.warlockStoneReminderTextColor,
     { 1, 1, 1 }
   )
-  Elysian.state.warlockStoneReminderTest = ElysianDB.warlockStoneReminderTest
-  Elysian.state.warlockStoneReminderPos = ElysianDB.warlockStoneReminderPos
-  Elysian.state.autoKeystoneEnabled = ElysianDB.autoKeystoneEnabled
 
   if Elysian.SaveState then
     Elysian.SaveState()
@@ -455,12 +578,15 @@ function Elysian.SaveState()
   ElysianDB.cursorRingTrailLength = Elysian.state.cursorRingTrailLength
   ElysianDB.cursorRingTrailSpacing = Elysian.state.cursorRingTrailSpacing
   ElysianDB.cursorRingTrailFade = Elysian.state.cursorRingTrailFade
+  ElysianDB.cursorRingTrailFadeTime = Elysian.state.cursorRingTrailFadeTime
   ElysianDB.cursorRingTrailColor = EnsureColorTable(
     Elysian.state.cursorRingTrailColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
+  ElysianDB.cursorRingTrailShape = Elysian.state.cursorRingTrailShape
   ElysianDB.autoRepairEnabled = Elysian.state.autoRepairEnabled
   ElysianDB.minimapButtonAngle = Elysian.state.minimapButtonAngle
+  ElysianDB.minimapButtonHidden = Elysian.state.minimapButtonHidden
   ElysianDB.uiFontScale = Elysian.state.uiFontScale
   ElysianDB.uiTextUseClassColor = Elysian.state.uiTextUseClassColor
   ElysianDB.uiTextColor = EnsureColorTable(
@@ -658,7 +784,7 @@ function Elysian.StyleCheckbox(checkbox)
     return
   end
 
-  checkbox:SetScale(0.7)
+  checkbox:SetScale(0.84)
   if checkbox.text then
     checkbox.text:SetTextColor(1, 1, 1)
   end

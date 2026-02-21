@@ -12,7 +12,14 @@ local SHAPES = {
   CROSSHAIR = "Interface\\AddOns\\ElysianFramework\\Assets\\cursor_crosshair.tga",
 }
 
-local SPARK_TEXTURE = "Interface\\AddOns\\ElysianFramework\\Assets\\cursor_spark.tga"
+local TRAIL_SHAPES = {
+  SPARK = "Interface\\AddOns\\ElysianFramework\\Assets\\cursor_spark.tga",
+  RING = SHAPES.RING,
+  THIN = SHAPES.THIN,
+  STAR = SHAPES.STAR,
+  SQUARE = SHAPES.SQUARE,
+  CROSSHAIR = SHAPES.CROSSHAIR,
+}
 
 local function GetClassColor()
   local _, class = UnitClass("player")
@@ -100,6 +107,24 @@ function CursorRing:SetTrailColor(color)
     for i, tex in ipairs(self.trailTextures) do
       local alpha = self:GetTrailAlpha(i)
       tex:SetVertexColor(color[1], color[2], color[3], alpha)
+    end
+  end
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+end
+
+function CursorRing:GetTrailTexture()
+  local shape = Elysian.state.cursorRingTrailShape or "SPARK"
+  return TRAIL_SHAPES[shape] or TRAIL_SHAPES.SPARK
+end
+
+function CursorRing:SetTrailShape(shape)
+  Elysian.state.cursorRingTrailShape = shape
+  if self.trailTextures then
+    local texture = self:GetTrailTexture()
+    for _, tex in ipairs(self.trailTextures) do
+      tex:SetTexture(texture)
     end
   end
   if Elysian.SaveState then
@@ -253,10 +278,11 @@ function CursorRing:EnsureTrail()
 
   local count = Elysian.state.cursorRingTrailLength or 12
   local trailSize = Clamp((Elysian.state.cursorRingSize or 18) * 0.5, 6, 24)
+  local texture = self:GetTrailTexture()
   local textures = {}
   for i = 1, count do
     local tex = trailFrame:CreateTexture(nil, "OVERLAY")
-    tex:SetTexture(SPARK_TEXTURE)
+    tex:SetTexture(texture)
     tex:SetSize(trailSize, trailSize)
     tex:Hide()
     textures[i] = tex
@@ -283,19 +309,49 @@ function CursorRing:UpdateTrail(elapsed, x, y)
     self:EnsureTrail()
     self:ApplyColors()
   end
-  if self.trailFrame and CursorRing:IsVisibleNow() then
+  if self.trailFrame then
     self.trailFrame:Show()
   end
 
   self.trailElapsed = (self.trailElapsed or 0) + elapsed
+  self.trailIdle = self.trailIdle or 0
+  local fadeTime = Elysian.state.cursorRingTrailFadeTime or 0.25
   local spacing = Elysian.state.cursorRingTrailSpacing or 0.02
-  if self.trailElapsed >= spacing then
-    self.trailElapsed = 0
-    table.insert(self.trailPositions, 1, { x = x, y = y })
-    local maxCount = Elysian.state.cursorRingTrailLength or 12
-    while #self.trailPositions > maxCount do
-      table.remove(self.trailPositions)
+  local lastX = self.lastTrailX
+  local lastY = self.lastTrailY
+  local moved = (not lastX) or (not lastY) or (math.abs(x - lastX) > 0.5) or (math.abs(y - lastY) > 0.5)
+  if moved then
+    if self.trailIdle > 0 then
+      self.trailPositions = {}
+      self.trailIdle = 0
     end
+    self.lastTrailX = x
+    self.lastTrailY = y
+    if self.trailElapsed >= spacing then
+      self.trailElapsed = 0
+      table.insert(self.trailPositions, 1, { x = x, y = y, t = GetTime() })
+      local maxCount = Elysian.state.cursorRingTrailLength or 12
+      while #self.trailPositions > maxCount do
+        table.remove(self.trailPositions)
+      end
+    end
+  else
+    self.trailElapsed = 0
+    if fadeTime <= 0 then
+      self.trailPositions = {}
+      self.trailIdle = 0
+    else
+      self.trailIdle = self.trailIdle + elapsed
+      if self.trailIdle >= fadeTime then
+        self.trailPositions = {}
+        self.trailIdle = 0
+      end
+    end
+  end
+
+  local idleScale = 1
+  if not moved and fadeTime > 0 then
+    idleScale = math.max(0, 1 - (self.trailIdle / fadeTime))
   end
 
   for i, tex in ipairs(self.trailTextures) do
@@ -303,9 +359,23 @@ function CursorRing:UpdateTrail(elapsed, x, y)
     if pos then
       tex:ClearAllPoints()
       tex:SetPoint("CENTER", UIParent, "BOTTOMLEFT", pos.x, pos.y)
-      tex:Show()
+      local baseAlpha = self:GetTrailAlpha(i)
+      local alpha = baseAlpha * idleScale
+      local color = Elysian.state.cursorRingTrailColor or { Elysian.HexToRGB(Elysian.theme.accent) }
+      tex:SetVertexColor(color[1], color[2], color[3], alpha)
+      if alpha > 0 then
+        tex:Show()
+      else
+        tex:Hide()
+      end
     else
       tex:Hide()
+    end
+  end
+
+  if #self.trailPositions == 0 and not moved then
+    if self.trailFrame then
+      self.trailFrame:Hide()
     end
   end
 end
@@ -420,8 +490,12 @@ local function CreateColorButton(parent, label, x, y, getColor, setColor)
   button:SetSize(140, 20)
   button:EnableMouse(true)
   button:RegisterForClicks("LeftButtonUp")
-  button:SetFrameStrata("HIGH")
-  button:SetFrameLevel(30)
+  if parent and parent.GetFrameStrata then
+    button:SetFrameStrata(parent:GetFrameStrata())
+  end
+  if parent and parent.GetFrameLevel then
+    button:SetFrameLevel(parent:GetFrameLevel() + 5)
+  end
   Elysian.SetBackdrop(button)
   Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
 
@@ -520,6 +594,43 @@ local function CreateSlider(parent, label, x, y, min, max, step, getValue, setVa
   return slider
 end
 
+local function CreateFloatSlider(parent, label, x, y, min, max, step, getValue, setValue, formatter)
+  local text = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  text:SetPoint("TOPLEFT", x, y)
+  Elysian.ApplyFont(text, 11)
+  Elysian.ApplyTextColor(text)
+
+  local valueText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  valueText:SetPoint("LEFT", text, "RIGHT", 6, 0)
+  Elysian.ApplyFont(valueText, 11)
+  Elysian.ApplyAccentColor(valueText)
+
+  local function UpdateLabel(value)
+    local display = value
+    if formatter then
+      display = formatter(value)
+    end
+    text:SetText(label)
+    valueText:SetText(display)
+  end
+
+  local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+  slider:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 0, -6)
+  slider:SetWidth(180)
+  slider:SetMinMaxValues(min, max)
+  slider:SetValueStep(step)
+  slider:SetObeyStepOnDrag(true)
+  slider:SetValue(getValue())
+  UpdateLabel(getValue())
+  slider:SetScript("OnValueChanged", function(selfSlider, value)
+    local rounded = tonumber(string.format("%.2f", value))
+    setValue(rounded)
+    UpdateLabel(rounded)
+  end)
+
+  return slider
+end
+
 function CursorRing:CreatePanel(parent)
   local panel = CreateFrame("Frame", nil, parent)
   panel:SetAllPoints()
@@ -584,13 +695,13 @@ function CursorRing:CreatePanel(parent)
 
   -- cast color button removed (use ring color + cast progress)
   local shapeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  shapeLabel:SetPoint("TOPLEFT", rightX, -100)
+  shapeLabel:SetPoint("TOPLEFT", rightX, leftStartY + 50)
   shapeLabel:SetText("Shape")
   Elysian.ApplyFont(shapeLabel, 11)
   Elysian.ApplyTextColor(shapeLabel)
 
   local shapeDropButton = CreateFrame("Button", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
-  shapeDropButton:SetPoint("TOPLEFT", rightX, -124)
+  shapeDropButton:SetPoint("TOPLEFT", rightX, leftStartY + 26)
   shapeDropButton:SetSize(140, 22)
   Elysian.SetBackdrop(shapeDropButton)
   Elysian.SetBackdropColors(shapeDropButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -644,7 +755,7 @@ function CursorRing:CreatePanel(parent)
     panel,
     "Ring size",
     rightX,
-    -170,
+    leftStartY - 40,
     8,
     64,
     1,
@@ -655,6 +766,61 @@ function CursorRing:CreatePanel(parent)
       CursorRing:SetSize(value)
     end
   )
+
+  local trailShapeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  trailShapeLabel:SetPoint("TOPLEFT", rightX, leftStartY - 90)
+  trailShapeLabel:SetText("Trail Shape")
+  Elysian.ApplyFont(trailShapeLabel, 11)
+  Elysian.ApplyTextColor(trailShapeLabel)
+
+  local trailShapeButton = CreateFrame("Button", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  trailShapeButton:SetPoint("TOPLEFT", rightX, leftStartY - 114)
+  trailShapeButton:SetSize(140, 22)
+  Elysian.SetBackdrop(trailShapeButton)
+  Elysian.SetBackdropColors(trailShapeButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local trailShapeText = trailShapeButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  trailShapeText:SetPoint("CENTER")
+  trailShapeText:SetText(Elysian.state.cursorRingTrailShape or "SPARK")
+  Elysian.ApplyFont(trailShapeText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(trailShapeText)
+
+  local trailShapeDrop = CreateFrame("Frame", "ElysianCursorRingTrailShapeDropDown", panel, "UIDropDownMenuTemplate")
+  UIDropDownMenu_SetWidth(trailShapeDrop, 140)
+
+  local function SetTrailShape(value)
+    CursorRing:SetTrailShape(value)
+    UIDropDownMenu_SetText(trailShapeDrop, value)
+    trailShapeText:SetText(value)
+  end
+
+  UIDropDownMenu_Initialize(trailShapeDrop, function(self, level)
+    local info = UIDropDownMenu_CreateInfo()
+    info.func = function(item)
+      SetTrailShape(item.value)
+    end
+    info.text, info.value = "SPARK", "SPARK"
+    UIDropDownMenu_AddButton(info)
+    info.text, info.value = "RING", "RING"
+    UIDropDownMenu_AddButton(info)
+    info.text, info.value = "THIN", "THIN"
+    UIDropDownMenu_AddButton(info)
+    info.text, info.value = "STAR", "STAR"
+    UIDropDownMenu_AddButton(info)
+    info.text, info.value = "SQUARE", "SQUARE"
+    UIDropDownMenu_AddButton(info)
+    info.text, info.value = "CROSSHAIR", "CROSSHAIR"
+    UIDropDownMenu_AddButton(info)
+  end)
+
+  UIDropDownMenu_SetText(trailShapeDrop, Elysian.state.cursorRingTrailShape or "SPARK")
+
+  trailShapeButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    ToggleDropDownMenu(1, nil, trailShapeDrop, trailShapeButton, 0, 0)
+  end)
 
   local showCombat = CreateCheckbox(panel, "Show in combat", leftX, -132)
   showCombat:SetChecked(Elysian.state.cursorRingShowInCombat)
@@ -725,7 +891,7 @@ function CursorRing:CreatePanel(parent)
     panel,
     "Trail length",
     rightX,
-    -296,
+    leftStartY - 160,
     4,
     30,
     1,
@@ -744,11 +910,33 @@ function CursorRing:CreatePanel(parent)
     end
   )
 
+  CreateFloatSlider(
+    panel,
+    "Trail fade",
+    rightX,
+    leftStartY - 226,
+    0,
+    1,
+    0.05,
+    function()
+      return Elysian.state.cursorRingTrailFadeTime or 0.25
+    end,
+    function(value)
+      Elysian.state.cursorRingTrailFadeTime = value
+      if Elysian.SaveState then
+        Elysian.SaveState()
+      end
+    end,
+    function(value)
+      return string.format("%.2fs", value)
+    end
+  )
+
   local trailColorButton = CreateColorButton(
     panel,
     "Trail Color",
     rightX,
-    -360,
+    leftStartY - 300,
     function()
       return Elysian.state.cursorRingTrailColor or { Elysian.HexToRGB(Elysian.theme.accent) }
     end,

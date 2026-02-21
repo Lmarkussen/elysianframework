@@ -36,3 +36,20 @@ Build a World of Warcraft addon for the Midnight expansion. Initial milestone: d
 ## Next Steps
 - Decide whether to persist the Scrap Seller toggle between sessions via SavedVariables.
 - Expand theming to other UI elements if desired.
+
+## Recent Updates
+- Version: v0.00.12.
+- Cursor trail only renders while the mouse is moving.
+- Snapshot created: ElysianFramework_0.00.12.zip.
+- Cursor trail now fades out on idle and clears on stop so it doesn't pick up old positions.
+- Added a trail shape dropdown (spark/ring/thin/star/square/crosshair).
+- Version: v0.00.13.
+- Added Warlock alert text color pickers (pet missing + healthstone).
+- Snapshot created: ElysianFramework_0.00.13.zip.
+- Version: v0.00.14.
+- Snapshot created: ElysianFramework_0.00.14.zip (older snapshots removed).
+- Version: v0.00.15.
+- Snapshot created: ElysianFramework_0.00.15.zip.
+- Version: v0.00.16.
+- Snapshot created: ElysianFramework_0.00.16.zip (older snapshots removed).
+- Profiles added (per character) with Default profile, save/load in General tab.

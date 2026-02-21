@@ -36,3 +36,25 @@
 - Removed cursor ring sparkles and fixed the color picker interaction.
 - Added a General tab Reset Settings button to restore defaults (features off).
 - Replaced the default close button with a Dracula-styled “X”.
+- Cursor trail now hides when the mouse is stationary; shows only while moving.
+- Bumped addon version to 0.00.12 (UI + TOC).
+- Snapshot: ElysianFramework_0.00.12.zip.
+- Cursor trail now fades out on idle and clears its positions when the mouse stops.
+- Added trail shape selection (spark, ring, thin, star, square, crosshair).
+- Added cursor ring trail fade timer state (default 0.25s).
+- Added text color pickers for Warlock pet missing and healthstone reminders.
+- Warlock reminder text now respects custom colors.
+- Bumped addon version to 0.00.13.
+- Snapshot: ElysianFramework_0.00.13.zip.
+- Bumped addon version to 0.00.14.
+- Snapshot: ElysianFramework_0.00.14.zip.
+- Removed older snapshots per request.
+- Removed portal cooldown edge highlight to avoid yellow streaks.
+- Bumped addon version to 0.00.15.
+- Snapshot: ElysianFramework_0.00.15.zip.
+- Reworked minimap button placement/appearance to match standard addon behavior (square minimap support).
+- Bumped addon version to 0.00.16.
+- Snapshot: ElysianFramework_0.00.16.zip.
+- Removed older snapshots per request.
+- Added per-character profiles: save/load profiles and default profile support.
+- General tab now has profile dropdown, name field, and Save/Load buttons.

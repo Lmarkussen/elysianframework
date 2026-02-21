@@ -537,6 +537,7 @@ function InfoBar:EnsurePortalWindow()
   backButton:Hide()
 
   self.portalButtons = {}
+  self.portalCooldowns = {}
 
   local function ClearButtons()
     for _, obj in ipairs(self.portalButtons) do
@@ -544,6 +545,10 @@ function InfoBar:EnsurePortalWindow()
       obj:SetParent(nil)
     end
     wipe(self.portalButtons)
+    for _, cd in ipairs(self.portalCooldowns) do
+      cd.frame:Hide()
+    end
+    wipe(self.portalCooldowns)
   end
 
   local function GetMapName(mapID)
@@ -625,10 +630,21 @@ function InfoBar:EnsurePortalWindow()
         else
           button:SetAttribute("type", nil)
         end
+
+        local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+        cooldown:SetAllPoints()
+        cooldown:SetDrawBling(false)
+        cooldown:SetDrawEdge(false)
+        cooldown:SetSwipeColor(0, 0, 0, 0.6)
+        cooldown:Hide()
+        table.insert(self.portalCooldowns, { frame = cooldown, spellID = spellID })
+
         table.insert(self.portalButtons, button)
         y = y - 24
       end
     end
+
+    InfoBar:UpdatePortalCooldowns()
   end
 
   backButton:SetScript("OnClick", function()
@@ -639,6 +655,36 @@ function InfoBar:EnsurePortalWindow()
 
   self.portalWindow = frame
   tinsert(UISpecialFrames, frame:GetName())
+
+  if not self.portalCooldownFrame then
+    local evt = CreateFrame("Frame")
+    evt:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+    evt:RegisterEvent("PLAYER_ENTERING_WORLD")
+    evt:RegisterEvent("SPELLS_CHANGED")
+    evt:SetScript("OnEvent", function()
+      if self.portalWindow and self.portalWindow:IsShown() then
+        self:UpdatePortalCooldowns()
+      end
+    end)
+    self.portalCooldownFrame = evt
+  end
+end
+
+function InfoBar:UpdatePortalCooldowns()
+  if not self.portalCooldowns then
+    return
+  end
+  for _, entry in ipairs(self.portalCooldowns) do
+    local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(entry.spellID) or nil
+    local start = info and info.startTime or 0
+    local duration = info and info.duration or 0
+    if start > 0 and duration > 0 then
+      entry.frame:SetCooldown(start, duration)
+      entry.frame:Show()
+    else
+      entry.frame:Hide()
+    end
+  end
 end
 
 function InfoBar:TogglePortalWindow()
@@ -647,5 +693,6 @@ function InfoBar:TogglePortalWindow()
     self.portalWindow:Hide()
   else
     self.portalWindow:Show()
+    self:UpdatePortalCooldowns()
   end
 end

@@ -104,8 +104,8 @@ end
 
 function WarlockReminders:ApplyColors()
   local classColor = GetClassColor()
-  local petColor = classColor
-  local stoneColor = classColor
+  local petColor = Elysian.state.warlockPetReminderTextColor or classColor
+  local stoneColor = Elysian.state.warlockStoneReminderTextColor or classColor
   local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
 
   if self.petText then

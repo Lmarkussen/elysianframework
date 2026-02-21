@@ -86,11 +86,25 @@ events:SetScript("OnEvent", function(_, event, arg1)
       GameMenuFrame:HookScript("OnShow", Elysian.ApplyGameMenuTheme)
     end
 
-    if Elysian.UI and Elysian.state then
-      if Elysian.state.showOnStart then
+    if Elysian.UI then
+      local show = true
+      if ElysianDB and ElysianDB.showOnStart == false then
+        show = false
+      elseif Elysian.state and Elysian.state.showOnStart == false then
+        show = false
+      end
+      if show then
         Elysian.UI:Show()
       else
         Elysian.UI:Hide()
+      end
+      if show and C_Timer then
+        C_Timer.After(0.2, function()
+          if Elysian.UI then
+            local frame = Elysian.UI.mainFrame or Elysian.UI:CreateMainFrame()
+            frame:Show()
+          end
+        end)
       end
     end
   elseif event == "PLAYER_ENTERING_WORLD" then
