@@ -19,7 +19,7 @@ Elysian.state = Elysian.state or {
   navBg = nil,
   contentBg = nil,
   cursorRingEnabled = true,
-  cursorRingSize = 14,
+  cursorRingSize = 52,
   cursorRingColor = nil,
   cursorRingClassColor = true,
   cursorRingShape = "RING",
@@ -37,11 +37,16 @@ Elysian.state = Elysian.state or {
   cursorRingTrailFadeTime = 0.25,
   cursorRingTrailShape = "SPARK",
   autoRepairEnabled = true,
+  autoRepairThreshold = 70,
   minimapButtonAngle = nil,
   minimapButtonHidden = false,
   uiFontScale = 1.1,
   uiTextUseClassColor = true,
   uiTextColor = nil,
+  bannerWidth = 0,
+  bannerHeight = 0,
+  bannerTextOverride = "",
+  bannerTestAll = false,
   infoBarEnabled = true,
   infoBarShowTime = true,
   infoBarShowGold = true,
@@ -54,21 +59,39 @@ Elysian.state = Elysian.state or {
   infoBarBgColor = nil,
   infoBarShowPortalButton = true,
   repairReminderEnabled = false,
-  repairReminderUnlocked = false,
+  repairReminderUnlocked = true,
   repairReminderTextColor = nil,
+  repairReminderBgColor = nil,
+  repairReminderWidth = 0,
+  repairReminderHeight = 0,
   repairReminderTest = false,
   repairReminderPos = nil,
+  repairReminderAlpha = 0.95,
+  repairReminderTextOverride = "",
   dungeonReminderEnabled = false,
-  dungeonReminderUnlocked = false,
+  dungeonReminderUnlocked = true,
   dungeonReminderTextColor = nil,
+  dungeonReminderBgColor = nil,
+  dungeonReminderAlpha = 0.95,
+  dungeonReminderWidth = 0,
+  dungeonReminderHeight = 0,
+  dungeonReminderTextOverride = "",
   dungeonReminderTest = false,
   dungeonReminderPos = nil,
   buffWatchEnabled = false,
   buffWatchTextColor = nil,
+  buffWatchBgColor = nil,
+  buffWatchAlpha = 0.95,
+  buffWatchWidth = 0,
+  buffWatchHeight = 0,
   buffWatchTest = false,
   buffWatchPos = nil,
   dungeonConsumablesEnabled = false,
   dungeonConsumablesTextColor = nil,
+  dungeonConsumablesBgColor = nil,
+  dungeonConsumablesAlpha = 0.95,
+  dungeonConsumablesWidth = 0,
+  dungeonConsumablesHeight = 0,
   dungeonConsumablesTest = false,
   dungeonConsumablesPos = nil,
   dungeonRoleMarksEnabled = true,
@@ -146,7 +169,7 @@ function Elysian.GetDefaultState()
     navBg = { Elysian.HexToRGB("#21222c") },
     contentBg = { Elysian.HexToRGB(Elysian.theme.bg) },
     cursorRingEnabled = true,
-    cursorRingSize = 14,
+    cursorRingSize = 52,
     cursorRingColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     cursorRingClassColor = true,
     cursorRingShape = "RING",
@@ -164,11 +187,16 @@ function Elysian.GetDefaultState()
     cursorRingTrailFadeTime = 0.25,
     cursorRingTrailShape = "SPARK",
     autoRepairEnabled = true,
+    autoRepairThreshold = 70,
     minimapButtonAngle = 225,
     minimapButtonHidden = false,
     uiFontScale = 1.1,
     uiTextUseClassColor = true,
     uiTextColor = { Elysian.HexToRGB(Elysian.theme.fg) },
+    bannerWidth = 0,
+    bannerHeight = 0,
+    bannerTextOverride = "",
+    bannerTestAll = false,
     infoBarEnabled = true,
     infoBarShowTime = true,
     infoBarShowGold = true,
@@ -180,22 +208,40 @@ function Elysian.GetDefaultState()
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     infoBarBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
     infoBarShowPortalButton = true,
-    repairReminderEnabled = false,
+    repairReminderEnabled = true,
     repairReminderUnlocked = false,
     repairReminderTextColor = { 1, 1, 1 },
+    repairReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    repairReminderWidth = 0,
+    repairReminderHeight = 0,
     repairReminderTest = false,
     repairReminderPos = nil,
-    dungeonReminderEnabled = false,
+    repairReminderAlpha = 0.95,
+    repairReminderTextOverride = "",
+    dungeonReminderEnabled = true,
     dungeonReminderUnlocked = false,
     dungeonReminderTextColor = { 1, 1, 1 },
+    dungeonReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    dungeonReminderAlpha = 0.95,
+    dungeonReminderWidth = 0,
+    dungeonReminderHeight = 0,
+    dungeonReminderTextOverride = "",
     dungeonReminderTest = false,
     dungeonReminderPos = nil,
-    buffWatchEnabled = false,
+    buffWatchEnabled = true,
     buffWatchTextColor = { 1, 1, 1 },
+    buffWatchBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    buffWatchAlpha = 0.95,
+    buffWatchWidth = 0,
+    buffWatchHeight = 0,
     buffWatchTest = false,
     buffWatchPos = nil,
-    dungeonConsumablesEnabled = false,
+    dungeonConsumablesEnabled = true,
     dungeonConsumablesTextColor = { 1, 1, 1 },
+    dungeonConsumablesBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    dungeonConsumablesAlpha = 0.95,
+    dungeonConsumablesWidth = 0,
+    dungeonConsumablesHeight = 0,
     dungeonConsumablesTest = false,
     dungeonConsumablesPos = nil,
     dungeonRoleMarksEnabled = true,
@@ -375,6 +421,18 @@ function Elysian.RefreshFeatures()
     Elysian.Features.DungeonReminder:Initialize()
     Elysian.Features.DungeonReminder:Refresh()
   end
+  if Elysian.Features and Elysian.Features.BuffWatch then
+    Elysian.Features.BuffWatch:Initialize()
+    Elysian.Features.BuffWatch:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.DungeonConsumables then
+    Elysian.Features.DungeonConsumables:Initialize()
+    Elysian.Features.DungeonConsumables:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.ClassBuffReminders then
+    Elysian.Features.ClassBuffReminders:Initialize()
+    Elysian.Features.ClassBuffReminders:Refresh()
+  end
   if Elysian.Features and Elysian.Features.WarlockReminders then
     Elysian.Features.WarlockReminders:Initialize()
     Elysian.Features.WarlockReminders:Refresh()
@@ -434,7 +492,29 @@ function Elysian.LoadProfile(name)
   if not ElysianDB or not ElysianDB.profiles or not ElysianDB.profiles[name] then
     return
   end
-  Elysian.state = MergeProfile(ElysianDB.profiles[name])
+  local profile = ElysianDB.profiles[name]
+  if type(name) == "string" then
+    local class = string.upper(name)
+    if class == "WARLOCK" then
+      profile.warlockPetReminderEnabled = true
+      profile.warlockStoneReminderEnabled = true
+    elseif class == "WARRIOR" then
+      profile.warriorBuffEnabled = true
+    elseif class == "MAGE" then
+      profile.mageBuffEnabled = true
+    elseif class == "PRIEST" then
+      profile.priestBuffEnabled = true
+    elseif class == "DRUID" then
+      profile.druidBuffEnabled = true
+    elseif class == "SHAMAN" then
+      profile.shamanBuffEnabled = true
+    elseif class == "EVOKER" then
+      profile.evokerBuffEnabled = true
+    elseif class == "ROGUE" then
+      profile.roguePoisonEnabled = true
+    end
+  end
+  Elysian.state = MergeProfile(profile)
   Elysian.SetActiveProfile(name)
   if Elysian.SaveState then
     Elysian.SaveState()
@@ -450,6 +530,28 @@ function Elysian.ResetSettings()
   local defaults = Elysian.GetDefaultState()
   for key, value in pairs(defaults) do
     Elysian.state[key] = value
+  end
+  local active = Elysian.GetActiveProfile and Elysian.GetActiveProfile() or "Default"
+  if type(active) == "string" then
+    local class = string.upper(active)
+    if class == "WARLOCK" then
+      Elysian.state.warlockPetReminderEnabled = true
+      Elysian.state.warlockStoneReminderEnabled = true
+    elseif class == "WARRIOR" then
+      Elysian.state.warriorBuffEnabled = true
+    elseif class == "MAGE" then
+      Elysian.state.mageBuffEnabled = true
+    elseif class == "PRIEST" then
+      Elysian.state.priestBuffEnabled = true
+    elseif class == "DRUID" then
+      Elysian.state.druidBuffEnabled = true
+    elseif class == "SHAMAN" then
+      Elysian.state.shamanBuffEnabled = true
+    elseif class == "EVOKER" then
+      Elysian.state.evokerBuffEnabled = true
+    elseif class == "ROGUE" then
+      Elysian.state.roguePoisonEnabled = true
+    end
   end
   if Elysian.SaveState then
     Elysian.SaveState()
@@ -500,7 +602,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.cursorRingEnabled = true
   end
   if ElysianDB.cursorRingSize == nil then
-    ElysianDB.cursorRingSize = 14
+    ElysianDB.cursorRingSize = 52
   end
   if ElysianDB.cursorRingColor == nil then
     ElysianDB.cursorRingColor = { Elysian.HexToRGB(Elysian.theme.accent) }
@@ -553,8 +655,23 @@ function Elysian.InitSavedVariables()
   if ElysianDB.autoRepairEnabled == nil then
     ElysianDB.autoRepairEnabled = true
   end
+  if ElysianDB.autoRepairThreshold == nil then
+    ElysianDB.autoRepairThreshold = 70
+  end
   if ElysianDB.uiFontScale == nil then
     ElysianDB.uiFontScale = 1.1
+  end
+  if ElysianDB.bannerWidth == nil then
+    ElysianDB.bannerWidth = 0
+  end
+  if ElysianDB.bannerHeight == nil then
+    ElysianDB.bannerHeight = 0
+  end
+  if ElysianDB.bannerTextOverride == nil then
+    ElysianDB.bannerTextOverride = ""
+  end
+  if ElysianDB.bannerTestAll == nil then
+    ElysianDB.bannerTestAll = false
   end
   if ElysianDB.infoBarEnabled == nil then
     ElysianDB.infoBarEnabled = true
@@ -590,13 +707,28 @@ function Elysian.InitSavedVariables()
     ElysianDB.infoBarShowPortalButton = true
   end
   if ElysianDB.repairReminderEnabled == nil then
-    ElysianDB.repairReminderEnabled = false
+    ElysianDB.repairReminderEnabled = true
   end
   if ElysianDB.repairReminderUnlocked == nil then
     ElysianDB.repairReminderUnlocked = false
   end
   if ElysianDB.repairReminderTextColor == nil then
     ElysianDB.repairReminderTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.repairReminderBgColor == nil then
+    ElysianDB.repairReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.repairReminderAlpha == nil then
+    ElysianDB.repairReminderAlpha = 0.95
+  end
+  if ElysianDB.repairReminderWidth == nil then
+    ElysianDB.repairReminderWidth = 0
+  end
+  if ElysianDB.repairReminderHeight == nil then
+    ElysianDB.repairReminderHeight = 0
+  end
+  if ElysianDB.repairReminderTextOverride == nil then
+    ElysianDB.repairReminderTextOverride = ""
   end
   if ElysianDB.repairReminderTest == nil then
     ElysianDB.repairReminderTest = false
@@ -605,13 +737,28 @@ function Elysian.InitSavedVariables()
     ElysianDB.repairReminderPos = nil
   end
   if ElysianDB.dungeonReminderEnabled == nil then
-    ElysianDB.dungeonReminderEnabled = false
+    ElysianDB.dungeonReminderEnabled = true
   end
   if ElysianDB.dungeonReminderUnlocked == nil then
     ElysianDB.dungeonReminderUnlocked = false
   end
   if ElysianDB.dungeonReminderTextColor == nil then
     ElysianDB.dungeonReminderTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.dungeonReminderBgColor == nil then
+    ElysianDB.dungeonReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.dungeonReminderAlpha == nil then
+    ElysianDB.dungeonReminderAlpha = 0.95
+  end
+  if ElysianDB.dungeonReminderWidth == nil then
+    ElysianDB.dungeonReminderWidth = 0
+  end
+  if ElysianDB.dungeonReminderHeight == nil then
+    ElysianDB.dungeonReminderHeight = 0
+  end
+  if ElysianDB.dungeonReminderTextOverride == nil then
+    ElysianDB.dungeonReminderTextOverride = ""
   end
   if ElysianDB.dungeonReminderTest == nil then
     ElysianDB.dungeonReminderTest = false
@@ -620,10 +767,22 @@ function Elysian.InitSavedVariables()
     ElysianDB.dungeonReminderPos = nil
   end
   if ElysianDB.buffWatchEnabled == nil then
-    ElysianDB.buffWatchEnabled = false
+    ElysianDB.buffWatchEnabled = true
   end
   if ElysianDB.buffWatchTextColor == nil then
     ElysianDB.buffWatchTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.buffWatchBgColor == nil then
+    ElysianDB.buffWatchBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.buffWatchAlpha == nil then
+    ElysianDB.buffWatchAlpha = 0.95
+  end
+  if ElysianDB.buffWatchWidth == nil then
+    ElysianDB.buffWatchWidth = 0
+  end
+  if ElysianDB.buffWatchHeight == nil then
+    ElysianDB.buffWatchHeight = 0
   end
   if ElysianDB.buffWatchTest == nil then
     ElysianDB.buffWatchTest = false
@@ -632,10 +791,22 @@ function Elysian.InitSavedVariables()
     ElysianDB.buffWatchPos = nil
   end
   if ElysianDB.dungeonConsumablesEnabled == nil then
-    ElysianDB.dungeonConsumablesEnabled = false
+    ElysianDB.dungeonConsumablesEnabled = true
   end
   if ElysianDB.dungeonConsumablesTextColor == nil then
     ElysianDB.dungeonConsumablesTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.dungeonConsumablesBgColor == nil then
+    ElysianDB.dungeonConsumablesBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.dungeonConsumablesAlpha == nil then
+    ElysianDB.dungeonConsumablesAlpha = 0.95
+  end
+  if ElysianDB.dungeonConsumablesWidth == nil then
+    ElysianDB.dungeonConsumablesWidth = 0
+  end
+  if ElysianDB.dungeonConsumablesHeight == nil then
+    ElysianDB.dungeonConsumablesHeight = 0
   end
   if ElysianDB.dungeonConsumablesTest == nil then
     ElysianDB.dungeonConsumablesTest = false
@@ -726,6 +897,15 @@ function Elysian.InitSavedVariables()
     Elysian.state.uiTextColor,
     { Elysian.HexToRGB(Elysian.theme.fg) }
   )
+  if type(Elysian.state.bannerWidth) ~= "number" then
+    Elysian.state.bannerWidth = 0
+  end
+  if type(Elysian.state.bannerHeight) ~= "number" then
+    Elysian.state.bannerHeight = 0
+  end
+  if type(Elysian.state.bannerTextOverride) ~= "string" then
+    Elysian.state.bannerTextOverride = ""
+  end
   Elysian.state.infoBarTextColor = EnsureColorTable(
     Elysian.state.infoBarTextColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
@@ -738,17 +918,33 @@ function Elysian.InitSavedVariables()
     Elysian.state.repairReminderTextColor,
     { 1, 1, 1 }
   )
+  Elysian.state.repairReminderBgColor = EnsureColorTable(
+    Elysian.state.repairReminderBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
   Elysian.state.dungeonReminderTextColor = EnsureColorTable(
     Elysian.state.dungeonReminderTextColor,
     { 1, 1, 1 }
+  )
+  Elysian.state.dungeonReminderBgColor = EnsureColorTable(
+    Elysian.state.dungeonReminderBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
   )
   Elysian.state.buffWatchTextColor = EnsureColorTable(
     Elysian.state.buffWatchTextColor,
     { 1, 1, 1 }
   )
+  Elysian.state.buffWatchBgColor = EnsureColorTable(
+    Elysian.state.buffWatchBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
   Elysian.state.dungeonConsumablesTextColor = EnsureColorTable(
     Elysian.state.dungeonConsumablesTextColor,
     { 1, 1, 1 }
+  )
+  Elysian.state.dungeonConsumablesBgColor = EnsureColorTable(
+    Elysian.state.dungeonConsumablesBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
   )
   Elysian.state.warlockPetReminderTextColor = EnsureColorTable(
     Elysian.state.warlockPetReminderTextColor,
@@ -832,6 +1028,26 @@ function Elysian.GetBannerOffsetY()
     return (UIParent:GetHeight() or 0) * 0.25
   end
   return 0
+end
+
+function Elysian.GetBannerSize(defaultWidth, defaultHeight)
+  local width = tonumber(Elysian.state.bannerWidth or 0) or 0
+  local height = tonumber(Elysian.state.bannerHeight or 0) or 0
+  if width <= 0 then
+    width = defaultWidth
+  end
+  if height <= 0 then
+    height = defaultHeight
+  end
+  return width, height
+end
+
+function Elysian.GetBannerOverride()
+  local text = Elysian.state.bannerTextOverride
+  if type(text) == "string" and text:match("%S") then
+    return text
+  end
+  return nil
 end
 
 function Elysian.ApplyTextColor(fontString)

@@ -93,7 +93,9 @@ function DungeonConsumables:EnsureFrame()
 
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianDungeonConsumables", UIParent, template)
-  frame:SetSize(420, 52)
+  local w = (Elysian.state.dungeonConsumablesWidth and Elysian.state.dungeonConsumablesWidth > 0) and Elysian.state.dungeonConsumablesWidth or 420
+  local h = (Elysian.state.dungeonConsumablesHeight and Elysian.state.dungeonConsumablesHeight > 0) and Elysian.state.dungeonConsumablesHeight or 52
+  frame:SetSize(w, h)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY() - 120)
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
@@ -119,15 +121,28 @@ function DungeonConsumables:EnsureFrame()
   text:SetPoint("CENTER")
   text:SetJustifyH("CENTER")
   text:SetJustifyV("MIDDLE")
-  text:SetWidth(380)
+  text:SetWidth(w - 40)
   text:SetWordWrap(true)
   Elysian.ApplyFont(text, 14, "OUTLINE")
   self.text = text
 
+  self:ApplySize()
   self:ApplyColors()
   self:ApplyPosition()
   self:UpdateVisibility(true)
   self:EnsureEvents()
+end
+
+function DungeonConsumables:ApplySize()
+  if not self.frame then
+    return
+  end
+  local w = (Elysian.state.dungeonConsumablesWidth and Elysian.state.dungeonConsumablesWidth > 0) and Elysian.state.dungeonConsumablesWidth or 420
+  local h = (Elysian.state.dungeonConsumablesHeight and Elysian.state.dungeonConsumablesHeight > 0) and Elysian.state.dungeonConsumablesHeight or 52
+  self.frame:SetSize(w, h)
+  if self.text then
+    self.text:SetWidth(w - 40)
+  end
 end
 
 function DungeonConsumables:ApplyPosition()
@@ -149,8 +164,9 @@ function DungeonConsumables:ApplyColors()
   if self.text then
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3])
   end
-  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
-  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), 0.95)
+  local bg = Elysian.state.dungeonConsumablesBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local alpha = Elysian.state.dungeonConsumablesAlpha or 0.95
+  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), alpha)
 end
 
 function DungeonConsumables:BuildMissingList()
@@ -169,12 +185,24 @@ function DungeonConsumables:UpdateText(missing)
     return
   end
   local message = "Missing consumables"
+  local override = Elysian.GetBannerOverride()
   if missing and #missing > 0 then
-    message = "Missing consumables: " .. table.concat(missing, ", ")
+    if override then
+      message = override .. ": " .. table.concat(missing, ", ")
+    else
+      message = "Missing consumables: " .. table.concat(missing, ", ")
+    end
+  elseif override then
+    message = override
   end
   self.text:SetText(message)
-  local height = math.max(52, (self.text:GetStringHeight() or 32) + 20)
-  self.frame:SetHeight(height)
+  local baseHeight = (Elysian.state.dungeonConsumablesHeight and Elysian.state.dungeonConsumablesHeight > 0) and Elysian.state.dungeonConsumablesHeight or 52
+  if baseHeight > 0 then
+    self.frame:SetHeight(baseHeight)
+  else
+    local height = math.max(52, (self.text:GetStringHeight() or 32) + 20)
+    self.frame:SetHeight(height)
+  end
 end
 
 function DungeonConsumables:UpdateVisibility(force)
@@ -231,6 +259,7 @@ end
 
 function DungeonConsumables:Refresh()
   if self.frame then
+    self:ApplySize()
     self:ApplyColors()
     self:UpdateVisibility(true)
   end

@@ -58,7 +58,9 @@ function RepairReminder:EnsureFrame()
 
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianRepairReminder", UIParent, template)
-  frame:SetSize(360, 46)
+  local w = (Elysian.state.repairReminderWidth and Elysian.state.repairReminderWidth > 0) and Elysian.state.repairReminderWidth or 360
+  local h = (Elysian.state.repairReminderHeight and Elysian.state.repairReminderHeight > 0) and Elysian.state.repairReminderHeight or 46
+  frame:SetSize(w, h)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY())
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
@@ -90,6 +92,7 @@ function RepairReminder:EnsureFrame()
   Elysian.ApplyFont(text, 16, "OUTLINE")
   self.text = text
 
+  self:ApplySize()
   self:ApplyColors()
   self:ApplyPosition()
   self:UpdateMouse()
@@ -102,6 +105,18 @@ function RepairReminder:EnsureFrame()
       self:UpdateVisibility()
     end
   end)
+end
+
+function RepairReminder:ApplySize()
+  if not self.frame then
+    return
+  end
+  local w = (Elysian.state.repairReminderWidth and Elysian.state.repairReminderWidth > 0) and Elysian.state.repairReminderWidth or 360
+  local h = (Elysian.state.repairReminderHeight and Elysian.state.repairReminderHeight > 0) and Elysian.state.repairReminderHeight or 46
+  self.frame:SetSize(w, h)
+  if self.text then
+    self.text:SetWidth(w - 40)
+  end
 end
 
 function RepairReminder:EnsureEvents()
@@ -138,10 +153,17 @@ function RepairReminder:ApplyColors()
   end
   local textColor = Elysian.state.repairReminderTextColor or { 1, 1, 1 }
   if self.text then
+    local override = Elysian.state.repairReminderTextOverride
+    if type(override) == "string" and override:match("%S") then
+      self.text:SetText(override)
+    else
+      self.text:SetText("REPAIR GEAR")
+    end
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3])
   end
-  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
-  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), 0.95)
+  local bg = Elysian.state.repairReminderBgColor or Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local alpha = tonumber(Elysian.state.repairReminderAlpha or 0.95) or 0.95
+  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), alpha)
 end
 
 function RepairReminder:UpdateMouse()
@@ -204,6 +226,7 @@ end
 
 function RepairReminder:Refresh()
   if self.frame then
+    self:ApplySize()
     self:ApplyColors()
     self:UpdateVisibility(true)
   end

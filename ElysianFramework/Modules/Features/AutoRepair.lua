@@ -4,6 +4,22 @@ Elysian.Features = Elysian.Features or {}
 local AutoRepair = {}
 Elysian.Features.AutoRepair = AutoRepair
 
+local DURABILITY_SLOTS = { 1, 3, 5, 6, 7, 8, 9, 10, 16, 17 }
+
+local function GetLowestDurability()
+  local lowest = nil
+  for _, slot in ipairs(DURABILITY_SLOTS) do
+    local cur, max = GetInventoryItemDurability(slot)
+    if cur and max and max > 0 then
+      local pct = (cur / max) * 100
+      if not lowest or pct < lowest then
+        lowest = pct
+      end
+    end
+  end
+  return lowest
+end
+
 function AutoRepair:IsEnabled()
   return Elysian.state.autoRepairEnabled and true or false
 end
@@ -24,6 +40,14 @@ function AutoRepair:OnMerchantShow()
   end
   if not CanMerchantRepair() then
     return
+  end
+
+  local threshold = tonumber(Elysian.state.autoRepairThreshold or 0) or 0
+  if threshold > 0 then
+    local pct = GetLowestDurability()
+    if pct and pct > threshold then
+      return
+    end
   end
 
   local cost, canRepair = GetRepairAllCost()
@@ -66,6 +90,33 @@ function AutoRepair:CreatePanel(parent)
   Elysian.ApplyFont(hint, 10)
   Elysian.ApplyTextColor(hint)
 
+  local thresholdLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  thresholdLabel:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", -4, -12)
+  thresholdLabel:SetText("Repair threshold (%)")
+  Elysian.ApplyFont(thresholdLabel, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(thresholdLabel)
+
+  local slider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+  slider:SetPoint("TOPLEFT", thresholdLabel, "BOTTOMLEFT", 4, -18)
+  slider:SetMinMaxValues(0, 100)
+  slider:SetValueStep(1)
+  slider:SetObeyStepOnDrag(true)
+  slider:SetWidth(220)
+  slider:SetValue(Elysian.state.autoRepairThreshold or 70)
+  slider.Low:SetText("0")
+  slider.High:SetText("100")
+  slider.Text:SetText(string.format("%d%%", slider:GetValue()))
+  slider:SetScript("OnValueChanged", function(selfSlider, value)
+    value = math.floor(value + 0.5)
+    selfSlider:SetValue(value)
+    selfSlider.Text:SetText(string.format("%d%%", value))
+    Elysian.state.autoRepairThreshold = value
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+  self.thresholdSlider = slider
+
   panel:Hide()
   return panel
 end
@@ -73,5 +124,10 @@ end
 function AutoRepair:Refresh()
   if self.toggle then
     self.toggle:SetChecked(self:IsEnabled())
+  end
+  if self.thresholdSlider then
+    local value = Elysian.state.autoRepairThreshold or 70
+    self.thresholdSlider:SetValue(value)
+    self.thresholdSlider.Text:SetText(string.format("%d%%", value))
   end
 end

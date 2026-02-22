@@ -42,7 +42,9 @@ function DungeonReminder:EnsureFrame()
 
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", "ElysianDungeonReminder", UIParent, template)
-  frame:SetSize(360, 46)
+  local w = (Elysian.state.dungeonReminderWidth and Elysian.state.dungeonReminderWidth > 0) and Elysian.state.dungeonReminderWidth or 360
+  local h = (Elysian.state.dungeonReminderHeight and Elysian.state.dungeonReminderHeight > 0) and Elysian.state.dungeonReminderHeight or 46
+  frame:SetSize(w, h)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY())
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
@@ -74,11 +76,24 @@ function DungeonReminder:EnsureFrame()
   Elysian.ApplyFont(text, 16, "OUTLINE")
   self.text = text
 
+  self:ApplySize()
   self:ApplyColors()
   self:ApplyPosition()
   self:UpdateMouse()
   self:UpdateVisibility(true)
   self:EnsureEvents()
+end
+
+function DungeonReminder:ApplySize()
+  if not self.frame then
+    return
+  end
+  local w = (Elysian.state.dungeonReminderWidth and Elysian.state.dungeonReminderWidth > 0) and Elysian.state.dungeonReminderWidth or 360
+  local h = (Elysian.state.dungeonReminderHeight and Elysian.state.dungeonReminderHeight > 0) and Elysian.state.dungeonReminderHeight or 46
+  self.frame:SetSize(w, h)
+  if self.text then
+    self.text:SetWidth(w - 40)
+  end
 end
 
 function DungeonReminder:EnsureEvents()
@@ -117,10 +132,17 @@ function DungeonReminder:ApplyColors()
   end
   local textColor = Elysian.state.dungeonReminderTextColor or { 1, 1, 1 }
   if self.text then
+    local override = Elysian.state.dungeonReminderTextOverride
+    if type(override) == "string" and override:match("%S") then
+      self.text:SetText(override)
+    else
+      self.text:SetText("DONT RELEASE")
+    end
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3])
   end
-  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
-  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), 0.95)
+  local bg = Elysian.state.dungeonReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local alpha = Elysian.state.dungeonReminderAlpha or 0.95
+  Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), alpha)
 end
 
 function DungeonReminder:UpdateMouse()
@@ -181,6 +203,7 @@ end
 
 function DungeonReminder:Refresh()
   if self.frame then
+    self:ApplySize()
     self:ApplyColors()
     self:UpdateVisibility(true)
   end

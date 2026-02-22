@@ -55,7 +55,8 @@ end
 local function EnsureFrame(name, label)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local frame = CreateFrame("Frame", name, UIParent, template)
-  frame:SetSize(360, 46)
+  local w, h = Elysian.GetBannerSize(360, 46)
+  frame:SetSize(w, h)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, Elysian.GetBannerOffsetY())
   frame:SetFrameStrata("DIALOG")
   frame:SetMovable(true)
@@ -74,6 +75,7 @@ local function EnsureFrame(name, label)
   text:SetPoint("CENTER")
   text:SetText(label)
   Elysian.ApplyFont(text, 16, "OUTLINE")
+  text:SetWidth(w - 40)
 
   return frame, text
 end
@@ -107,11 +109,22 @@ function WarlockReminders:ApplyColors()
   local petColor = Elysian.state.warlockPetReminderTextColor or classColor
   local stoneColor = Elysian.state.warlockStoneReminderTextColor or classColor
   local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local override = Elysian.GetBannerOverride()
 
   if self.petText then
+    if override then
+      self.petText:SetText(override)
+    else
+      self.petText:SetText("PET MISSING")
+    end
     self.petText:SetTextColor(petColor[1], petColor[2], petColor[3])
   end
   if self.stoneText then
+    if override then
+      self.stoneText:SetText(override)
+    else
+      self.stoneText:SetText("MISSING HEALTHSTONE")
+    end
     self.stoneText:SetTextColor(stoneColor[1], stoneColor[2], stoneColor[3])
   end
 
@@ -120,6 +133,22 @@ function WarlockReminders:ApplyColors()
   end
   if self.stoneFrame then
     Elysian.SetBackdropColors(self.stoneFrame, bg, Elysian.GetThemeBorder(), 0.95)
+  end
+end
+
+function WarlockReminders:ApplySize()
+  local w, h = Elysian.GetBannerSize(360, 46)
+  if self.petFrame then
+    self.petFrame:SetSize(w, h)
+  end
+  if self.stoneFrame then
+    self.stoneFrame:SetSize(w, h)
+  end
+  if self.petText then
+    self.petText:SetWidth(w - 40)
+  end
+  if self.stoneText then
+    self.stoneText:SetWidth(w - 40)
   end
 end
 
@@ -185,6 +214,7 @@ end
 
 function WarlockReminders:Initialize()
   self:EnsureFrames()
+  self:ApplySize()
   self:ApplyColors()
   self:UpdateVisibility(true)
   self:EnsureEvents()
@@ -192,6 +222,7 @@ end
 
 function WarlockReminders:Refresh()
   self:EnsureFrames()
+  self:ApplySize()
   self:ApplyColors()
   self:UpdateVisibility(true)
 end

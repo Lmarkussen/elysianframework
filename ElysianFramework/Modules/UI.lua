@@ -322,6 +322,7 @@ function Elysian.UI:CreateMainFrame()
   local contentBody = CreateFrame("Frame", nil, content)
   contentBody:SetPoint("TOPLEFT", 0, -34)
   contentBody:SetPoint("BOTTOMRIGHT", 0, 0)
+  contentBody:SetClipsChildren(true)
 
   local panels = {}
   local scrapPanel = Elysian.Features and Elysian.Features.ScrapSeller and Elysian.Features.ScrapSeller:CreatePanel(contentBody)
@@ -389,7 +390,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v0.00.21 BETA")
+  versionText:SetText("v0.10.00 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -432,26 +433,12 @@ function Elysian.UI:CreateMainFrame()
     if Elysian.ResetSettings then
       Elysian.ResetSettings()
     end
-    if Elysian.Features and Elysian.Features.CursorRing then
-      Elysian.Features.CursorRing:SetEnabled(false)
-      Elysian.Features.CursorRing:ApplyShape()
-      Elysian.Features.CursorRing:ApplyColors()
-      Elysian.Features.CursorRing:UpdateVisibility()
-      if Elysian.Features.CursorRing.Refresh then
-        Elysian.Features.CursorRing:Refresh()
-      end
+    if Elysian.RefreshFeatures then
+      Elysian.RefreshFeatures()
     end
-    if Elysian.Features and Elysian.Features.ScrapSeller then
-      Elysian.Features.ScrapSeller:SetEnabled(false)
-      if Elysian.Features.ScrapSeller.Refresh then
-        Elysian.Features.ScrapSeller:Refresh()
-      end
-    end
-    if Elysian.Features and Elysian.Features.AutoRepair then
-      Elysian.Features.AutoRepair:SetEnabled(false)
-      if Elysian.Features.AutoRepair.Refresh then
-        Elysian.Features.AutoRepair:Refresh()
-      end
+    if Elysian.UI and Elysian.UI.Rebuild then
+      Elysian.UI:Rebuild()
+      Elysian.UI:Show()
     end
     if Elysian.UI and Elysian.UI.mainFrame and Elysian.UI.mainFrame:IsShown() then
       if Elysian.UI.showOnStartCheck then
@@ -460,6 +447,79 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
   HookButtonPressFeedback(resetButton)
+
+  local testBarsButton = CreateFrame("Button", nil, generalPanel, template)
+  testBarsButton:SetPoint("BOTTOMLEFT", 176, 16)
+  testBarsButton:SetSize(160, 22)
+  Elysian.SetBackdrop(testBarsButton)
+  Elysian.SetBackdropColors(testBarsButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local testBarsText = testBarsButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  testBarsText:SetPoint("CENTER")
+  testBarsText:SetText("Test Bars")
+  Elysian.ApplyFont(testBarsText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(testBarsText)
+
+  local function UpdateTestBarsStyle(active)
+    local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+    Elysian.SetBackdropColors(testBarsButton, bg, Elysian.GetThemeBorder(), 0.9)
+  end
+  UpdateTestBarsStyle(Elysian.state.bannerTestAll)
+
+  local function SetAllBannerTests(enabled)
+    Elysian.state.bannerTestAll = enabled and true or false
+    Elysian.state.repairReminderTest = enabled and true or false
+    Elysian.state.dungeonReminderTest = enabled and true or false
+    Elysian.state.buffWatchTest = enabled and true or false
+    Elysian.state.dungeonConsumablesTest = enabled and true or false
+    Elysian.state.warlockPetReminderTest = enabled and true or false
+    Elysian.state.warlockStoneReminderTest = enabled and true or false
+    Elysian.state.warriorBuffTest = enabled and true or false
+    Elysian.state.mageBuffTest = enabled and true or false
+    Elysian.state.priestBuffTest = enabled and true or false
+    Elysian.state.druidBuffTest = enabled and true or false
+    Elysian.state.shamanBuffTest = enabled and true or false
+    Elysian.state.evokerBuffTest = enabled and true or false
+    Elysian.state.roguePoisonTest = enabled and true or false
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.Features and Elysian.Features.RepairReminder then
+      Elysian.Features.RepairReminder:SetTestEnabled(enabled)
+    end
+    if Elysian.Features and Elysian.Features.DungeonReminder then
+      Elysian.Features.DungeonReminder:SetTestEnabled(enabled)
+    end
+    if Elysian.Features and Elysian.Features.BuffWatch then
+      Elysian.Features.BuffWatch:SetTestEnabled(enabled)
+    end
+    if Elysian.Features and Elysian.Features.DungeonConsumables then
+      Elysian.Features.DungeonConsumables:SetTestEnabled(enabled)
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      Elysian.Features.WarlockReminders:SetPetTest(enabled)
+      Elysian.Features.WarlockReminders:SetStoneTest(enabled)
+    end
+    if Elysian.Features and Elysian.Features.ClassBuffReminders then
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("warrior", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("mage", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("priest", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("druid", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("shaman", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("evoker", enabled)
+      Elysian.Features.ClassBuffReminders:SetTestEnabled("rogue", enabled)
+    end
+  end
+
+  testBarsButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    local enabled = not Elysian.state.bannerTestAll
+    SetAllBannerTests(enabled)
+    UpdateTestBarsStyle(enabled)
+  end)
+  HookButtonPressFeedback(testBarsButton)
 
   local fontLabel = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   fontLabel:SetPoint("TOPLEFT", generalText, "BOTTOMLEFT", 0, -18)
@@ -635,9 +695,12 @@ function Elysian.UI:CreateMainFrame()
         selectedProfile = selfButton.value
         UIDropDownMenu_SetText(profileDrop, string.upper(selectedProfile))
         UIDropDownMenu_SetSelectedValue(profileDrop, selectedProfile)
-        if Elysian.LoadProfile then
-          Elysian.LoadProfile(selectedProfile)
-        end
+      if Elysian.LoadProfile then
+        Elysian.LoadProfile(selectedProfile)
+      end
+      if Elysian.UI and Elysian.UI.Rebuild then
+        Elysian.UI:Rebuild()
+      end
       end
       for _, name in ipairs(names) do
         info.text = string.upper(name)
@@ -747,25 +810,8 @@ function Elysian.UI:CreateMainFrame()
   HookButtonPressFeedback(deleteProfileButton)
 
 
-  local generalQolToggle = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
-  generalQolToggle:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", -12, -44)
-  generalQolToggle.text = generalQolToggle.text or _G[generalQolToggle:GetName() .. "Text"]
-  generalQolToggle.text:SetText("Toggle ON all QOL Features")
-  Elysian.ApplyFont(generalQolToggle.text, 12)
-  Elysian.ApplyTextColor(generalQolToggle.text)
-  Elysian.StyleCheckbox(generalQolToggle)
-  generalQolToggle:SetChecked(false)
-  generalQolToggle:SetScript("OnClick", function(selfButton)
-    if Elysian.ClickFeedback then
-      Elysian.ClickFeedback()
-    end
-    if Elysian.UI and Elysian.UI.SetAllQolEnabled then
-      Elysian.UI.SetAllQolEnabled(selfButton:GetChecked())
-    end
-  end)
-
   local minimapToggle = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
-  minimapToggle:SetPoint("TOPLEFT", generalQolToggle, "BOTTOMLEFT", 0, -12)
+  minimapToggle:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", -12, -34)
   minimapToggle.text = minimapToggle.text or _G[minimapToggle:GetName() .. "Text"]
   minimapToggle.text:SetText("Show minimap button")
   Elysian.ApplyFont(minimapToggle.text, 12)
@@ -785,6 +831,28 @@ function Elysian.UI:CreateMainFrame()
       Elysian.MinimapButton:ApplyVisibility()
     end
   end)
+
+  local showOnStart = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
+  showOnStart:SetPoint("BOTTOMLEFT", 0, -15)
+  showOnStart.text = showOnStart.text or _G[showOnStart:GetName() .. "Text"]
+  showOnStart.text:SetText("Do not show at start")
+  Elysian.ApplyFont(showOnStart.text, 13)
+  Elysian.ApplyTextColor(showOnStart.text)
+  Elysian.StyleCheckbox(showOnStart)
+  local dbShow = (ElysianDB and ElysianDB.showOnStart)
+  local shouldShowOnStart = (dbShow ~= false) and (Elysian.state.showOnStart ~= false)
+  showOnStart:SetChecked(not shouldShowOnStart)
+  showOnStart:SetScript("OnClick", function(selfButton)
+    local showAtStart = not selfButton:GetChecked()
+    Elysian.state.showOnStart = showAtStart
+    if ElysianDB then
+      ElysianDB.showOnStart = showAtStart
+    end
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+  self.showOnStartCheck = showOnStart
 
 
   table.insert(panels, generalPanel)
@@ -834,10 +902,130 @@ function Elysian.UI:CreateMainFrame()
     end
     table.insert(alertTabs, tab)
 
-    local panel = CreateFrame("Frame", nil, contentBody)
-    panel:SetPoint("TOPLEFT", 12, -12)
-    panel:SetPoint("TOPRIGHT", -12, -12)
-    panel:SetHeight(880)
+    local rootPanel = CreateFrame("Frame", nil, contentBody)
+    rootPanel:SetPoint("TOPLEFT", 12, -12)
+    rootPanel:SetPoint("TOPRIGHT", -12, -12)
+    rootPanel:SetHeight(880)
+
+    local panel = rootPanel
+    if className == "DUNGEONS" then
+      rootPanel:SetClipsChildren(true)
+      local scrollFrame = CreateFrame("ScrollFrame", "ElysianDungeonScrollFrame", rootPanel, "UIPanelScrollFrameTemplate")
+      scrollFrame:SetPoint("TOPLEFT", 4, -4)
+      scrollFrame:SetPoint("BOTTOMRIGHT", -28, 4)
+      scrollFrame:SetClipsChildren(true)
+      scrollFrame:EnableMouseWheel(true)
+
+      local scrollChild = CreateFrame("Frame", nil, scrollFrame)
+      scrollChild:SetPoint("TOPLEFT", 0, 0)
+      scrollChild:SetPoint("TOPRIGHT", 0, 0)
+      scrollChild:SetHeight(1800)
+      scrollFrame:SetScrollChild(scrollChild)
+
+      local scrollBar = _G["ElysianDungeonScrollFrameScrollBar"]
+      if scrollBar then
+        scrollBar:Show()
+        scrollBar:SetAlpha(0)
+      end
+
+      local customBar = CreateFrame("Frame", nil, scrollFrame, BackdropTemplateMixin and "BackdropTemplate" or nil)
+      customBar:SetPoint("TOPRIGHT", -2, -2)
+      customBar:SetPoint("BOTTOMRIGHT", -2, 2)
+      customBar:SetWidth(10)
+      Elysian.SetBackdrop(customBar)
+      Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local thumb = customBar:CreateTexture(nil, "OVERLAY")
+      thumb:SetTexture("Interface/Buttons/WHITE8x8")
+      local accent = { Elysian.HexToRGB(Elysian.theme.accent) }
+      thumb:SetVertexColor(accent[1], accent[2], accent[3], 1)
+      thumb:SetPoint("TOPLEFT", 1, -1)
+      thumb:SetPoint("TOPRIGHT", -1, -1)
+      thumb:SetHeight(12)
+      customBar.thumb = thumb
+
+      local function Clamp(value, minValue, maxValue)
+        if value < minValue then
+          return minValue
+        end
+        if value > maxValue then
+          return maxValue
+        end
+        return value
+      end
+
+      local function SyncScrollSize()
+        local width = scrollFrame:GetWidth() or 0
+        if width <= 0 then
+          width = (rootPanel.GetWidth and rootPanel:GetWidth()) or 1
+        end
+        scrollChild:SetWidth(width)
+        scrollFrame:UpdateScrollChildRect()
+        if scrollBar then
+          scrollBar:SetAlpha(0)
+        end
+        local max = scrollFrame:GetVerticalScrollRange() or 0
+        if max <= 0 then
+          customBar:Hide()
+        else
+          customBar:Show()
+          local view = scrollFrame:GetHeight() or 1
+          local ratio = view / (view + max)
+          local minHeight = 12
+          local barHeight = (customBar:GetHeight() or 1) * ratio * 0.125
+          if barHeight < minHeight then
+            barHeight = minHeight
+          end
+          local maxHeight = (customBar:GetHeight() or 1) - 2
+          if barHeight > maxHeight then
+            barHeight = maxHeight
+          end
+          customBar.thumb:SetHeight(barHeight)
+        end
+      end
+
+      local function UpdateThumbPosition(value)
+        local max = scrollFrame:GetVerticalScrollRange() or 0
+        if max <= 0 then
+          return
+        end
+        local available = (customBar:GetHeight() or 1) - (customBar.thumb:GetHeight() or 1) - 2
+        if available < 0 then
+          available = 0
+        end
+        local ratio = value / max
+        local offset = -ratio * available
+        offset = Clamp(offset, -available, 0)
+        customBar.thumb:ClearAllPoints()
+        customBar.thumb:SetPoint("TOPLEFT", 1, -1 + offset)
+        customBar.thumb:SetPoint("TOPRIGHT", -1, -1 + offset)
+      end
+
+      scrollFrame:SetScript("OnSizeChanged", function()
+        SyncScrollSize()
+      end)
+      scrollFrame:SetScript("OnShow", function()
+        SyncScrollSize()
+      end)
+
+      scrollFrame:SetScript("OnMouseWheel", function(_, delta)
+        local step = 30
+        local value = scrollFrame:GetVerticalScroll() or 0
+        local max = scrollFrame:GetVerticalScrollRange() or 0
+        local nextValue = Clamp(value - delta * step, 0, max)
+        scrollFrame:SetVerticalScroll(nextValue)
+        UpdateThumbPosition(nextValue)
+      end)
+
+      scrollFrame:SetScript("OnVerticalScroll", function(_, value)
+        UpdateThumbPosition(value)
+      end)
+
+      rootPanel.scrollFrame = scrollFrame
+      rootPanel.scrollChild = scrollChild
+      rootPanel._syncDungeonScroll = SyncScrollSize
+      panel = scrollChild
+    end
 
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 8, -8)
@@ -849,6 +1037,37 @@ function Elysian.UI:CreateMainFrame()
 
     Elysian.ApplyFont(title, 13, "OUTLINE")
     Elysian.ApplyTextColor(title)
+
+    if className == "DUNGEONS" and rootPanel.scrollChild then
+      local lastWidget = rootPanel._dungeonLastWidget
+      if lastWidget and rootPanel.scrollChild then
+        local function FinalizeDungeonScroll()
+          local child = rootPanel.scrollChild
+          local top = child:GetTop()
+          local bottom = lastWidget:GetBottom()
+          local view = rootPanel.scrollFrame and rootPanel.scrollFrame:GetHeight()
+          if top and bottom then
+            local height = (top - bottom) + 40
+            if view and height < view then
+              height = view
+            end
+            if height < 1800 then
+              height = 1800
+            end
+            child:SetHeight(height)
+            if rootPanel._syncDungeonScroll then
+              rootPanel._syncDungeonScroll()
+            end
+          end
+        end
+        rootPanel:HookScript("OnShow", FinalizeDungeonScroll)
+        if C_Timer and C_Timer.After then
+          C_Timer.After(0, FinalizeDungeonScroll)
+        else
+          FinalizeDungeonScroll()
+        end
+      end
+    end
 
     local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
@@ -936,8 +1155,188 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(colorButton)
 
+      local textOverrideLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      textOverrideLabel:SetPoint("BOTTOMLEFT", colorButton, "TOPRIGHT", 10, 2)
+      textOverrideLabel:SetText("Custom Text:")
+      Elysian.ApplyFont(textOverrideLabel, 10)
+      Elysian.ApplyTextColor(textOverrideLabel)
+
+      local textOverrideBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+      textOverrideBox:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
+      textOverrideBox:SetSize(180, 22)
+      textOverrideBox:SetAutoFocus(false)
+      Elysian.SetBackdrop(textOverrideBox)
+      Elysian.SetBackdropColors(textOverrideBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+      textOverrideBox:SetTextInsets(6, 6, 2, 2)
+      textOverrideBox:SetText(Elysian.state.repairReminderTextOverride or "")
+      Elysian.ApplyFont(textOverrideBox, 11, "OUTLINE")
+      Elysian.ApplyTextColor(textOverrideBox)
+      textOverrideBox:SetScript("OnEnterPressed", function(selfBox)
+        selfBox:ClearFocus()
+      end)
+      textOverrideBox:SetScript("OnEditFocusLost", function(selfBox)
+        Elysian.state.repairReminderTextOverride = selfBox:GetText() or ""
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.RepairReminder then
+          Elysian.Features.RepairReminder:ApplyColors()
+        end
+      end)
+
+      local bgButton = CreateFrame("Button", nil, panel, template)
+      bgButton:SetPoint("TOPLEFT", colorButton, "BOTTOMLEFT", 0, -10)
+      bgButton:SetSize(180, 22)
+      Elysian.SetBackdrop(bgButton)
+      Elysian.SetBackdropColors(bgButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local bgText = bgButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      bgText:SetPoint("CENTER")
+      bgText:SetText("Background Color")
+      Elysian.ApplyFont(bgText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(bgText)
+
+      local bgSwatch = bgButton:CreateTexture(nil, "OVERLAY")
+      bgSwatch:SetSize(12, 12)
+      bgSwatch:SetPoint("RIGHT", -8, 0)
+      local startBg = Elysian.state.repairReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+      bgSwatch:SetColorTexture(startBg[1], startBg[2], startBg[3], 1)
+
+      bgButton:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.repairReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        local function apply(r, g, b)
+          Elysian.state.repairReminderBgColor = { r, g, b }
+          bgSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.RepairReminder then
+            Elysian.Features.RepairReminder:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(bgButton)
+
+      local alphaLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      alphaLabel:SetPoint("TOPLEFT", bgButton, "BOTTOMLEFT", 0, -12)
+      alphaLabel:SetText("Transparency")
+      Elysian.ApplyFont(alphaLabel, 11)
+      Elysian.ApplyTextColor(alphaLabel)
+
+      local alphaSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      alphaSlider:SetPoint("TOPLEFT", alphaLabel, "BOTTOMLEFT", 4, -26)
+      alphaSlider:SetMinMaxValues(0.1, 1.0)
+      alphaSlider:SetValueStep(0.05)
+      alphaSlider:SetObeyStepOnDrag(true)
+      alphaSlider:SetWidth(220)
+      local alphaValue = Elysian.state.repairReminderAlpha or 0.95
+      alphaSlider:SetValue(alphaValue)
+      alphaSlider.Low:SetText("10%")
+      alphaSlider.High:SetText("100%")
+      alphaSlider.Text:SetText(string.format("%d%%", math.floor(alphaValue * 100 + 0.5)))
+      alphaSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.max(0.1, math.min(1, value))
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+        Elysian.state.repairReminderAlpha = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.RepairReminder then
+          Elysian.Features.RepairReminder:ApplyColors()
+        end
+      end)
+
+      local widthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      widthLabel:SetPoint("TOPLEFT", alphaSlider, "BOTTOMLEFT", -4, -20)
+      widthLabel:SetText("Banner Width")
+      Elysian.ApplyFont(widthLabel, 11)
+      Elysian.ApplyTextColor(widthLabel)
+
+      local widthSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      widthSlider:SetPoint("TOPLEFT", widthLabel, "BOTTOMLEFT", 4, -26)
+      widthSlider:SetMinMaxValues(200, 600)
+      widthSlider:SetValueStep(1)
+      widthSlider:SetObeyStepOnDrag(true)
+      widthSlider:SetWidth(220)
+      local widthValue = Elysian.state.repairReminderWidth
+      if not widthValue or widthValue <= 0 then
+        widthValue = 360
+      end
+      widthSlider:SetValue(widthValue)
+      widthSlider.Low:SetText("200")
+      widthSlider.High:SetText("600")
+      widthSlider.Text:SetText(string.format("%d", widthValue))
+      widthSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.repairReminderWidth = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.RepairReminder then
+          Elysian.Features.RepairReminder:ApplySize()
+        end
+      end)
+
+      local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      heightLabel:SetPoint("TOPLEFT", widthSlider, "BOTTOMLEFT", -4, -20)
+      heightLabel:SetText("Banner Height")
+      Elysian.ApplyFont(heightLabel, 11)
+      Elysian.ApplyTextColor(heightLabel)
+
+      local heightSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      heightSlider:SetPoint("TOPLEFT", heightLabel, "BOTTOMLEFT", 4, -26)
+      heightSlider:SetMinMaxValues(30, 120)
+      heightSlider:SetValueStep(1)
+      heightSlider:SetObeyStepOnDrag(true)
+      heightSlider:SetWidth(220)
+      local heightValue = Elysian.state.repairReminderHeight
+      if not heightValue or heightValue <= 0 then
+        heightValue = 46
+      end
+      heightSlider:SetValue(heightValue)
+      heightSlider.Low:SetText("30")
+      heightSlider.High:SetText("120")
+      heightSlider.Text:SetText(string.format("%d", heightValue))
+      heightSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.repairReminderHeight = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.RepairReminder then
+          Elysian.Features.RepairReminder:ApplySize()
+        end
+      end)
+
       local testBanner = CreateFrame("Button", nil, panel, template)
-      testBanner:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
+      testBanner:SetPoint("LEFT", bgButton, "RIGHT", 10, 0)
       testBanner:SetSize(120, 22)
       Elysian.SetBackdrop(testBanner)
       Elysian.SetBackdropColors(testBanner, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1041,8 +1440,188 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(dungeonColor)
 
+      local textOverrideLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      textOverrideLabel:SetPoint("BOTTOMLEFT", dungeonColor, "TOPRIGHT", 10, 2)
+      textOverrideLabel:SetText("Custom Text:")
+      Elysian.ApplyFont(textOverrideLabel, 10)
+      Elysian.ApplyTextColor(textOverrideLabel)
+
+      local textOverrideBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+      textOverrideBox:SetPoint("LEFT", dungeonColor, "RIGHT", 10, 0)
+      textOverrideBox:SetSize(180, 22)
+      textOverrideBox:SetAutoFocus(false)
+      Elysian.SetBackdrop(textOverrideBox)
+      Elysian.SetBackdropColors(textOverrideBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+      textOverrideBox:SetTextInsets(6, 6, 2, 2)
+      textOverrideBox:SetText(Elysian.state.dungeonReminderTextOverride or "")
+      Elysian.ApplyFont(textOverrideBox, 11, "OUTLINE")
+      Elysian.ApplyTextColor(textOverrideBox)
+      textOverrideBox:SetScript("OnEnterPressed", function(selfBox)
+        selfBox:ClearFocus()
+      end)
+      textOverrideBox:SetScript("OnEditFocusLost", function(selfBox)
+        Elysian.state.dungeonReminderTextOverride = selfBox:GetText() or ""
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonReminder then
+          Elysian.Features.DungeonReminder:ApplyColors()
+        end
+      end)
+
+      local dungeonBg = CreateFrame("Button", nil, panel, template)
+      dungeonBg:SetPoint("TOPLEFT", dungeonColor, "BOTTOMLEFT", 0, -10)
+      dungeonBg:SetSize(180, 22)
+      Elysian.SetBackdrop(dungeonBg)
+      Elysian.SetBackdropColors(dungeonBg, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local dungeonBgText = dungeonBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      dungeonBgText:SetPoint("CENTER")
+      dungeonBgText:SetText("Background Color")
+      Elysian.ApplyFont(dungeonBgText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(dungeonBgText)
+
+      local dungeonBgSwatch = dungeonBg:CreateTexture(nil, "OVERLAY")
+      dungeonBgSwatch:SetSize(12, 12)
+      dungeonBgSwatch:SetPoint("RIGHT", -8, 0)
+      local dungeonBgStart = Elysian.state.dungeonReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+      dungeonBgSwatch:SetColorTexture(dungeonBgStart[1], dungeonBgStart[2], dungeonBgStart[3], 1)
+
+      dungeonBg:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.dungeonReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        local function apply(r, g, b)
+          Elysian.state.dungeonReminderBgColor = { r, g, b }
+          dungeonBgSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.DungeonReminder then
+            Elysian.Features.DungeonReminder:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(dungeonBg)
+
+      local dungeonAlphaLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      dungeonAlphaLabel:SetPoint("TOPLEFT", dungeonBg, "BOTTOMLEFT", 0, -12)
+      dungeonAlphaLabel:SetText("Transparency")
+      Elysian.ApplyFont(dungeonAlphaLabel, 11)
+      Elysian.ApplyTextColor(dungeonAlphaLabel)
+
+      local dungeonAlphaSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      dungeonAlphaSlider:SetPoint("TOPLEFT", dungeonAlphaLabel, "BOTTOMLEFT", 4, -26)
+      dungeonAlphaSlider:SetMinMaxValues(0.1, 1.0)
+      dungeonAlphaSlider:SetValueStep(0.05)
+      dungeonAlphaSlider:SetObeyStepOnDrag(true)
+      dungeonAlphaSlider:SetWidth(220)
+      local dungeonAlphaValue = Elysian.state.dungeonReminderAlpha or 0.95
+      dungeonAlphaSlider:SetValue(dungeonAlphaValue)
+      dungeonAlphaSlider.Low:SetText("10%")
+      dungeonAlphaSlider.High:SetText("100%")
+      dungeonAlphaSlider.Text:SetText(string.format("%d%%", math.floor(dungeonAlphaValue * 100 + 0.5)))
+      dungeonAlphaSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.max(0.1, math.min(1, value))
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+        Elysian.state.dungeonReminderAlpha = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonReminder then
+          Elysian.Features.DungeonReminder:ApplyColors()
+        end
+      end)
+
+      local dungeonWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      dungeonWidthLabel:SetPoint("TOPLEFT", dungeonAlphaSlider, "BOTTOMLEFT", -4, -20)
+      dungeonWidthLabel:SetText("Banner Width")
+      Elysian.ApplyFont(dungeonWidthLabel, 11)
+      Elysian.ApplyTextColor(dungeonWidthLabel)
+
+      local dungeonWidthSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      dungeonWidthSlider:SetPoint("TOPLEFT", dungeonWidthLabel, "BOTTOMLEFT", 4, -26)
+      dungeonWidthSlider:SetMinMaxValues(200, 600)
+      dungeonWidthSlider:SetValueStep(1)
+      dungeonWidthSlider:SetObeyStepOnDrag(true)
+      dungeonWidthSlider:SetWidth(220)
+      local dungeonWidthValue = Elysian.state.dungeonReminderWidth
+      if not dungeonWidthValue or dungeonWidthValue <= 0 then
+        dungeonWidthValue = 360
+      end
+      dungeonWidthSlider:SetValue(dungeonWidthValue)
+      dungeonWidthSlider.Low:SetText("200")
+      dungeonWidthSlider.High:SetText("600")
+      dungeonWidthSlider.Text:SetText(string.format("%d", dungeonWidthValue))
+      dungeonWidthSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.dungeonReminderWidth = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonReminder then
+          Elysian.Features.DungeonReminder:ApplySize()
+        end
+      end)
+
+      local dungeonHeightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      dungeonHeightLabel:SetPoint("TOPLEFT", dungeonWidthSlider, "BOTTOMLEFT", -4, -20)
+      dungeonHeightLabel:SetText("Banner Height")
+      Elysian.ApplyFont(dungeonHeightLabel, 11)
+      Elysian.ApplyTextColor(dungeonHeightLabel)
+
+      local dungeonHeightSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      dungeonHeightSlider:SetPoint("TOPLEFT", dungeonHeightLabel, "BOTTOMLEFT", 4, -26)
+      dungeonHeightSlider:SetMinMaxValues(30, 120)
+      dungeonHeightSlider:SetValueStep(1)
+      dungeonHeightSlider:SetObeyStepOnDrag(true)
+      dungeonHeightSlider:SetWidth(220)
+      local dungeonHeightValue = Elysian.state.dungeonReminderHeight
+      if not dungeonHeightValue or dungeonHeightValue <= 0 then
+        dungeonHeightValue = 46
+      end
+      dungeonHeightSlider:SetValue(dungeonHeightValue)
+      dungeonHeightSlider.Low:SetText("30")
+      dungeonHeightSlider.High:SetText("120")
+      dungeonHeightSlider.Text:SetText(string.format("%d", dungeonHeightValue))
+      dungeonHeightSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.dungeonReminderHeight = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonReminder then
+          Elysian.Features.DungeonReminder:ApplySize()
+        end
+      end)
+
       local dungeonTest = CreateFrame("Button", nil, panel, template)
-      dungeonTest:SetPoint("LEFT", dungeonColor, "RIGHT", 10, 0)
+      dungeonTest:SetPoint("LEFT", dungeonBg, "RIGHT", 10, 0)
       dungeonTest:SetSize(120, 22)
       Elysian.SetBackdrop(dungeonTest)
       Elysian.SetBackdropColors(dungeonTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1072,7 +1651,7 @@ function Elysian.UI:CreateMainFrame()
       HookButtonPressFeedback(dungeonTest)
 
       local buffToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
-      buffToggle:SetPoint("TOPLEFT", dungeonColor, "BOTTOMLEFT", 0, -18)
+      buffToggle:SetPoint("TOPLEFT", dungeonHeightSlider, "BOTTOMLEFT", -4, -20)
       buffToggle.text = buffToggle.text or _G[buffToggle:GetName() .. "Text"]
       buffToggle.text:SetText("Enable Buffwatch")
       Elysian.ApplyFont(buffToggle.text, 12)
@@ -1144,8 +1723,159 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(buffColor)
 
+      local buffBg = CreateFrame("Button", nil, panel, template)
+      buffBg:SetPoint("TOPLEFT", buffColor, "BOTTOMLEFT", 0, -10)
+      buffBg:SetSize(180, 22)
+      Elysian.SetBackdrop(buffBg)
+      Elysian.SetBackdropColors(buffBg, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local buffBgText = buffBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffBgText:SetPoint("CENTER")
+      buffBgText:SetText("Background Color")
+      Elysian.ApplyFont(buffBgText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(buffBgText)
+
+      local buffBgSwatch = buffBg:CreateTexture(nil, "OVERLAY")
+      buffBgSwatch:SetSize(12, 12)
+      buffBgSwatch:SetPoint("RIGHT", -8, 0)
+      local buffBgStart = Elysian.state.buffWatchBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+      buffBgSwatch:SetColorTexture(buffBgStart[1], buffBgStart[2], buffBgStart[3], 1)
+
+      buffBg:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.buffWatchBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        local function apply(r, g, b)
+          Elysian.state.buffWatchBgColor = { r, g, b }
+          buffBgSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.BuffWatch then
+            Elysian.Features.BuffWatch:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(buffBg)
+
+      local buffAlphaLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffAlphaLabel:SetPoint("TOPLEFT", buffBg, "BOTTOMLEFT", 0, -12)
+      buffAlphaLabel:SetText("Transparency")
+      Elysian.ApplyFont(buffAlphaLabel, 11)
+      Elysian.ApplyTextColor(buffAlphaLabel)
+
+      local buffAlphaSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      buffAlphaSlider:SetPoint("TOPLEFT", buffAlphaLabel, "BOTTOMLEFT", 4, -26)
+      buffAlphaSlider:SetMinMaxValues(0.1, 1.0)
+      buffAlphaSlider:SetValueStep(0.05)
+      buffAlphaSlider:SetObeyStepOnDrag(true)
+      buffAlphaSlider:SetWidth(220)
+      local buffAlphaValue = Elysian.state.buffWatchAlpha or 0.95
+      buffAlphaSlider:SetValue(buffAlphaValue)
+      buffAlphaSlider.Low:SetText("10%")
+      buffAlphaSlider.High:SetText("100%")
+      buffAlphaSlider.Text:SetText(string.format("%d%%", math.floor(buffAlphaValue * 100 + 0.5)))
+      buffAlphaSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.max(0.1, math.min(1, value))
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+        Elysian.state.buffWatchAlpha = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.BuffWatch then
+          Elysian.Features.BuffWatch:ApplyColors()
+        end
+      end)
+
+      local buffWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffWidthLabel:SetPoint("TOPLEFT", buffAlphaSlider, "BOTTOMLEFT", -4, -20)
+      buffWidthLabel:SetText("Banner Width")
+      Elysian.ApplyFont(buffWidthLabel, 11)
+      Elysian.ApplyTextColor(buffWidthLabel)
+
+      local buffWidthSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      buffWidthSlider:SetPoint("TOPLEFT", buffWidthLabel, "BOTTOMLEFT", 4, -26)
+      buffWidthSlider:SetMinMaxValues(200, 600)
+      buffWidthSlider:SetValueStep(1)
+      buffWidthSlider:SetObeyStepOnDrag(true)
+      buffWidthSlider:SetWidth(220)
+      local buffWidthValue = Elysian.state.buffWatchWidth
+      if not buffWidthValue or buffWidthValue <= 0 then
+        buffWidthValue = 420
+      end
+      buffWidthSlider:SetValue(buffWidthValue)
+      buffWidthSlider.Low:SetText("200")
+      buffWidthSlider.High:SetText("600")
+      buffWidthSlider.Text:SetText(string.format("%d", buffWidthValue))
+      buffWidthSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.buffWatchWidth = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.BuffWatch then
+          Elysian.Features.BuffWatch:ApplySize()
+        end
+      end)
+
+      local buffHeightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      buffHeightLabel:SetPoint("TOPLEFT", buffWidthSlider, "BOTTOMLEFT", -4, -20)
+      buffHeightLabel:SetText("Banner Height")
+      Elysian.ApplyFont(buffHeightLabel, 11)
+      Elysian.ApplyTextColor(buffHeightLabel)
+
+      local buffHeightSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      buffHeightSlider:SetPoint("TOPLEFT", buffHeightLabel, "BOTTOMLEFT", 4, -26)
+      buffHeightSlider:SetMinMaxValues(30, 120)
+      buffHeightSlider:SetValueStep(1)
+      buffHeightSlider:SetObeyStepOnDrag(true)
+      buffHeightSlider:SetWidth(220)
+      local buffHeightValue = Elysian.state.buffWatchHeight
+      if not buffHeightValue or buffHeightValue <= 0 then
+        buffHeightValue = 52
+      end
+      buffHeightSlider:SetValue(buffHeightValue)
+      buffHeightSlider.Low:SetText("30")
+      buffHeightSlider.High:SetText("120")
+      buffHeightSlider.Text:SetText(string.format("%d", buffHeightValue))
+      buffHeightSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.buffWatchHeight = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.BuffWatch then
+          Elysian.Features.BuffWatch:ApplySize()
+        end
+      end)
+
       local buffTest = CreateFrame("Button", nil, panel, template)
-      buffTest:SetPoint("LEFT", buffColor, "RIGHT", 10, 0)
+      buffTest:SetPoint("LEFT", buffBg, "RIGHT", 10, 0)
       buffTest:SetSize(120, 22)
       Elysian.SetBackdrop(buffTest)
       Elysian.SetBackdropColors(buffTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1175,7 +1905,7 @@ function Elysian.UI:CreateMainFrame()
       HookButtonPressFeedback(buffTest)
 
       local consumableToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
-      consumableToggle:SetPoint("TOPLEFT", buffColor, "BOTTOMLEFT", 0, -18)
+      consumableToggle:SetPoint("TOPLEFT", buffHeightSlider, "BOTTOMLEFT", -4, -20)
       consumableToggle.text = consumableToggle.text or _G[consumableToggle:GetName() .. "Text"]
       consumableToggle.text:SetText("Enable consumable reminders")
       Elysian.ApplyFont(consumableToggle.text, 12)
@@ -1247,8 +1977,159 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(consumableColor)
 
+      local consumableBg = CreateFrame("Button", nil, panel, template)
+      consumableBg:SetPoint("TOPLEFT", consumableColor, "BOTTOMLEFT", 0, -10)
+      consumableBg:SetSize(180, 22)
+      Elysian.SetBackdrop(consumableBg)
+      Elysian.SetBackdropColors(consumableBg, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local consumableBgText = consumableBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableBgText:SetPoint("CENTER")
+      consumableBgText:SetText("Background Color")
+      Elysian.ApplyFont(consumableBgText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(consumableBgText)
+
+      local consumableBgSwatch = consumableBg:CreateTexture(nil, "OVERLAY")
+      consumableBgSwatch:SetSize(12, 12)
+      consumableBgSwatch:SetPoint("RIGHT", -8, 0)
+      local consumableBgStart = Elysian.state.dungeonConsumablesBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+      consumableBgSwatch:SetColorTexture(consumableBgStart[1], consumableBgStart[2], consumableBgStart[3], 1)
+
+      consumableBg:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.dungeonConsumablesBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        local function apply(r, g, b)
+          Elysian.state.dungeonConsumablesBgColor = { r, g, b }
+          consumableBgSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.DungeonConsumables then
+            Elysian.Features.DungeonConsumables:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+        if Elysian.OpenColorPicker then
+          Elysian.OpenColorPicker({
+            r = color[1],
+            g = color[2],
+            b = color[3],
+            opacity = 1,
+            hasOpacity = false,
+            swatchFunc = function()
+              local r, g, b = ColorPickerFrame:GetColorRGB()
+              apply(r, g, b)
+            end,
+            cancelFunc = function(prev)
+              local pr = prev.r or prev[1] or color[1]
+              local pg = prev.g or prev[2] or color[2]
+              local pb = prev.b or prev[3] or color[3]
+              apply(pr, pg, pb)
+            end,
+          })
+        end
+      end)
+      HookButtonPressFeedback(consumableBg)
+
+      local consumableAlphaLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableAlphaLabel:SetPoint("TOPLEFT", consumableBg, "BOTTOMLEFT", 0, -12)
+      consumableAlphaLabel:SetText("Transparency")
+      Elysian.ApplyFont(consumableAlphaLabel, 11)
+      Elysian.ApplyTextColor(consumableAlphaLabel)
+
+      local consumableAlphaSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      consumableAlphaSlider:SetPoint("TOPLEFT", consumableAlphaLabel, "BOTTOMLEFT", 4, -26)
+      consumableAlphaSlider:SetMinMaxValues(0.1, 1.0)
+      consumableAlphaSlider:SetValueStep(0.05)
+      consumableAlphaSlider:SetObeyStepOnDrag(true)
+      consumableAlphaSlider:SetWidth(220)
+      local consumableAlphaValue = Elysian.state.dungeonConsumablesAlpha or 0.95
+      consumableAlphaSlider:SetValue(consumableAlphaValue)
+      consumableAlphaSlider.Low:SetText("10%")
+      consumableAlphaSlider.High:SetText("100%")
+      consumableAlphaSlider.Text:SetText(string.format("%d%%", math.floor(consumableAlphaValue * 100 + 0.5)))
+      consumableAlphaSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.max(0.1, math.min(1, value))
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+        Elysian.state.dungeonConsumablesAlpha = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonConsumables then
+          Elysian.Features.DungeonConsumables:ApplyColors()
+        end
+      end)
+
+      local consumableWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableWidthLabel:SetPoint("TOPLEFT", consumableAlphaSlider, "BOTTOMLEFT", -4, -20)
+      consumableWidthLabel:SetText("Banner Width")
+      Elysian.ApplyFont(consumableWidthLabel, 11)
+      Elysian.ApplyTextColor(consumableWidthLabel)
+
+      local consumableWidthSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      consumableWidthSlider:SetPoint("TOPLEFT", consumableWidthLabel, "BOTTOMLEFT", 4, -26)
+      consumableWidthSlider:SetMinMaxValues(200, 600)
+      consumableWidthSlider:SetValueStep(1)
+      consumableWidthSlider:SetObeyStepOnDrag(true)
+      consumableWidthSlider:SetWidth(220)
+      local consumableWidthValue = Elysian.state.dungeonConsumablesWidth
+      if not consumableWidthValue or consumableWidthValue <= 0 then
+        consumableWidthValue = 420
+      end
+      consumableWidthSlider:SetValue(consumableWidthValue)
+      consumableWidthSlider.Low:SetText("200")
+      consumableWidthSlider.High:SetText("600")
+      consumableWidthSlider.Text:SetText(string.format("%d", consumableWidthValue))
+      consumableWidthSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.dungeonConsumablesWidth = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonConsumables then
+          Elysian.Features.DungeonConsumables:ApplySize()
+        end
+      end)
+
+      local consumableHeightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      consumableHeightLabel:SetPoint("TOPLEFT", consumableWidthSlider, "BOTTOMLEFT", -4, -20)
+      consumableHeightLabel:SetText("Banner Height")
+      Elysian.ApplyFont(consumableHeightLabel, 11)
+      Elysian.ApplyTextColor(consumableHeightLabel)
+
+      local consumableHeightSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      consumableHeightSlider:SetPoint("TOPLEFT", consumableHeightLabel, "BOTTOMLEFT", 4, -26)
+      consumableHeightSlider:SetMinMaxValues(30, 120)
+      consumableHeightSlider:SetValueStep(1)
+      consumableHeightSlider:SetObeyStepOnDrag(true)
+      consumableHeightSlider:SetWidth(220)
+      local consumableHeightValue = Elysian.state.dungeonConsumablesHeight
+      if not consumableHeightValue or consumableHeightValue <= 0 then
+        consumableHeightValue = 52
+      end
+      consumableHeightSlider:SetValue(consumableHeightValue)
+      consumableHeightSlider.Low:SetText("30")
+      consumableHeightSlider.High:SetText("120")
+      consumableHeightSlider.Text:SetText(string.format("%d", consumableHeightValue))
+      consumableHeightSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        value = math.floor(value + 0.5)
+        selfSlider:SetValue(value)
+        selfSlider.Text:SetText(string.format("%d", value))
+        Elysian.state.dungeonConsumablesHeight = value
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+        if Elysian.Features and Elysian.Features.DungeonConsumables then
+          Elysian.Features.DungeonConsumables:ApplySize()
+        end
+      end)
+
       local consumableTest = CreateFrame("Button", nil, panel, template)
-      consumableTest:SetPoint("LEFT", consumableColor, "RIGHT", 10, 0)
+      consumableTest:SetPoint("LEFT", consumableBg, "RIGHT", 10, 0)
       consumableTest:SetSize(120, 22)
       Elysian.SetBackdrop(consumableTest)
       Elysian.SetBackdropColors(consumableTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1277,9 +2158,11 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(consumableTest)
 
+      rootPanel._dungeonLastWidget = consumableHeightSlider
+
     end
 
-    table.insert(alertPanels, panel)
+    table.insert(alertPanels, rootPanel)
   end
   for _, t in ipairs(alertTabs) do
     t:Hide()
@@ -2072,28 +2955,6 @@ function Elysian.UI:CreateMainFrame()
   SelectTopTab(generalTab)
   SelectSubTab(scrapTab)
   ShowGeneral()
-
-  local showOnStart = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
-  showOnStart:SetPoint("BOTTOMLEFT", 10, 10)
-  showOnStart.text = showOnStart.text or _G[showOnStart:GetName() .. "Text"]
-  showOnStart.text:SetText("Do not show at start")
-  Elysian.ApplyFont(showOnStart.text, 13)
-  Elysian.ApplyTextColor(showOnStart.text)
-  Elysian.StyleCheckbox(showOnStart)
-  local dbShow = (ElysianDB and ElysianDB.showOnStart)
-  local shouldShowOnStart = (dbShow ~= false) and (Elysian.state.showOnStart ~= false)
-  showOnStart:SetChecked(not shouldShowOnStart)
-  showOnStart:SetScript("OnClick", function(selfButton)
-    local showAtStart = not selfButton:GetChecked()
-    Elysian.state.showOnStart = showAtStart
-    if ElysianDB then
-      ElysianDB.showOnStart = showAtStart
-    end
-    if Elysian.SaveState then
-      Elysian.SaveState()
-    end
-  end)
-  self.showOnStartCheck = showOnStart
 
   self.mainFrame = frame
   tinsert(UISpecialFrames, frame:GetName())
