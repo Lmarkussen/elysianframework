@@ -344,8 +344,7 @@ function CursorRing:UpdateTrail(elapsed, x, y)
   local fadeTime = Elysian.state.cursorRingTrailFadeTime or 0.25
   local spacing = Elysian.state.cursorRingTrailSpacing or 0.02
   local ringSize = Elysian.state.cursorRingSize or 18
-  local collapseRadius = ringSize * 0.45
-  local collapseSpeed = ringSize * 18
+  local minRadius = ringSize * 0.55
   local lastX = self.lastTrailX
   local lastY = self.lastTrailY
   local moved = (not lastX) or (not lastY) or (math.abs(x - lastX) > 0.5) or (math.abs(y - lastY) > 0.5)
@@ -357,7 +356,17 @@ function CursorRing:UpdateTrail(elapsed, x, y)
     self.lastTrailY = y
     if self.trailElapsed >= spacing or #self.trailPositions == 0 then
       self.trailElapsed = 0
-      table.insert(self.trailPositions, 1, { x = x, y = y, t = GetTime() })
+      local dx = x - (lastX or x)
+      local dy = y - (lastY or y)
+      local dist = math.sqrt(dx * dx + dy * dy)
+      local nx, ny = 0, 0
+      if dist > 0 then
+        nx = dx / dist
+        ny = dy / dist
+      end
+      local px = x - nx * minRadius
+      local py = y - ny * minRadius
+      table.insert(self.trailPositions, 1, { x = px, y = py, t = GetTime() })
       local maxCount = Elysian.state.cursorRingTrailLength or 12
       while #self.trailPositions > maxCount do
         table.remove(self.trailPositions)
@@ -382,20 +391,40 @@ function CursorRing:UpdateTrail(elapsed, x, y)
     idleScale = math.max(0, 1 - (self.trailIdle / fadeTime))
   end
 
-  if not moved and #self.trailPositions > 0 then
-    for i = #self.trailPositions, 1, -1 do
-      local pos = self.trailPositions[i]
-      local dx = x - pos.x
-      local dy = y - pos.y
+  if moved then
+    self.trailCollapse = 0
+  elseif #self.trailPositions > 0 then
+    local maxCount = Elysian.state.cursorRingTrailLength or 12
+    local collapseRate = maxCount / math.max(fadeTime, 0.1)
+    self.trailCollapse = (self.trailCollapse or 0) + elapsed * collapseRate
+    local removeCount = math.floor(self.trailCollapse)
+    if removeCount > 0 then
+      self.trailCollapse = self.trailCollapse - removeCount
+      for _ = 1, removeCount do
+        if #self.trailPositions > 0 then
+          table.remove(self.trailPositions)
+        else
+          break
+        end
+      end
+    end
+  end
+
+  if #self.trailPositions > 0 then
+    for _, pos in ipairs(self.trailPositions) do
+      local dx = pos.x - x
+      local dy = pos.y - y
       local dist = math.sqrt(dx * dx + dy * dy)
-      if dist <= collapseRadius then
-        table.remove(self.trailPositions, i)
-      else
-        local step = math.min(dist, collapseSpeed * elapsed)
-        local nx = dx / dist
-        local ny = dy / dist
-        pos.x = pos.x + nx * step
-        pos.y = pos.y + ny * step
+      if dist < minRadius then
+        if dist == 0 then
+          pos.x = x - minRadius
+          pos.y = y
+        else
+          local nx = dx / dist
+          local ny = dy / dist
+          pos.x = x + nx * minRadius
+          pos.y = y + ny * minRadius
+        end
       end
     end
   end
