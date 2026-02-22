@@ -77,6 +77,10 @@ function ClassBuffReminders:GetKeys(prefix)
   return {
     enabled = GetStateKey(prefix, "BuffEnabled"),
     text = GetStateKey(prefix, "BuffTextColor"),
+    bg = GetStateKey(prefix, "BuffBgColor"),
+    alpha = GetStateKey(prefix, "BuffAlpha"),
+    width = GetStateKey(prefix, "BuffWidth"),
+    height = GetStateKey(prefix, "BuffHeight"),
     test = GetStateKey(prefix, "BuffTest"),
     pos = GetStateKey(prefix, "BuffPos"),
   }
@@ -86,6 +90,10 @@ function ClassBuffReminders:GetPoisonKeys()
   return {
     enabled = "roguePoisonEnabled",
     text = "roguePoisonTextColor",
+    bg = "roguePoisonBgColor",
+    alpha = "roguePoisonAlpha",
+    width = "roguePoisonWidth",
+    height = "roguePoisonHeight",
     test = "roguePoisonTest",
     pos = "roguePoisonPos",
   }
@@ -144,8 +152,9 @@ function ClassBuffReminders:ApplyColors(prefix)
   end
   local color = GetColor(keys.text)
   frame.text:SetTextColor(color[1], color[2], color[3])
-  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
-  Elysian.SetBackdropColors(frame, bg, Elysian.GetThemeBorder(), 0.95)
+  local bg = Elysian.state[keys.bg] or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local alpha = Elysian.state[keys.alpha] or 0.95
+  Elysian.SetBackdropColors(frame, bg, Elysian.GetThemeBorder(), alpha)
 end
 
 function ClassBuffReminders:ApplyPosition(prefix)
@@ -166,7 +175,9 @@ function ClassBuffReminders:ApplySize(prefix)
   if not frame then
     return
   end
-  local w, h = Elysian.GetBannerSize(420, 52)
+  local keys = self.keys[prefix]
+  local w = (keys and Elysian.state[keys.width] and Elysian.state[keys.width] > 0) and Elysian.state[keys.width] or 420
+  local h = (keys and Elysian.state[keys.height] and Elysian.state[keys.height] > 0) and Elysian.state[keys.height] or 52
   frame:SetSize(w, h)
   if frame.text then
     frame.text:SetWidth(w - 40)
@@ -184,9 +195,6 @@ function ClassBuffReminders:UpdateFrameText(prefix, message)
   else
     frame.text:SetText(message)
   end
-  local _, baseHeight = Elysian.GetBannerSize(420, 52)
-  local height = math.max(baseHeight, (frame.text:GetStringHeight() or 32) + 20)
-  frame:SetHeight(height)
 end
 
 function ClassBuffReminders:UpdateBuff(prefix)

@@ -108,7 +108,10 @@ function WarlockReminders:ApplyColors()
   local classColor = GetClassColor()
   local petColor = Elysian.state.warlockPetReminderTextColor or classColor
   local stoneColor = Elysian.state.warlockStoneReminderTextColor or classColor
-  local bg = Elysian.state.contentBg or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local petBg = Elysian.state.warlockPetReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local stoneBg = Elysian.state.warlockStoneReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local petAlpha = Elysian.state.warlockPetReminderAlpha or 0.95
+  local stoneAlpha = Elysian.state.warlockStoneReminderAlpha or 0.95
   local override = Elysian.GetBannerOverride()
 
   if self.petText then
@@ -129,26 +132,29 @@ function WarlockReminders:ApplyColors()
   end
 
   if self.petFrame then
-    Elysian.SetBackdropColors(self.petFrame, bg, Elysian.GetThemeBorder(), 0.95)
+    Elysian.SetBackdropColors(self.petFrame, petBg, Elysian.GetThemeBorder(), petAlpha)
   end
   if self.stoneFrame then
-    Elysian.SetBackdropColors(self.stoneFrame, bg, Elysian.GetThemeBorder(), 0.95)
+    Elysian.SetBackdropColors(self.stoneFrame, stoneBg, Elysian.GetThemeBorder(), stoneAlpha)
   end
 end
 
 function WarlockReminders:ApplySize()
-  local w, h = Elysian.GetBannerSize(360, 46)
+  local w = (Elysian.state.warlockPetReminderWidth and Elysian.state.warlockPetReminderWidth > 0) and Elysian.state.warlockPetReminderWidth or 360
+  local h = (Elysian.state.warlockPetReminderHeight and Elysian.state.warlockPetReminderHeight > 0) and Elysian.state.warlockPetReminderHeight or 46
+  local stoneW = (Elysian.state.warlockStoneReminderWidth and Elysian.state.warlockStoneReminderWidth > 0) and Elysian.state.warlockStoneReminderWidth or 360
+  local stoneH = (Elysian.state.warlockStoneReminderHeight and Elysian.state.warlockStoneReminderHeight > 0) and Elysian.state.warlockStoneReminderHeight or 46
   if self.petFrame then
     self.petFrame:SetSize(w, h)
   end
   if self.stoneFrame then
-    self.stoneFrame:SetSize(w, h)
+    self.stoneFrame:SetSize(stoneW, stoneH)
   end
   if self.petText then
     self.petText:SetWidth(w - 40)
   end
   if self.stoneText then
-    self.stoneText:SetWidth(w - 40)
+    self.stoneText:SetWidth(stoneW - 40)
   end
 end
 

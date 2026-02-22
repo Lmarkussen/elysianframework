@@ -249,39 +249,83 @@ function Elysian.GetDefaultState()
     dungeonHealerMark = 2,
     warlockPetReminderEnabled = false,
     warlockPetReminderTextColor = { 1, 1, 1 },
+    warlockPetReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    warlockPetReminderAlpha = 0.95,
+    warlockPetReminderWidth = 0,
+    warlockPetReminderHeight = 0,
     warlockPetReminderTest = false,
     warlockPetReminderPos = nil,
     warlockStoneReminderEnabled = false,
     warlockStoneReminderTextColor = { 1, 1, 1 },
+    warlockStoneReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    warlockStoneReminderAlpha = 0.95,
+    warlockStoneReminderWidth = 0,
+    warlockStoneReminderHeight = 0,
     warlockStoneReminderTest = false,
     warlockStoneReminderPos = nil,
+    hunterPetReminderEnabled = false,
+    hunterPetReminderTextColor = { 1, 1, 1 },
+    hunterPetReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    hunterPetReminderAlpha = 0.95,
+    hunterPetReminderWidth = 0,
+    hunterPetReminderHeight = 0,
+    hunterPetReminderTest = false,
+    hunterPetReminderPos = nil,
     autoKeystoneEnabled = true,
     warriorBuffEnabled = false,
     warriorBuffTextColor = { 1, 1, 1 },
+    warriorBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    warriorBuffAlpha = 0.95,
+    warriorBuffWidth = 0,
+    warriorBuffHeight = 0,
     warriorBuffTest = false,
     warriorBuffPos = nil,
     mageBuffEnabled = false,
     mageBuffTextColor = { 1, 1, 1 },
+    mageBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    mageBuffAlpha = 0.95,
+    mageBuffWidth = 0,
+    mageBuffHeight = 0,
     mageBuffTest = false,
     mageBuffPos = nil,
     priestBuffEnabled = false,
     priestBuffTextColor = { 1, 1, 1 },
+    priestBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    priestBuffAlpha = 0.95,
+    priestBuffWidth = 0,
+    priestBuffHeight = 0,
     priestBuffTest = false,
     priestBuffPos = nil,
     druidBuffEnabled = false,
     druidBuffTextColor = { 1, 1, 1 },
+    druidBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    druidBuffAlpha = 0.95,
+    druidBuffWidth = 0,
+    druidBuffHeight = 0,
     druidBuffTest = false,
     druidBuffPos = nil,
     shamanBuffEnabled = false,
     shamanBuffTextColor = { 1, 1, 1 },
+    shamanBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    shamanBuffAlpha = 0.95,
+    shamanBuffWidth = 0,
+    shamanBuffHeight = 0,
     shamanBuffTest = false,
     shamanBuffPos = nil,
     evokerBuffEnabled = false,
     evokerBuffTextColor = { 1, 1, 1 },
+    evokerBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    evokerBuffAlpha = 0.95,
+    evokerBuffWidth = 0,
+    evokerBuffHeight = 0,
     evokerBuffTest = false,
     evokerBuffPos = nil,
     roguePoisonEnabled = false,
     roguePoisonTextColor = { 1, 1, 1 },
+    roguePoisonBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    roguePoisonAlpha = 0.95,
+    roguePoisonWidth = 0,
+    roguePoisonHeight = 0,
     roguePoisonTest = false,
     roguePoisonPos = nil,
   }
@@ -307,6 +351,8 @@ local function BuildClassProfile(class)
   if class == "WARLOCK" then
     state.warlockPetReminderEnabled = true
     state.warlockStoneReminderEnabled = true
+  elseif class == "HUNTER" then
+    state.hunterPetReminderEnabled = true
   elseif class == "WARRIOR" then
     state.warriorBuffEnabled = true
   elseif class == "MAGE" then
@@ -437,6 +483,10 @@ function Elysian.RefreshFeatures()
     Elysian.Features.WarlockReminders:Initialize()
     Elysian.Features.WarlockReminders:Refresh()
   end
+  if Elysian.Features and Elysian.Features.HunterReminders then
+    Elysian.Features.HunterReminders:Initialize()
+    Elysian.Features.HunterReminders:Refresh()
+  end
   if Elysian.Features and Elysian.Features.AutoKeystone then
     Elysian.Features.AutoKeystone:Initialize()
     if Elysian.Features.AutoKeystone.Refresh then
@@ -498,6 +548,8 @@ function Elysian.LoadProfile(name)
     if class == "WARLOCK" then
       profile.warlockPetReminderEnabled = true
       profile.warlockStoneReminderEnabled = true
+    elseif class == "HUNTER" then
+      profile.hunterPetReminderEnabled = true
     elseif class == "WARRIOR" then
       profile.warriorBuffEnabled = true
     elseif class == "MAGE" then
@@ -531,12 +583,16 @@ function Elysian.ResetSettings()
   for key, value in pairs(defaults) do
     Elysian.state[key] = value
   end
+  Elysian.state.uiTextUseClassColor = true
+  Elysian.state.uiTextColor = { Elysian.HexToRGB(Elysian.theme.fg) }
   local active = Elysian.GetActiveProfile and Elysian.GetActiveProfile() or "Default"
   if type(active) == "string" then
     local class = string.upper(active)
     if class == "WARLOCK" then
       Elysian.state.warlockPetReminderEnabled = true
       Elysian.state.warlockStoneReminderEnabled = true
+    elseif class == "HUNTER" then
+      Elysian.state.hunterPetReminderEnabled = true
     elseif class == "WARRIOR" then
       Elysian.state.warriorBuffEnabled = true
     elseif class == "MAGE" then
@@ -829,6 +885,18 @@ function Elysian.InitSavedVariables()
   if ElysianDB.warlockPetReminderTextColor == nil then
     ElysianDB.warlockPetReminderTextColor = { 1, 1, 1 }
   end
+  if ElysianDB.warlockPetReminderBgColor == nil then
+    ElysianDB.warlockPetReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.warlockPetReminderAlpha == nil then
+    ElysianDB.warlockPetReminderAlpha = 0.95
+  end
+  if ElysianDB.warlockPetReminderWidth == nil then
+    ElysianDB.warlockPetReminderWidth = 0
+  end
+  if ElysianDB.warlockPetReminderHeight == nil then
+    ElysianDB.warlockPetReminderHeight = 0
+  end
   if ElysianDB.warlockPetReminderTest == nil then
     ElysianDB.warlockPetReminderTest = false
   end
@@ -841,11 +909,194 @@ function Elysian.InitSavedVariables()
   if ElysianDB.warlockStoneReminderTextColor == nil then
     ElysianDB.warlockStoneReminderTextColor = { 1, 1, 1 }
   end
+  if ElysianDB.warlockStoneReminderBgColor == nil then
+    ElysianDB.warlockStoneReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.warlockStoneReminderAlpha == nil then
+    ElysianDB.warlockStoneReminderAlpha = 0.95
+  end
+  if ElysianDB.warlockStoneReminderWidth == nil then
+    ElysianDB.warlockStoneReminderWidth = 0
+  end
+  if ElysianDB.warlockStoneReminderHeight == nil then
+    ElysianDB.warlockStoneReminderHeight = 0
+  end
   if ElysianDB.warlockStoneReminderTest == nil then
     ElysianDB.warlockStoneReminderTest = false
   end
   if ElysianDB.warlockStoneReminderPos == nil then
     ElysianDB.warlockStoneReminderPos = nil
+  end
+  if ElysianDB.hunterPetReminderEnabled == nil then
+    ElysianDB.hunterPetReminderEnabled = false
+  end
+  if ElysianDB.hunterPetReminderTextColor == nil then
+    ElysianDB.hunterPetReminderTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.hunterPetReminderBgColor == nil then
+    ElysianDB.hunterPetReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.hunterPetReminderAlpha == nil then
+    ElysianDB.hunterPetReminderAlpha = 0.95
+  end
+  if ElysianDB.hunterPetReminderWidth == nil then
+    ElysianDB.hunterPetReminderWidth = 0
+  end
+  if ElysianDB.hunterPetReminderHeight == nil then
+    ElysianDB.hunterPetReminderHeight = 0
+  end
+  if ElysianDB.hunterPetReminderTest == nil then
+    ElysianDB.hunterPetReminderTest = false
+  end
+  if ElysianDB.hunterPetReminderPos == nil then
+    ElysianDB.hunterPetReminderPos = nil
+  end
+  if ElysianDB.warriorBuffTextColor == nil then
+    ElysianDB.warriorBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.warriorBuffBgColor == nil then
+    ElysianDB.warriorBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.warriorBuffAlpha == nil then
+    ElysianDB.warriorBuffAlpha = 0.95
+  end
+  if ElysianDB.warriorBuffWidth == nil then
+    ElysianDB.warriorBuffWidth = 0
+  end
+  if ElysianDB.warriorBuffHeight == nil then
+    ElysianDB.warriorBuffHeight = 0
+  end
+  if ElysianDB.warriorBuffTest == nil then
+    ElysianDB.warriorBuffTest = false
+  end
+  if ElysianDB.warriorBuffPos == nil then
+    ElysianDB.warriorBuffPos = nil
+  end
+  if ElysianDB.mageBuffTextColor == nil then
+    ElysianDB.mageBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.mageBuffBgColor == nil then
+    ElysianDB.mageBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.mageBuffAlpha == nil then
+    ElysianDB.mageBuffAlpha = 0.95
+  end
+  if ElysianDB.mageBuffWidth == nil then
+    ElysianDB.mageBuffWidth = 0
+  end
+  if ElysianDB.mageBuffHeight == nil then
+    ElysianDB.mageBuffHeight = 0
+  end
+  if ElysianDB.mageBuffTest == nil then
+    ElysianDB.mageBuffTest = false
+  end
+  if ElysianDB.mageBuffPos == nil then
+    ElysianDB.mageBuffPos = nil
+  end
+  if ElysianDB.priestBuffTextColor == nil then
+    ElysianDB.priestBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.priestBuffBgColor == nil then
+    ElysianDB.priestBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.priestBuffAlpha == nil then
+    ElysianDB.priestBuffAlpha = 0.95
+  end
+  if ElysianDB.priestBuffWidth == nil then
+    ElysianDB.priestBuffWidth = 0
+  end
+  if ElysianDB.priestBuffHeight == nil then
+    ElysianDB.priestBuffHeight = 0
+  end
+  if ElysianDB.priestBuffTest == nil then
+    ElysianDB.priestBuffTest = false
+  end
+  if ElysianDB.priestBuffPos == nil then
+    ElysianDB.priestBuffPos = nil
+  end
+  if ElysianDB.druidBuffTextColor == nil then
+    ElysianDB.druidBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.druidBuffBgColor == nil then
+    ElysianDB.druidBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.druidBuffAlpha == nil then
+    ElysianDB.druidBuffAlpha = 0.95
+  end
+  if ElysianDB.druidBuffWidth == nil then
+    ElysianDB.druidBuffWidth = 0
+  end
+  if ElysianDB.druidBuffHeight == nil then
+    ElysianDB.druidBuffHeight = 0
+  end
+  if ElysianDB.druidBuffTest == nil then
+    ElysianDB.druidBuffTest = false
+  end
+  if ElysianDB.druidBuffPos == nil then
+    ElysianDB.druidBuffPos = nil
+  end
+  if ElysianDB.shamanBuffTextColor == nil then
+    ElysianDB.shamanBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.shamanBuffBgColor == nil then
+    ElysianDB.shamanBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.shamanBuffAlpha == nil then
+    ElysianDB.shamanBuffAlpha = 0.95
+  end
+  if ElysianDB.shamanBuffWidth == nil then
+    ElysianDB.shamanBuffWidth = 0
+  end
+  if ElysianDB.shamanBuffHeight == nil then
+    ElysianDB.shamanBuffHeight = 0
+  end
+  if ElysianDB.shamanBuffTest == nil then
+    ElysianDB.shamanBuffTest = false
+  end
+  if ElysianDB.shamanBuffPos == nil then
+    ElysianDB.shamanBuffPos = nil
+  end
+  if ElysianDB.evokerBuffTextColor == nil then
+    ElysianDB.evokerBuffTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.evokerBuffBgColor == nil then
+    ElysianDB.evokerBuffBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.evokerBuffAlpha == nil then
+    ElysianDB.evokerBuffAlpha = 0.95
+  end
+  if ElysianDB.evokerBuffWidth == nil then
+    ElysianDB.evokerBuffWidth = 0
+  end
+  if ElysianDB.evokerBuffHeight == nil then
+    ElysianDB.evokerBuffHeight = 0
+  end
+  if ElysianDB.evokerBuffTest == nil then
+    ElysianDB.evokerBuffTest = false
+  end
+  if ElysianDB.evokerBuffPos == nil then
+    ElysianDB.evokerBuffPos = nil
+  end
+  if ElysianDB.roguePoisonTextColor == nil then
+    ElysianDB.roguePoisonTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.roguePoisonBgColor == nil then
+    ElysianDB.roguePoisonBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.roguePoisonAlpha == nil then
+    ElysianDB.roguePoisonAlpha = 0.95
+  end
+  if ElysianDB.roguePoisonWidth == nil then
+    ElysianDB.roguePoisonWidth = 0
+  end
+  if ElysianDB.roguePoisonHeight == nil then
+    ElysianDB.roguePoisonHeight = 0
+  end
+  if ElysianDB.roguePoisonTest == nil then
+    ElysianDB.roguePoisonTest = false
+  end
+  if ElysianDB.roguePoisonPos == nil then
+    ElysianDB.roguePoisonPos = nil
   end
   if ElysianDB.autoKeystoneEnabled == nil then
     ElysianDB.autoKeystoneEnabled = true
@@ -874,6 +1125,9 @@ function Elysian.InitSavedVariables()
   local profileName = Elysian.GetActiveProfile()
   local profile = ElysianDB.profiles[profileName] or ElysianDB.profiles.Default or Elysian.GetDefaultState()
   Elysian.state = MergeProfile(profile)
+  if profileName == "HUNTER" then
+    Elysian.state.hunterPetReminderEnabled = true
+  end
   if ElysianDB.minimapButtonAngle ~= nil then
     Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
   end
@@ -950,9 +1204,53 @@ function Elysian.InitSavedVariables()
     Elysian.state.warlockPetReminderTextColor,
     { 1, 1, 1 }
   )
+  Elysian.state.warlockPetReminderBgColor = EnsureColorTable(
+    Elysian.state.warlockPetReminderBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
   Elysian.state.warlockStoneReminderTextColor = EnsureColorTable(
     Elysian.state.warlockStoneReminderTextColor,
     { 1, 1, 1 }
+  )
+  Elysian.state.warlockStoneReminderBgColor = EnsureColorTable(
+    Elysian.state.warlockStoneReminderBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.hunterPetReminderTextColor = EnsureColorTable(
+    Elysian.state.hunterPetReminderTextColor,
+    { 1, 1, 1 }
+  )
+  Elysian.state.hunterPetReminderBgColor = EnsureColorTable(
+    Elysian.state.hunterPetReminderBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.warriorBuffBgColor = EnsureColorTable(
+    Elysian.state.warriorBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.mageBuffBgColor = EnsureColorTable(
+    Elysian.state.mageBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.priestBuffBgColor = EnsureColorTable(
+    Elysian.state.priestBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.druidBuffBgColor = EnsureColorTable(
+    Elysian.state.druidBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.shamanBuffBgColor = EnsureColorTable(
+    Elysian.state.shamanBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.evokerBuffBgColor = EnsureColorTable(
+    Elysian.state.evokerBuffBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.roguePoisonBgColor = EnsureColorTable(
+    Elysian.state.roguePoisonBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
   )
 
   if Elysian.SaveState then
