@@ -38,6 +38,9 @@ Elysian.state = Elysian.state or {
   cursorRingTrailShape = "SPARK",
   autoRepairEnabled = true,
   autoRepairThreshold = 70,
+  autoRepairUseGuild = true,
+  autoRepairLastCost = 0,
+  autoRepairLastUsedGuild = false,
   minimapButtonAngle = nil,
   minimapButtonHidden = false,
   uiFontScale = 1.1,
@@ -188,6 +191,9 @@ function Elysian.GetDefaultState()
     cursorRingTrailShape = "SPARK",
     autoRepairEnabled = true,
     autoRepairThreshold = 70,
+    autoRepairUseGuild = true,
+    autoRepairLastCost = 0,
+    autoRepairLastUsedGuild = false,
     minimapButtonAngle = 225,
     minimapButtonHidden = false,
     uiFontScale = 1.1,
@@ -713,6 +719,15 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.autoRepairThreshold == nil then
     ElysianDB.autoRepairThreshold = 70
+  end
+  if ElysianDB.autoRepairUseGuild == nil then
+    ElysianDB.autoRepairUseGuild = true
+  end
+  if ElysianDB.autoRepairLastCost == nil then
+    ElysianDB.autoRepairLastCost = 0
+  end
+  if ElysianDB.autoRepairLastUsedGuild == nil then
+    ElysianDB.autoRepairLastUsedGuild = false
   end
   if ElysianDB.uiFontScale == nil then
     ElysianDB.uiFontScale = 1.1

@@ -54,8 +54,20 @@ function AutoRepair:OnMerchantShow()
   if not canRepair or cost <= 0 then
     return
   end
-
-  RepairAllItems()
+  local useGuild = Elysian.state.autoRepairUseGuild and CanGuildBankRepair and CanGuildBankRepair()
+  if useGuild then
+    RepairAllItems(true)
+  else
+    RepairAllItems()
+  end
+  Elysian.state.autoRepairLastCost = cost
+  Elysian.state.autoRepairLastUsedGuild = useGuild and true or false
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  if self.summaryText then
+    self.summaryText:SetText("")
+  end
 end
 
 function AutoRepair:CreatePanel(parent)
@@ -90,8 +102,27 @@ function AutoRepair:CreatePanel(parent)
   Elysian.ApplyFont(hint, 10)
   Elysian.ApplyTextColor(hint)
 
+  local guildToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  guildToggle:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", -4, -10)
+  guildToggle.text = guildToggle.text or _G[guildToggle:GetName() .. "Text"]
+  guildToggle.text:SetText("Use guild bank funds when available")
+  Elysian.ApplyFont(guildToggle.text, 12)
+  Elysian.ApplyTextColor(guildToggle.text)
+  Elysian.StyleCheckbox(guildToggle)
+  guildToggle:SetChecked(Elysian.state.autoRepairUseGuild)
+  guildToggle:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.autoRepairUseGuild = selfButton:GetChecked()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+  self.guildToggle = guildToggle
+
   local thresholdLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  thresholdLabel:SetPoint("TOPLEFT", hint, "BOTTOMLEFT", -4, -12)
+  thresholdLabel:SetPoint("TOPLEFT", guildToggle, "BOTTOMLEFT", -4, -12)
   thresholdLabel:SetText("Repair threshold (%)")
   Elysian.ApplyFont(thresholdLabel, 11, "OUTLINE")
   Elysian.ApplyAccentColor(thresholdLabel)
@@ -125,9 +156,15 @@ function AutoRepair:Refresh()
   if self.toggle then
     self.toggle:SetChecked(self:IsEnabled())
   end
+  if self.guildToggle then
+    self.guildToggle:SetChecked(Elysian.state.autoRepairUseGuild)
+  end
   if self.thresholdSlider then
     local value = Elysian.state.autoRepairThreshold or 70
     self.thresholdSlider:SetValue(value)
     self.thresholdSlider.Text:SetText(string.format("%d%%", value))
+  end
+  if self.summaryText then
+    self.summaryText:SetText("")
   end
 end

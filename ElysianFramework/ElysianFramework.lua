@@ -40,6 +40,9 @@ local function ApplySavedSettings()
   if Elysian.Features and Elysian.Features.WarlockReminders then
     Elysian.Features.WarlockReminders:Initialize()
   end
+  if Elysian.Features and Elysian.Features.HunterReminders then
+    Elysian.Features.HunterReminders:Initialize()
+  end
   if Elysian.Features and Elysian.Features.AutoKeystone then
     Elysian.Features.AutoKeystone:Initialize()
   end
