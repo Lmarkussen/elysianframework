@@ -103,6 +103,12 @@ end
 
 function CursorRing:SetTrailColor(color)
   Elysian.state.cursorRingTrailColor = color
+  if Elysian.state.cursorRingTrailRandom then
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    return
+  end
   if self.trailTextures then
     for i, tex in ipairs(self.trailTextures) do
       local alpha = self:GetTrailAlpha(i)
@@ -172,7 +178,16 @@ function CursorRing:ApplyColors()
   local trailColor = Elysian.state.cursorRingTrailColor or { Elysian.HexToRGB(Elysian.theme.accent) }
   if self.trailTextures then
     for i, tex in ipairs(self.trailTextures) do
-      tex:SetVertexColor(trailColor[1], trailColor[2], trailColor[3], self:GetTrailAlpha(i))
+      if Elysian.state.cursorRingTrailRandom then
+        local rc = tex.randomColor
+        if rc then
+          tex:SetVertexColor(rc[1], rc[2], rc[3], self:GetTrailAlpha(i))
+        else
+          tex:SetVertexColor(trailColor[1], trailColor[2], trailColor[3], self:GetTrailAlpha(i))
+        end
+      else
+        tex:SetVertexColor(trailColor[1], trailColor[2], trailColor[3], self:GetTrailAlpha(i))
+      end
     end
   end
 
@@ -328,17 +343,19 @@ function CursorRing:UpdateTrail(elapsed, x, y)
   self.trailIdle = self.trailIdle or 0
   local fadeTime = Elysian.state.cursorRingTrailFadeTime or 0.25
   local spacing = Elysian.state.cursorRingTrailSpacing or 0.02
+  local ringSize = Elysian.state.cursorRingSize or 18
+  local collapseRadius = ringSize * 0.45
+  local collapseSpeed = ringSize * 18
   local lastX = self.lastTrailX
   local lastY = self.lastTrailY
   local moved = (not lastX) or (not lastY) or (math.abs(x - lastX) > 0.5) or (math.abs(y - lastY) > 0.5)
   if moved then
     if self.trailIdle > 0 then
-      self.trailPositions = {}
       self.trailIdle = 0
     end
     self.lastTrailX = x
     self.lastTrailY = y
-    if self.trailElapsed >= spacing then
+    if self.trailElapsed >= spacing or #self.trailPositions == 0 then
       self.trailElapsed = 0
       table.insert(self.trailPositions, 1, { x = x, y = y, t = GetTime() })
       local maxCount = Elysian.state.cursorRingTrailLength or 12
@@ -365,6 +382,24 @@ function CursorRing:UpdateTrail(elapsed, x, y)
     idleScale = math.max(0, 1 - (self.trailIdle / fadeTime))
   end
 
+  if not moved and #self.trailPositions > 0 then
+    for i = #self.trailPositions, 1, -1 do
+      local pos = self.trailPositions[i]
+      local dx = x - pos.x
+      local dy = y - pos.y
+      local dist = math.sqrt(dx * dx + dy * dy)
+      if dist <= collapseRadius then
+        table.remove(self.trailPositions, i)
+      else
+        local step = math.min(dist, collapseSpeed * elapsed)
+        local nx = dx / dist
+        local ny = dy / dist
+        pos.x = pos.x + nx * step
+        pos.y = pos.y + ny * step
+      end
+    end
+  end
+
   for i, tex in ipairs(self.trailTextures) do
     local pos = self.trailPositions[i]
     if pos then
@@ -373,7 +408,15 @@ function CursorRing:UpdateTrail(elapsed, x, y)
       local baseAlpha = self:GetTrailAlpha(i)
       local alpha = baseAlpha * idleScale
       local color = Elysian.state.cursorRingTrailColor or { Elysian.HexToRGB(Elysian.theme.accent) }
-      tex:SetVertexColor(color[1], color[2], color[3], alpha)
+      if Elysian.state.cursorRingTrailRandom then
+        if not tex.randomColor then
+          tex.randomColor = { math.random(), math.random(), math.random() }
+        end
+        tex:SetVertexColor(tex.randomColor[1], tex.randomColor[2], tex.randomColor[3], alpha)
+      else
+        tex.randomColor = nil
+        tex:SetVertexColor(color[1], color[2], color[3], alpha)
+      end
       if alpha > 0 then
         tex:Show()
       else
@@ -1088,10 +1131,29 @@ function CursorRing:CreatePanel(parent)
     end
   )
 
+  local randomTrail = CreateCheckbox(panel, "Randomize trail colors", leftX, -204)
+  randomTrail:SetChecked(Elysian.state.cursorRingTrailRandom)
+  randomTrail:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.cursorRingTrailRandom = selfButton:GetChecked()
+    if CursorRing.trailTextures then
+      for _, tex in ipairs(CursorRing.trailTextures) do
+        tex.randomColor = nil
+      end
+    end
+    CursorRing:ApplyColors()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+
   self.toggle = toggle
   self.classColor = classColor
   self.castToggle = castToggle
   self.trailToggle = trailToggle
+  self.randomTrail = randomTrail
   self.showCombat = showCombat
   self.showOutCombat = showOutCombat
   self.showInstances = showInstances
@@ -1113,6 +1175,9 @@ function CursorRing:Refresh()
   end
   if self.trailToggle then
     self.trailToggle:SetChecked(Elysian.state.cursorRingTrailEnabled)
+  end
+  if self.randomTrail then
+    self.randomTrail:SetChecked(Elysian.state.cursorRingTrailRandom)
   end
   if self.showCombat then
     self.showCombat:SetChecked(Elysian.state.cursorRingShowInCombat)
