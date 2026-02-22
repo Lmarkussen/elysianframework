@@ -390,7 +390,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v0.10.00 BETA")
+  versionText:SetText("v0.10.01 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
