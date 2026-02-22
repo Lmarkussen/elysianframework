@@ -155,6 +155,9 @@ function CursorRing:ApplyShape()
   local shape = Elysian.state.cursorRingShape or "RING"
   local texture = SHAPES[shape] or SHAPES.RING
   self.texture:SetTexture(texture)
+  if self.cooldown and self.cooldown.SetSwipeTexture then
+    self.cooldown:SetSwipeTexture(texture)
+  end
 end
 
 function CursorRing:ApplyColors()
@@ -231,11 +234,11 @@ function CursorRing:UpdateVisibility()
 end
 
 function CursorRing:UpdateCastProgress()
-  if not self.cooldown then
-    return
-  end
   if not Elysian.state.cursorRingCastProgress then
-    self.cooldown:Hide()
+    self.castActive = false
+    if self.cooldown then
+      self.cooldown:Hide()
+    end
     self:ApplyCastColor(false)
     return
   end
@@ -248,20 +251,28 @@ function CursorRing:UpdateCastProgress()
   end
 
   if not name or not startTime or not endTime then
-    self.cooldown:Hide()
+    self.castActive = false
+    if self.cooldown then
+      self.cooldown:Hide()
+    end
     self:ApplyCastColor(false)
     return
   end
 
-  local castColor = Elysian.state.cursorRingCastColor or { Elysian.HexToRGB(Elysian.theme.accent) }
-  self.cooldown:SetSwipeColor(castColor[1], castColor[2], castColor[3], 0.6)
-  self:ApplyCastColor(true)
+  self.castActive = true
   local duration = (endTime - startTime) / 1000
-  self.cooldown:SetCooldown(startTime / 1000, duration)
-  if self.cooldown.SetReverse then
-    self.cooldown:SetReverse(isChannel)
+  if self.cooldown then
+    local castColor = Elysian.state.cursorRingCastColor or { Elysian.HexToRGB(Elysian.theme.accent) }
+    if self.cooldown.SetSwipeColor then
+      self.cooldown:SetSwipeColor(castColor[1], castColor[2], castColor[3], 1)
+    end
+    self.cooldown:SetCooldown(startTime / 1000, duration)
+    if self.cooldown.SetReverse then
+      self.cooldown:SetReverse(isChannel)
+    end
+    self.cooldown:Show()
   end
-  self.cooldown:Show()
+  self:ApplyCastColor(true)
 end
 
 function CursorRing:EnsureTrail()
@@ -404,6 +415,12 @@ function CursorRing:EnsureFrame()
   cooldown:SetDrawSwipe(true)
   cooldown:SetHideCountdownNumbers(true)
   cooldown:SetReverse(false)
+  if cooldown.SetBlingTexture then
+    cooldown:SetBlingTexture("", 0, 0, 0, 0)
+  end
+  if cooldown.SetSwipeTexture then
+    cooldown:SetSwipeTexture(SHAPES.RING)
+  end
   cooldown:SetFrameLevel(frame:GetFrameLevel() + 2)
   self.cooldown = cooldown
 
@@ -564,7 +581,11 @@ local function CreateColorButton(parent, label, x, y, getColor, setColor)
         local pb = prev.b or prev[3] or color[3]
         apply(pr, pg, pb)
       end
-      ColorPickerFrame:SetColorRGB(color[1], color[2], color[3])
+      if ColorPickerFrame.SetColorRGB then
+        ColorPickerFrame:SetColorRGB(color[1], color[2], color[3])
+      elseif ColorPickerFrame.Content and ColorPickerFrame.Content.ColorPicker and ColorPickerFrame.Content.ColorPicker.SetColorRGB then
+        ColorPickerFrame.Content.ColorPicker:SetColorRGB(color[1], color[2], color[3])
+      end
       ColorPickerFrame:Show()
       ColorPickerFrame:Raise()
     end
@@ -632,8 +653,111 @@ local function CreateFloatSlider(parent, label, x, y, min, max, step, getValue, 
 end
 
 function CursorRing:CreatePanel(parent)
-  local panel = CreateFrame("Frame", nil, parent)
-  panel:SetAllPoints()
+  local rootPanel = CreateFrame("Frame", nil, parent)
+  rootPanel:SetAllPoints()
+  rootPanel:SetClipsChildren(true)
+
+  local scrollFrame = CreateFrame("ScrollFrame", nil, rootPanel)
+  scrollFrame:SetPoint("TOPLEFT", 4, -4)
+  scrollFrame:SetPoint("BOTTOMRIGHT", -4, 4)
+  scrollFrame:SetClipsChildren(true)
+  scrollFrame:EnableMouseWheel(true)
+
+  local panel = CreateFrame("Frame", nil, scrollFrame)
+  panel:SetPoint("TOPLEFT", 0, 0)
+  panel:SetPoint("TOPRIGHT", 0, 0)
+  panel:SetHeight(1200)
+  scrollFrame:SetScrollChild(panel)
+
+  local customBar = CreateFrame("Frame", nil, scrollFrame, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  customBar:SetPoint("TOPRIGHT", -2, -2)
+  customBar:SetPoint("BOTTOMRIGHT", -2, 2)
+  customBar:SetWidth(10)
+  Elysian.SetBackdrop(customBar)
+  Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local thumb = customBar:CreateTexture(nil, "OVERLAY")
+  thumb:SetTexture("Interface/Buttons/WHITE8x8")
+  local accent = { Elysian.HexToRGB(Elysian.theme.accent) }
+  thumb:SetVertexColor(accent[1], accent[2], accent[3], 1)
+  thumb:SetPoint("TOPLEFT", 1, -1)
+  thumb:SetPoint("TOPRIGHT", -1, -1)
+  thumb:SetHeight(12)
+  customBar.thumb = thumb
+
+  local function Clamp(value, minValue, maxValue)
+    if value < minValue then
+      return minValue
+    end
+    if value > maxValue then
+      return maxValue
+    end
+    return value
+  end
+
+  local function UpdateThumbPosition(value)
+    local max = scrollFrame:GetVerticalScrollRange() or 0
+    if max <= 0 then
+      return
+    end
+    local available = (customBar:GetHeight() or 1) - (customBar.thumb:GetHeight() or 1) - 2
+    if available < 0 then
+      available = 0
+    end
+    local ratio = value / max
+    local offset = -ratio * available
+    offset = Clamp(offset, -available, 0)
+    customBar.thumb:ClearAllPoints()
+    customBar.thumb:SetPoint("TOPLEFT", 1, -1 + offset)
+    customBar.thumb:SetPoint("TOPRIGHT", -1, -1 + offset)
+  end
+
+  local function SyncScrollSize()
+    local width = scrollFrame:GetWidth() or 0
+    if width <= 0 then
+      width = (rootPanel.GetWidth and rootPanel:GetWidth()) or 1
+    end
+    panel:SetWidth(width)
+    scrollFrame:UpdateScrollChildRect()
+    local max = scrollFrame:GetVerticalScrollRange() or 0
+    if max <= 0 then
+      customBar:Hide()
+    else
+      customBar:Show()
+      local view = scrollFrame:GetHeight() or 1
+      local ratio = view / (view + max)
+      local minHeight = 12
+      local barHeight = (customBar:GetHeight() or 1) * ratio * 0.125
+      if barHeight < minHeight then
+        barHeight = minHeight
+      end
+      local maxHeight = (customBar:GetHeight() or 1) - 2
+      if barHeight > maxHeight then
+        barHeight = maxHeight
+      end
+      customBar.thumb:SetHeight(barHeight)
+    end
+  end
+
+  scrollFrame:SetScript("OnSizeChanged", function()
+    SyncScrollSize()
+  end)
+  scrollFrame:SetScript("OnShow", function()
+    SyncScrollSize()
+  end)
+
+  scrollFrame:SetScript("OnMouseWheel", function(_, delta)
+    local step = 30
+    local value = scrollFrame:GetVerticalScroll() or 0
+    local max = scrollFrame:GetVerticalScrollRange() or 0
+    local nextValue = Clamp(value - delta * step, 0, max)
+    scrollFrame:SetVerticalScroll(nextValue)
+    UpdateThumbPosition(nextValue)
+  end)
+
+  scrollFrame:SetScript("OnVerticalScroll", function(_, value)
+    UpdateThumbPosition(value)
+  end)
 
   local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   title:SetPoint("TOPLEFT", 8, -8)
@@ -677,6 +801,19 @@ function CursorRing:CreatePanel(parent)
     end,
     function(color)
       CursorRing:SetColor(color)
+    end
+  )
+
+  local castColorButton = CreateColorButton(
+    panel,
+    "Cast Color",
+    rightX,
+    leftStartY - 34,
+    function()
+      return Elysian.state.cursorRingCastColor or { Elysian.HexToRGB(Elysian.theme.accent) }
+    end,
+    function(color)
+      CursorRing:SetCastColor(color)
     end
   )
 
@@ -960,8 +1097,8 @@ function CursorRing:CreatePanel(parent)
   self.showInstances = showInstances
   self.showWorld = showWorld
 
-  panel:Hide()
-  return panel
+  rootPanel:Hide()
+  return rootPanel
 end
 
 function CursorRing:Refresh()
