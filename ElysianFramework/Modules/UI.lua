@@ -390,7 +390,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v0.10.01 BETA")
+  versionText:SetText("v0.10.02 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -697,9 +697,6 @@ function Elysian.UI:CreateMainFrame()
         UIDropDownMenu_SetSelectedValue(profileDrop, selectedProfile)
       if Elysian.LoadProfile then
         Elysian.LoadProfile(selectedProfile)
-      end
-      if Elysian.UI and Elysian.UI.Rebuild then
-        Elysian.UI:Rebuild()
       end
       end
       for _, name in ipairs(names) do
@@ -2172,19 +2169,19 @@ function Elysian.UI:CreateMainFrame()
   local classAlertPanels = {}
 
   local classTabOrder = {
+    "DEATHKNIGHT",
+    "DEMONHUNTER",
+    "DRUID",
+    "EVOKER",
+    "HUNTER",
+    "MAGE",
+    "MONK",
+    "PALADIN",
+    "PRIEST",
+    "ROGUE",
+    "SHAMAN",
     "WARLOCK",
     "WARRIOR",
-    "PALADIN",
-    "HUNTER",
-    "ROGUE",
-    "PRIEST",
-    "DEATHKNIGHT",
-    "SHAMAN",
-    "MAGE",
-    "DRUID",
-    "MONK",
-    "DEMONHUNTER",
-    "EVOKER",
   }
 
   local row1Count = 6
@@ -2213,22 +2210,20 @@ function Elysian.UI:CreateMainFrame()
     return panel
   end
 
-  local warlockTab = CreateClassTab("WARLOCK", 1)
-  local warlockPanel = CreateClassPanel()
-
-  local classAlertsTitle = warlockPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+  local function BuildWarlockPanel(panel)
+  local classAlertsTitle = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
   classAlertsTitle:SetPoint("TOPLEFT", 8, -8)
-  classAlertsTitle:SetText("Class Alerts")
+  classAlertsTitle:SetText("Warlock Alerts")
   Elysian.ApplyFont(classAlertsTitle, 13, "OUTLINE")
   Elysian.ApplyTextColor(classAlertsTitle)
 
-  local classAlertsHint = warlockPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+  local classAlertsHint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   classAlertsHint:SetPoint("TOPLEFT", classAlertsTitle, "BOTTOMLEFT", 0, -6)
   classAlertsHint:SetText("")
   Elysian.ApplyFont(classAlertsHint, 10)
   Elysian.ApplyTextColor(classAlertsHint)
 
-  local petToggle = CreateFrame("CheckButton", nil, warlockPanel, "UICheckButtonTemplate")
+  local petToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
   petToggle:SetPoint("TOPLEFT", classAlertsHint, "BOTTOMLEFT", 0, -16)
   petToggle.text = petToggle.text or _G[petToggle:GetName() .. "Text"]
   petToggle.text:SetText("Enable pet missing reminder")
@@ -2245,7 +2240,7 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
 
-  local petColorButton = CreateFrame("Button", nil, warlockPanel, template)
+  local petColorButton = CreateFrame("Button", nil, panel, template)
   petColorButton:SetPoint("TOPLEFT", petToggle, "BOTTOMLEFT", 0, -12)
   petColorButton:SetSize(180, 22)
   Elysian.SetBackdrop(petColorButton)
@@ -2300,7 +2295,7 @@ function Elysian.UI:CreateMainFrame()
   end)
   HookButtonPressFeedback(petColorButton)
 
-  local petTest = CreateFrame("Button", nil, warlockPanel, template)
+  local petTest = CreateFrame("Button", nil, panel, template)
   petTest:SetPoint("LEFT", petColorButton, "RIGHT", 10, 0)
   petTest:SetSize(120, 22)
   Elysian.SetBackdrop(petTest)
@@ -2330,7 +2325,7 @@ function Elysian.UI:CreateMainFrame()
   end)
   HookButtonPressFeedback(petTest)
 
-  local stoneToggle = CreateFrame("CheckButton", nil, warlockPanel, "UICheckButtonTemplate")
+  local stoneToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
   stoneToggle:SetPoint("TOPLEFT", petToggle, "BOTTOMLEFT", 0, -70)
   stoneToggle.text = stoneToggle.text or _G[stoneToggle:GetName() .. "Text"]
   stoneToggle.text:SetText("Enable missing healthstone reminder")
@@ -2347,7 +2342,7 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
 
-  local stoneColorButton = CreateFrame("Button", nil, warlockPanel, template)
+  local stoneColorButton = CreateFrame("Button", nil, panel, template)
   stoneColorButton:SetPoint("TOPLEFT", stoneToggle, "BOTTOMLEFT", 0, -12)
   stoneColorButton:SetSize(180, 22)
   Elysian.SetBackdrop(stoneColorButton)
@@ -2402,7 +2397,7 @@ function Elysian.UI:CreateMainFrame()
   end)
   HookButtonPressFeedback(stoneColorButton)
 
-  local stoneTest = CreateFrame("Button", nil, warlockPanel, template)
+  local stoneTest = CreateFrame("Button", nil, panel, template)
   stoneTest:SetPoint("LEFT", stoneColorButton, "RIGHT", 10, 0)
   stoneTest:SetSize(120, 22)
   Elysian.SetBackdrop(stoneTest)
@@ -2431,6 +2426,7 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
   HookButtonPressFeedback(stoneTest)
+  end
 
   local function BuildSimpleBuffPanel(panel, className, prefix, labelText)
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -2652,11 +2648,123 @@ function Elysian.UI:CreateMainFrame()
     HookButtonPressFeedback(testButton)
   end
 
-  for i = 2, #classTabOrder do
+  local function BuildHunterPanel(panel)
+    local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 8, -8)
+    title:SetText("Hunter Alerts")
+    Elysian.ApplyFont(title, 13, "OUTLINE")
+    Elysian.ApplyTextColor(title)
+
+    local toggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+    toggle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+    toggle.text = toggle.text or _G[toggle:GetName() .. "Text"]
+    toggle.text:SetText("Enable pet missing reminder")
+    Elysian.ApplyFont(toggle.text, 12)
+    Elysian.ApplyTextColor(toggle.text)
+    Elysian.StyleCheckbox(toggle)
+    toggle:SetChecked(Elysian.state.hunterPetReminderEnabled)
+    toggle:SetScript("OnClick", function(selfButton)
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.HunterReminders then
+        Elysian.Features.HunterReminders:SetPetEnabled(selfButton:GetChecked())
+      end
+    end)
+
+    local colorButton = CreateFrame("Button", nil, panel, template)
+    colorButton:SetPoint("TOPLEFT", toggle, "BOTTOMLEFT", 0, -12)
+    colorButton:SetSize(180, 22)
+    Elysian.SetBackdrop(colorButton)
+    Elysian.SetBackdropColors(colorButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local colorText = colorButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    colorText:SetPoint("CENTER")
+    colorText:SetText("Text Color")
+    Elysian.ApplyFont(colorText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(colorText)
+
+    local swatch = colorButton:CreateTexture(nil, "OVERLAY")
+    swatch:SetSize(12, 12)
+    swatch:SetPoint("RIGHT", -8, 0)
+    local start = Elysian.state.hunterPetReminderTextColor or { 0.67, 0.83, 0.45 }
+    swatch:SetColorTexture(start[1], start[2], start[3], 1)
+
+    colorButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      local color = Elysian.state.hunterPetReminderTextColor or { 0.67, 0.83, 0.45 }
+      local function apply(r, g, b)
+        Elysian.state.hunterPetReminderTextColor = { r, g, b }
+        swatch:SetColorTexture(r, g, b, 1)
+        if Elysian.Features and Elysian.Features.HunterReminders then
+          Elysian.Features.HunterReminders:ApplyColors()
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end
+      if Elysian.OpenColorPicker then
+        Elysian.OpenColorPicker({
+          r = color[1],
+          g = color[2],
+          b = color[3],
+          opacity = 1,
+          hasOpacity = false,
+          swatchFunc = function()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            apply(r, g, b)
+          end,
+          cancelFunc = function(prev)
+            local pr = prev.r or prev[1] or color[1]
+            local pg = prev.g or prev[2] or color[2]
+            local pb = prev.b or prev[3] or color[3]
+            apply(pr, pg, pb)
+          end,
+        })
+      end
+    end)
+    HookButtonPressFeedback(colorButton)
+
+    local testButton = CreateFrame("Button", nil, panel, template)
+    testButton:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
+    testButton:SetSize(120, 22)
+    Elysian.SetBackdrop(testButton)
+    Elysian.SetBackdropColors(testButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+    local testText = testButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    testText:SetPoint("CENTER")
+    testText:SetText("Test Banner")
+    Elysian.ApplyFont(testText, 11, "OUTLINE")
+    Elysian.ApplyAccentColor(testText)
+
+    local function UpdateTestStyle(active)
+      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+    end
+    UpdateTestStyle(Elysian.state.hunterPetReminderTest)
+
+    testButton:SetScript("OnClick", function()
+      if Elysian.ClickFeedback then
+        Elysian.ClickFeedback()
+      end
+      if Elysian.Features and Elysian.Features.HunterReminders then
+        local enabled = not Elysian.state.hunterPetReminderTest
+        Elysian.Features.HunterReminders:SetPetTest(enabled)
+        UpdateTestStyle(enabled)
+      end
+    end)
+    HookButtonPressFeedback(testButton)
+  end
+
+  for i = 1, #classTabOrder do
     local className = classTabOrder[i]
     CreateClassTab(className, i)
     local panel = CreateClassPanel()
-    if className == "WARRIOR" then
+    if className == "WARLOCK" then
+      BuildWarlockPanel(panel)
+    elseif className == "WARRIOR" then
       BuildSimpleBuffPanel(panel, "Warrior", "warrior", "Enable Battle Shout reminder")
     elseif className == "MAGE" then
       BuildSimpleBuffPanel(panel, "Mage", "mage", "Enable Arcane Intellect reminder")
@@ -2668,6 +2776,8 @@ function Elysian.UI:CreateMainFrame()
       BuildSimpleBuffPanel(panel, "Shaman", "shaman", "Enable Skyfury reminder")
     elseif className == "EVOKER" then
       BuildSimpleBuffPanel(panel, "Evoker", "evoker", "Enable Blessing of the Bronze reminder")
+    elseif className == "HUNTER" then
+      BuildHunterPanel(panel)
     elseif className == "ROGUE" then
       BuildRoguePanel(panel)
     else

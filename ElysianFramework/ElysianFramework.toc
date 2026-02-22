@@ -2,7 +2,7 @@
 ## Title: Elysian Framework
 ## Notes: Minimal UI frame and menu theming for the Elysian Framework addon.
 ## Author: Elysian
-## Version: 0.10.01 BETA
+## Version: 0.10.02 BETA
 ## SavedVariables: ElysianDB
 
 Modules/Core.lua
@@ -17,6 +17,7 @@ Modules/Features/BuffWatch.lua
 Modules/Features/DungeonConsumables.lua
 Modules/Features/ClassBuffReminders.lua
 Modules/Features/WarlockReminders.lua
+Modules/Features/HunterReminders.lua
 Modules/Features/AutoKeystone.lua
 Modules/Features/PortalData.lua
 Modules/MinimapButton.lua
