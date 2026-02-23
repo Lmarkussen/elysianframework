@@ -15,6 +15,7 @@ Modules/Features/RepairReminder.lua
 Modules/Features/DungeonReminder.lua
 Modules/Features/BuffWatch.lua
 Modules/Features/DungeonConsumables.lua
+Modules/Features/KeystoneReminder.lua
 Modules/Features/ClassBuffReminders.lua
 Modules/Features/WarlockReminders.lua
 Modules/Features/HunterReminders.lua

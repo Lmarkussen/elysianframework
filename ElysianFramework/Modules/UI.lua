@@ -2137,7 +2137,232 @@ function Elysian.UI:CreateMainFrame()
       end)
       HookButtonPressFeedback(consumableTest)
 
-      rootPanel._dungeonLastWidget = consumableHeightSlider
+      local keystoneToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+      keystoneToggle:SetPoint("TOPLEFT", consumableHeightSlider, "BOTTOMLEFT", -4, -20)
+      keystoneToggle.text = keystoneToggle.text or _G[keystoneToggle:GetName() .. "Text"]
+      keystoneToggle.text:SetText("Enable keystone reminder")
+      Elysian.ApplyFont(keystoneToggle.text, 12)
+      Elysian.ApplyTextColor(keystoneToggle.text)
+      Elysian.StyleCheckbox(keystoneToggle)
+      keystoneToggle:SetChecked(Elysian.state.keystoneReminderEnabled)
+      keystoneToggle:SetScript("OnClick", function(selfButton)
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        Elysian.state.keystoneReminderEnabled = selfButton:GetChecked()
+        if Elysian.Features and Elysian.Features.KeystoneReminder then
+          Elysian.Features.KeystoneReminder:SetEnabled(selfButton:GetChecked())
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end)
+
+      local keystoneColor = CreateFrame("Button", nil, panel, template)
+      keystoneColor:SetPoint("TOPLEFT", keystoneToggle, "BOTTOMLEFT", 0, -12)
+      keystoneColor:SetSize(180, 22)
+      Elysian.SetBackdrop(keystoneColor)
+      Elysian.SetBackdropColors(keystoneColor, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local keystoneColorText = keystoneColor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneColorText:SetPoint("CENTER")
+      keystoneColorText:SetText("Text Color")
+      Elysian.ApplyFont(keystoneColorText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(keystoneColorText)
+
+      local keystoneSwatch = keystoneColor:CreateTexture(nil, "OVERLAY")
+      keystoneSwatch:SetSize(12, 12)
+      keystoneSwatch:SetPoint("RIGHT", -8, 0)
+      local keystoneStart = Elysian.state.keystoneReminderTextColor or { 1, 1, 1 }
+      keystoneSwatch:SetColorTexture(keystoneStart[1], keystoneStart[2], keystoneStart[3], 1)
+
+      keystoneColor:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.keystoneReminderTextColor or { 1, 1, 1 }
+        Elysian.OpenColorPicker(color, function(r, g, b)
+          Elysian.state.keystoneReminderTextColor = { r, g, b }
+          keystoneSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.KeystoneReminder then
+            Elysian.Features.KeystoneReminder:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end)
+      end)
+      HookButtonPressFeedback(keystoneColor)
+
+      local keystoneBg = CreateFrame("Button", nil, panel, template)
+      keystoneBg:SetPoint("TOPLEFT", keystoneColor, "BOTTOMLEFT", 0, -10)
+      keystoneBg:SetSize(180, 22)
+      Elysian.SetBackdrop(keystoneBg)
+      Elysian.SetBackdropColors(keystoneBg, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local keystoneBgText = keystoneBg:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneBgText:SetPoint("CENTER")
+      keystoneBgText:SetText("Background Color")
+      Elysian.ApplyFont(keystoneBgText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(keystoneBgText)
+
+      local keystoneBgSwatch = keystoneBg:CreateTexture(nil, "OVERLAY")
+      keystoneBgSwatch:SetSize(12, 12)
+      keystoneBgSwatch:SetPoint("RIGHT", -8, 0)
+      local keystoneBgStart = Elysian.state.keystoneReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+      keystoneBgSwatch:SetColorTexture(keystoneBgStart[1], keystoneBgStart[2], keystoneBgStart[3], 1)
+
+      keystoneBg:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local color = Elysian.state.keystoneReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        Elysian.OpenColorPicker(color, function(r, g, b)
+          Elysian.state.keystoneReminderBgColor = { r, g, b }
+          keystoneBgSwatch:SetColorTexture(r, g, b, 1)
+          if Elysian.Features and Elysian.Features.KeystoneReminder then
+            Elysian.Features.KeystoneReminder:ApplyColors()
+          end
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end)
+      end)
+      HookButtonPressFeedback(keystoneBg)
+
+      local keystoneAlphaLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneAlphaLabel:SetPoint("TOPLEFT", keystoneBg, "BOTTOMLEFT", 0, -12)
+      keystoneAlphaLabel:SetText("Transparency")
+      Elysian.ApplyFont(keystoneAlphaLabel, 11)
+      Elysian.ApplyTextColor(keystoneAlphaLabel)
+
+      local keystoneAlphaSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      keystoneAlphaSlider:SetPoint("TOPLEFT", keystoneAlphaLabel, "BOTTOMLEFT", 4, -26)
+      keystoneAlphaSlider:SetMinMaxValues(0.1, 1.0)
+      keystoneAlphaSlider:SetValueStep(0.05)
+      keystoneAlphaSlider:SetObeyStepOnDrag(true)
+      keystoneAlphaSlider:SetWidth(220)
+      local keystoneAlphaValue = Elysian.state.keystoneReminderAlpha or 0.95
+      keystoneAlphaSlider:SetValue(keystoneAlphaValue)
+      keystoneAlphaSlider.Low:SetText("10%")
+      keystoneAlphaSlider.High:SetText("100%")
+      keystoneAlphaSlider.Text:SetText(string.format("%d%%", math.floor(keystoneAlphaValue * 100 + 0.5)))
+      keystoneAlphaSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        if not Elysian.state then
+          return
+        end
+        Elysian.state.keystoneReminderAlpha = value
+        selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
+        if Elysian.Features and Elysian.Features.KeystoneReminder then
+          Elysian.Features.KeystoneReminder:ApplyColors()
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end)
+
+      local keystoneWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneWidthLabel:SetPoint("TOPLEFT", keystoneAlphaSlider, "BOTTOMLEFT", -4, -20)
+      keystoneWidthLabel:SetText("Banner Width")
+      Elysian.ApplyFont(keystoneWidthLabel, 11)
+      Elysian.ApplyTextColor(keystoneWidthLabel)
+
+      local keystoneWidthSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      keystoneWidthSlider:SetPoint("TOPLEFT", keystoneWidthLabel, "BOTTOMLEFT", 4, -26)
+      keystoneWidthSlider:SetMinMaxValues(200, 600)
+      keystoneWidthSlider:SetValueStep(1)
+      keystoneWidthSlider:SetObeyStepOnDrag(true)
+      keystoneWidthSlider:SetWidth(220)
+      local keystoneWidthValue = Elysian.state.keystoneReminderWidth
+      if not keystoneWidthValue or keystoneWidthValue <= 0 then
+        keystoneWidthValue = 360
+      end
+      keystoneWidthSlider:SetValue(keystoneWidthValue)
+      keystoneWidthSlider.Low:SetText("200")
+      keystoneWidthSlider.High:SetText("600")
+      keystoneWidthSlider.Text:SetText(string.format("%d", keystoneWidthValue))
+      keystoneWidthSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        if not Elysian.state then
+          return
+        end
+        Elysian.state.keystoneReminderWidth = value
+        selfSlider.Text:SetText(string.format("%d", value))
+        if Elysian.Features and Elysian.Features.KeystoneReminder then
+          Elysian.Features.KeystoneReminder:ApplySize()
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end)
+
+      local keystoneHeightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneHeightLabel:SetPoint("TOPLEFT", keystoneWidthSlider, "BOTTOMLEFT", -4, -20)
+      keystoneHeightLabel:SetText("Banner Height")
+      Elysian.ApplyFont(keystoneHeightLabel, 11)
+      Elysian.ApplyTextColor(keystoneHeightLabel)
+
+      local keystoneHeightSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+      keystoneHeightSlider:SetPoint("TOPLEFT", keystoneHeightLabel, "BOTTOMLEFT", 4, -26)
+      keystoneHeightSlider:SetMinMaxValues(30, 120)
+      keystoneHeightSlider:SetValueStep(1)
+      keystoneHeightSlider:SetObeyStepOnDrag(true)
+      keystoneHeightSlider:SetWidth(220)
+      local keystoneHeightValue = Elysian.state.keystoneReminderHeight
+      if not keystoneHeightValue or keystoneHeightValue <= 0 then
+        keystoneHeightValue = 46
+      end
+      keystoneHeightSlider:SetValue(keystoneHeightValue)
+      keystoneHeightSlider.Low:SetText("30")
+      keystoneHeightSlider.High:SetText("120")
+      keystoneHeightSlider.Text:SetText(string.format("%d", keystoneHeightValue))
+      keystoneHeightSlider:SetScript("OnValueChanged", function(selfSlider, value)
+        if not Elysian.state then
+          return
+        end
+        Elysian.state.keystoneReminderHeight = value
+        selfSlider.Text:SetText(string.format("%d", value))
+        if Elysian.Features and Elysian.Features.KeystoneReminder then
+          Elysian.Features.KeystoneReminder:ApplySize()
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end)
+
+      local keystoneTest = CreateFrame("Button", nil, panel, template)
+      keystoneTest:SetPoint("LEFT", keystoneBg, "RIGHT", 10, 0)
+      keystoneTest:SetSize(120, 22)
+      Elysian.SetBackdrop(keystoneTest)
+      Elysian.SetBackdropColors(keystoneTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local keystoneTestText = keystoneTest:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      keystoneTestText:SetPoint("CENTER")
+      keystoneTestText:SetText("Test Banner")
+      Elysian.ApplyFont(keystoneTestText, 11, "OUTLINE")
+      Elysian.ApplyAccentColor(keystoneTestText)
+
+      local function UpdateKeystoneTestStyle(active)
+        local bg = active and { Elysian.HexToRGB("#e6e6e6") } or Elysian.GetNavBg()
+        Elysian.SetBackdropColors(keystoneTest, bg, Elysian.GetThemeBorder(), 0.9)
+      end
+      UpdateKeystoneTestStyle(Elysian.state.keystoneReminderTest)
+      keystoneTest:SetScript("OnClick", function()
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        local enabled = not Elysian.state.keystoneReminderTest
+        Elysian.state.keystoneReminderTest = enabled
+        UpdateKeystoneTestStyle(enabled)
+        if Elysian.Features and Elysian.Features.KeystoneReminder then
+          Elysian.Features.KeystoneReminder:SetTestEnabled(enabled)
+        end
+        if Elysian.SaveState then
+          Elysian.SaveState()
+        end
+      end)
+      HookButtonPressFeedback(keystoneTest)
+
+      rootPanel._dungeonLastWidget = keystoneHeightSlider
 
     end
 

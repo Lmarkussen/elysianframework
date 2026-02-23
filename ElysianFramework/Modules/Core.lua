@@ -34,6 +34,7 @@ Elysian.state = Elysian.state or {
   cursorRingTrailSpacing = 0.02,
   cursorRingTrailFade = 0.6,
   cursorRingTrailColor = nil,
+  cursorRingTrailRandom = false,
   cursorRingTrailFadeTime = 0.25,
   cursorRingTrailShape = "SPARK",
   autoRepairEnabled = true,
@@ -97,6 +98,14 @@ Elysian.state = Elysian.state or {
   dungeonConsumablesHeight = 0,
   dungeonConsumablesTest = false,
   dungeonConsumablesPos = nil,
+  keystoneReminderEnabled = true,
+  keystoneReminderTextColor = nil,
+  keystoneReminderBgColor = nil,
+  keystoneReminderAlpha = 0.95,
+  keystoneReminderWidth = 0,
+  keystoneReminderHeight = 0,
+  keystoneReminderTest = false,
+  keystoneReminderPos = nil,
   dungeonRoleMarksEnabled = true,
   dungeonTankMark = 6,
   dungeonHealerMark = 2,
@@ -187,6 +196,7 @@ function Elysian.GetDefaultState()
     cursorRingTrailSpacing = 0.02,
     cursorRingTrailFade = 0.6,
     cursorRingTrailColor = { Elysian.HexToRGB(Elysian.theme.accent) },
+    cursorRingTrailRandom = false,
     cursorRingTrailFadeTime = 0.25,
     cursorRingTrailShape = "SPARK",
     autoRepairEnabled = true,
@@ -250,6 +260,14 @@ function Elysian.GetDefaultState()
     dungeonConsumablesHeight = 0,
     dungeonConsumablesTest = false,
     dungeonConsumablesPos = nil,
+    keystoneReminderEnabled = true,
+    keystoneReminderTextColor = { 1, 1, 1 },
+    keystoneReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    keystoneReminderAlpha = 0.95,
+    keystoneReminderWidth = 0,
+    keystoneReminderHeight = 0,
+    keystoneReminderTest = false,
+    keystoneReminderPos = nil,
     dungeonRoleMarksEnabled = true,
     dungeonTankMark = 6,
     dungeonHealerMark = 2,
@@ -641,6 +659,11 @@ function Elysian.InitSavedVariables()
     ElysianDB.profiles.Default = CopyTable(Elysian.GetDefaultState())
   end
   EnsureClassProfiles()
+  for _, profile in pairs(ElysianDB.profiles) do
+    if profile.cursorRingTrailRandom == nil then
+      profile.cursorRingTrailRandom = false
+    end
+  end
   if not ElysianDB.charProfiles[Elysian.GetCharacterKey()] then
     local _, class = UnitClass("player")
     if class and ElysianDB.profiles[class] then
@@ -704,6 +727,9 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.cursorRingTrailFade == nil then
     ElysianDB.cursorRingTrailFade = 0.6
+  end
+  if ElysianDB.cursorRingTrailRandom == nil then
+    ElysianDB.cursorRingTrailRandom = false
   end
   if ElysianDB.cursorRingTrailFadeTime == nil then
     ElysianDB.cursorRingTrailFadeTime = 0.25
@@ -872,6 +898,30 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.dungeonConsumablesAlpha == nil then
     ElysianDB.dungeonConsumablesAlpha = 0.95
+  end
+  if ElysianDB.keystoneReminderEnabled == nil then
+    ElysianDB.keystoneReminderEnabled = true
+  end
+  if ElysianDB.keystoneReminderTextColor == nil then
+    ElysianDB.keystoneReminderTextColor = nil
+  end
+  if ElysianDB.keystoneReminderBgColor == nil then
+    ElysianDB.keystoneReminderBgColor = nil
+  end
+  if ElysianDB.keystoneReminderAlpha == nil then
+    ElysianDB.keystoneReminderAlpha = 0.95
+  end
+  if ElysianDB.keystoneReminderWidth == nil then
+    ElysianDB.keystoneReminderWidth = 0
+  end
+  if ElysianDB.keystoneReminderHeight == nil then
+    ElysianDB.keystoneReminderHeight = 0
+  end
+  if ElysianDB.keystoneReminderTest == nil then
+    ElysianDB.keystoneReminderTest = false
+  end
+  if ElysianDB.keystoneReminderPos == nil then
+    ElysianDB.keystoneReminderPos = nil
   end
   if ElysianDB.dungeonConsumablesWidth == nil then
     ElysianDB.dungeonConsumablesWidth = 0
@@ -1213,6 +1263,14 @@ function Elysian.InitSavedVariables()
   )
   Elysian.state.dungeonConsumablesBgColor = EnsureColorTable(
     Elysian.state.dungeonConsumablesBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.keystoneReminderTextColor = EnsureColorTable(
+    Elysian.state.keystoneReminderTextColor,
+    { 1, 1, 1 }
+  )
+  Elysian.state.keystoneReminderBgColor = EnsureColorTable(
+    Elysian.state.keystoneReminderBgColor,
     { Elysian.HexToRGB(Elysian.theme.bg) }
   )
   Elysian.state.warlockPetReminderTextColor = EnsureColorTable(
