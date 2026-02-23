@@ -4,6 +4,70 @@ Elysian.Features = Elysian.Features or {}
 local InfoBar = {}
 Elysian.Features.InfoBar = InfoBar
 
+local MAGE_TELEPORTS = {
+  "Teleport: Stormwind",
+  "Teleport: Ironforge",
+  "Teleport: Darnassus",
+  "Teleport: Exodar",
+  "Teleport: Orgrimmar",
+  "Teleport: Undercity",
+  "Teleport: Thunder Bluff",
+  "Teleport: Silvermoon",
+  "Teleport: Shattrath",
+  "Teleport: Dalaran - Northrend",
+  "Ancient Teleport: Dalaran",
+  "Teleport: Tol Barad",
+  "Teleport: Vale of Eternal Blossoms",
+  "Teleport: Stormshield",
+  "Teleport: Warspear",
+  "Teleport: Hall of the Guardian",
+  "Teleport: Dalaran - Broken Isles",
+  "Teleport: Dazar'alor",
+  "Teleport: Boralus",
+  "Teleport: Oribos",
+  "Teleport: Valdrakken",
+  "Teleport: Dornogal",
+}
+
+local MAGE_PORTALS = {
+  "Portal: Stormwind",
+  "Portal: Ironforge",
+  "Portal: Darnassus",
+  "Portal: Exodar",
+  "Portal: Orgrimmar",
+  "Portal: Undercity",
+  "Portal: Thunder Bluff",
+  "Portal: Silvermoon",
+  "Portal: Shattrath",
+  "Portal: Dalaran - Northrend",
+  "Portal: Tol Barad",
+  "Portal: Vale of Eternal Blossoms",
+  "Portal: Stormshield",
+  "Portal: Warspear",
+  "Portal: Hall of the Guardian",
+  "Portal: Dalaran - Broken Isles",
+  "Portal: Dazar'alor",
+  "Portal: Boralus",
+  "Portal: Oribos",
+  "Portal: Valdrakken",
+  "Portal: Dornogal",
+}
+
+local function IsMage()
+  local _, class = UnitClass("player")
+  return class == "MAGE"
+end
+
+local function GetMageColor()
+  if C_ClassColor and C_ClassColor.GetClassColor then
+    local color = C_ClassColor.GetClassColor("MAGE")
+    if color then
+      return color.r, color.g, color.b
+    end
+  end
+  return 0.41, 0.8, 0.94
+end
+
 local function GetClassColor()
   local _, class = UnitClass("player")
   local colors = CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS
@@ -107,6 +171,50 @@ function InfoBar:EnsureFrame()
   self.portalButton = portalButton
   self.portalText = portalText
 
+  local mageTeleportButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  mageTeleportButton:SetSize(140, 22)
+  mageTeleportButton:SetPoint("RIGHT", portalButton, "LEFT", -8, 0)
+  Elysian.SetBackdrop(mageTeleportButton)
+  mageTeleportButton:Hide()
+
+  local mageTeleportText = mageTeleportButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  mageTeleportText:SetPoint("CENTER")
+  mageTeleportText:SetText("Teleports")
+  Elysian.ApplyFont(mageTeleportText, 11, "OUTLINE")
+  local mr, mg, mb = GetMageColor()
+  mageTeleportText:SetTextColor(mr, mg, mb)
+
+  mageTeleportButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    InfoBar:ToggleMageTeleportsWindow()
+  end)
+
+  local magePortalButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  magePortalButton:SetSize(140, 22)
+  magePortalButton:SetPoint("LEFT", portalButton, "RIGHT", 8, 0)
+  Elysian.SetBackdrop(magePortalButton)
+  magePortalButton:Hide()
+
+  local magePortalText = magePortalButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  magePortalText:SetPoint("CENTER")
+  magePortalText:SetText("Mage Portals")
+  Elysian.ApplyFont(magePortalText, 11, "OUTLINE")
+  magePortalText:SetTextColor(mr, mg, mb)
+
+  magePortalButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    InfoBar:ToggleMagePortalsWindow()
+  end)
+
+  self.mageTeleportButton = mageTeleportButton
+  self.mageTeleportText = mageTeleportText
+  self.magePortalButton = magePortalButton
+  self.magePortalText = magePortalText
+
   self:ApplyColors()
   self:UpdateVisibility()
 
@@ -135,6 +243,12 @@ function InfoBar:ApplyColors()
   Elysian.SetBackdropColors(self.frame, bgColor, Elysian.GetThemeBorder(), opacity)
   if self.portalButton then
     Elysian.SetBackdropColors(self.portalButton, bgColor, Elysian.GetThemeBorder(), opacity)
+  end
+  if self.mageTeleportButton then
+    Elysian.SetBackdropColors(self.mageTeleportButton, bgColor, Elysian.GetThemeBorder(), opacity)
+  end
+  if self.magePortalButton then
+    Elysian.SetBackdropColors(self.magePortalButton, bgColor, Elysian.GetThemeBorder(), opacity)
   end
 end
 
@@ -189,14 +303,41 @@ function InfoBar:UpdateVisibility()
     if self.portalButton then
       if Elysian.state.infoBarShowPortalButton then
         self.portalButton:Show()
+        if IsMage() then
+          if self.mageTeleportButton then
+            self.mageTeleportButton:Show()
+          end
+          if self.magePortalButton then
+            self.magePortalButton:Show()
+          end
+        else
+          if self.mageTeleportButton then
+            self.mageTeleportButton:Hide()
+          end
+          if self.magePortalButton then
+            self.magePortalButton:Hide()
+          end
+        end
       else
         self.portalButton:Hide()
+        if self.mageTeleportButton then
+          self.mageTeleportButton:Hide()
+        end
+        if self.magePortalButton then
+          self.magePortalButton:Hide()
+        end
       end
     end
   else
     self.frame:Hide()
     if self.portalButton then
       self.portalButton:Hide()
+    end
+    if self.mageTeleportButton then
+      self.mageTeleportButton:Hide()
+    end
+    if self.magePortalButton then
+      self.magePortalButton:Hide()
     end
   end
 end
@@ -670,29 +811,216 @@ function InfoBar:EnsurePortalWindow()
   end
 end
 
-function InfoBar:UpdatePortalCooldowns()
-  if not self.portalCooldowns then
-    return
-  end
-  for _, entry in ipairs(self.portalCooldowns) do
-    local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(entry.spellID) or nil
-    local start = info and info.startTime or 0
-    local duration = info and info.duration or 0
-    if start > 0 and duration > 0 then
-      entry.frame:SetCooldown(start, duration)
-      entry.frame:Show()
-    else
-      entry.frame:Hide()
+local function BuildMageWindow(titleText, spellList, windowName)
+  local template = BackdropTemplateMixin and "BackdropTemplate" or nil
+  local frame = CreateFrame("Frame", windowName, UIParent, template)
+  frame:SetSize(360, 420)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+  frame:SetFrameStrata("DIALOG")
+  frame:SetFrameLevel(200)
+  frame:SetMovable(true)
+  frame:EnableMouse(true)
+  frame:SetClampedToScreen(true)
+  frame:RegisterForDrag("LeftButton")
+  frame:SetScript("OnDragStart", frame.StartMoving)
+  frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+  Elysian.SetBackdrop(frame)
+  Elysian.SetBackdropColors(frame, Elysian.GetContentBg(), Elysian.GetThemeBorder(), 0.95)
+
+  local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+  title:SetPoint("TOP", 0, -12)
+  title:SetText(titleText)
+  Elysian.ApplyFont(title, 13, "OUTLINE")
+  local r, g, b = GetMageColor()
+  title:SetTextColor(r, g, b)
+
+  local close = CreateFrame("Button", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  close:SetSize(18, 18)
+  close:SetPoint("TOPRIGHT", -8, -8)
+  close:SetFrameLevel(frame:GetFrameLevel() + 5)
+  Elysian.SetBackdrop(close)
+  Elysian.SetBackdropColors(close, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local closeText = close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  closeText:SetPoint("CENTER")
+  closeText:SetText("X")
+  Elysian.ApplyFont(closeText, 10, "OUTLINE")
+  closeText:SetTextColor(r, g, b)
+  close:SetScript("OnClick", function()
+    frame:Hide()
+  end)
+
+  local content = CreateFrame("Frame", nil, frame)
+  content:SetPoint("TOPLEFT", 12, -44)
+  content:SetPoint("BOTTOMRIGHT", -12, 12)
+
+  local buttons = {}
+  local cooldowns = {}
+  local y = -6
+  for _, name in ipairs(spellList) do
+    local info = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(name) or nil
+    local spellID = info and info.spellID or nil
+    if spellID then
+      local button = CreateFrame("Button", nil, content, "SecureActionButtonTemplate,BackdropTemplate")
+      button:SetPoint("TOP", content, "TOP", 0, y)
+      button:SetSize(300, 22)
+      button:SetFrameLevel(frame:GetFrameLevel() + 1)
+      Elysian.SetBackdrop(button)
+      Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+      local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      text:SetPoint("CENTER")
+      text:SetText(name)
+      Elysian.ApplyFont(text, 10, "OUTLINE")
+      text:SetTextColor(r, g, b)
+
+      if IsSpellKnown and IsSpellKnown(spellID) then
+        button:SetAttribute("type", "spell")
+        button:SetAttribute("spell", spellID)
+        button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
+      else
+        button:SetAttribute("type", nil)
+      end
+
+      local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+      cooldown:SetAllPoints()
+      cooldown:SetDrawBling(false)
+      cooldown:SetDrawEdge(false)
+      cooldown:SetSwipeColor(0, 0, 0, 0.6)
+      cooldown:Hide()
+
+      table.insert(buttons, button)
+      table.insert(cooldowns, { frame = cooldown, spellID = spellID })
+      y = y - 24
     end
   end
+
+  return frame, buttons, cooldowns
+end
+
+function InfoBar:EnsureMageTeleportsWindow()
+  if self.mageTeleportsWindow then
+    return
+  end
+  local frame, buttons, cooldowns = BuildMageWindow("Mage Teleports", MAGE_TELEPORTS, "ElysianMageTeleportsFrame")
+  self.mageTeleportsWindow = frame
+  self.mageTeleportButtons = buttons
+  self.mageTeleportCooldowns = cooldowns
+  tinsert(UISpecialFrames, frame:GetName())
+end
+
+function InfoBar:EnsureMagePortalsWindow()
+  if self.magePortalsWindow then
+    return
+  end
+  local frame, buttons, cooldowns = BuildMageWindow("Mage Portals", MAGE_PORTALS, "ElysianMagePortalsFrame")
+  self.magePortalsWindow = frame
+  self.magePortalButtons = buttons
+  self.magePortalCooldowns = cooldowns
+  tinsert(UISpecialFrames, frame:GetName())
+end
+
+function InfoBar:UpdatePortalCooldowns()
+  local function UpdateList(list)
+    if not list then
+      return
+    end
+    for _, entry in ipairs(list) do
+      local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(entry.spellID) or nil
+      local start = info and info.startTime or 0
+      local duration = info and info.duration or 0
+      if start > 0 and duration > 0 then
+        entry.frame:SetCooldown(start, duration)
+        entry.frame:Show()
+      else
+        entry.frame:Hide()
+      end
+    end
+  end
+  UpdateList(self.portalCooldowns)
+  UpdateList(self.mageTeleportCooldowns)
+  UpdateList(self.magePortalCooldowns)
 end
 
 function InfoBar:TogglePortalWindow()
+  local wasCreated = not self.portalWindow
   self:EnsurePortalWindow()
+  if wasCreated then
+    if self.mageTeleportsWindow then
+      self.mageTeleportsWindow:Hide()
+    end
+    if self.magePortalsWindow then
+      self.magePortalsWindow:Hide()
+    end
+    self.portalWindow:Show()
+    self:UpdatePortalCooldowns()
+    return
+  end
   if self.portalWindow:IsShown() then
     self.portalWindow:Hide()
   else
+    if self.mageTeleportsWindow then
+      self.mageTeleportsWindow:Hide()
+    end
+    if self.magePortalsWindow then
+      self.magePortalsWindow:Hide()
+    end
     self.portalWindow:Show()
+    self:UpdatePortalCooldowns()
+  end
+end
+
+function InfoBar:ToggleMageTeleportsWindow()
+  local wasCreated = not self.mageTeleportsWindow
+  self:EnsureMageTeleportsWindow()
+  if wasCreated then
+    if self.portalWindow then
+      self.portalWindow:Hide()
+    end
+    if self.magePortalsWindow then
+      self.magePortalsWindow:Hide()
+    end
+    self.mageTeleportsWindow:Show()
+    self:UpdatePortalCooldowns()
+    return
+  end
+  if self.mageTeleportsWindow:IsShown() then
+    self.mageTeleportsWindow:Hide()
+  else
+    if self.portalWindow then
+      self.portalWindow:Hide()
+    end
+    if self.magePortalsWindow then
+      self.magePortalsWindow:Hide()
+    end
+    self.mageTeleportsWindow:Show()
+    self:UpdatePortalCooldowns()
+  end
+end
+
+function InfoBar:ToggleMagePortalsWindow()
+  local wasCreated = not self.magePortalsWindow
+  self:EnsureMagePortalsWindow()
+  if wasCreated then
+    if self.portalWindow then
+      self.portalWindow:Hide()
+    end
+    if self.mageTeleportsWindow then
+      self.mageTeleportsWindow:Hide()
+    end
+    self.magePortalsWindow:Show()
+    self:UpdatePortalCooldowns()
+    return
+  end
+  if self.magePortalsWindow:IsShown() then
+    self.magePortalsWindow:Hide()
+  else
+    if self.portalWindow then
+      self.portalWindow:Hide()
+    end
+    if self.mageTeleportsWindow then
+      self.mageTeleportsWindow:Hide()
+    end
+    self.magePortalsWindow:Show()
     self:UpdatePortalCooldowns()
   end
 end
