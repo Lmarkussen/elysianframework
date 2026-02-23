@@ -57,6 +57,8 @@ Elysian.state = Elysian.state or {
   infoBarShowDurability = true,
   infoBarShowFPS = true,
   infoBarShowMS = true,
+  infoBarShowMemory = false,
+  infoBarShowItemLevel = false,
   infoBarUnlocked = false,
   infoBarOpacity = 0.35,
   infoBarTextColor = nil,
@@ -219,6 +221,8 @@ function Elysian.GetDefaultState()
     infoBarShowDurability = true,
     infoBarShowFPS = true,
     infoBarShowMS = true,
+    infoBarShowMemory = false,
+    infoBarShowItemLevel = false,
     infoBarUnlocked = false,
     infoBarOpacity = 0.35,
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
@@ -667,12 +671,13 @@ function Elysian.InitSavedVariables()
       profile.infoBarShowPortalButton = true
     end
   end
-  if not ElysianDB.charProfiles[Elysian.GetCharacterKey()] then
+  local charKey = Elysian.GetCharacterKey()
+  if not ElysianDB.charProfiles[charKey] or ElysianDB.charProfiles[charKey] == "Default" then
     local _, class = UnitClass("player")
     if class and ElysianDB.profiles[class] then
-      ElysianDB.charProfiles[Elysian.GetCharacterKey()] = class
+      ElysianDB.charProfiles[charKey] = class
     else
-      ElysianDB.charProfiles[Elysian.GetCharacterKey()] = "Default"
+      ElysianDB.charProfiles[charKey] = "Default"
     end
   end
   if ElysianDB.showOnStart == nil then
@@ -790,6 +795,12 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.infoBarShowMS == nil then
     ElysianDB.infoBarShowMS = true
+  end
+  if ElysianDB.infoBarShowMemory == nil then
+    ElysianDB.infoBarShowMemory = false
+  end
+  if ElysianDB.infoBarShowItemLevel == nil then
+    ElysianDB.infoBarShowItemLevel = false
   end
   if ElysianDB.infoBarUnlocked == nil then
     ElysianDB.infoBarUnlocked = false
@@ -1196,8 +1207,13 @@ function Elysian.InitSavedVariables()
   if profileName == "HUNTER" then
     Elysian.state.hunterPetReminderEnabled = true
   end
+  if profileName == "ROGUE" then
+    Elysian.state.roguePoisonEnabled = true
+  end
   if ElysianDB.minimapButtonAngle ~= nil then
     Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
+  elseif Elysian.state.minimapButtonAngle == nil then
+    Elysian.state.minimapButtonAngle = 225
   end
   Elysian.state.scrapSellerEnabled = Elysian.state.scrapSellerEnabled or false
   Elysian.state.showOnStart = Elysian.state.showOnStart ~= false

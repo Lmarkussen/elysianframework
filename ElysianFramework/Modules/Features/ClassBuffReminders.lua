@@ -36,21 +36,49 @@ local function HasBuff(name, spellId)
   return false
 end
 
-local function HasAnyPoisonAura()
-  local poisons = {
-    "Deadly Poison",
-    "Instant Poison",
-    "Wound Poison",
-    "Crippling Poison",
-    "Numbing Poison",
-    "Atrophic Poison",
-  }
-  for _, name in ipairs(poisons) do
-    if HasBuff(name) then
+local function HasPoisonAuraById(spellId)
+  if not spellId then
+    return false
+  end
+  if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+    if C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
+      return true
+    end
+  end
+  if AuraUtil and AuraUtil.FindAuraBySpellId then
+    if AuraUtil.FindAuraBySpellId(spellId, "player") then
       return true
     end
   end
   return false
+end
+
+local function GetPoisonHandState()
+  local lethal = {
+    2818,   -- Deadly Poison
+    315584, -- Instant Poison (DF)
+    8680,   -- Wound Poison
+  }
+  local nonLethal = {
+    3408,   -- Crippling Poison
+    5760,   -- Numbing Poison
+    381637, -- Atrophic Poison
+  }
+  local hasLethal = false
+  for _, spellId in ipairs(lethal) do
+    if HasPoisonAuraById(spellId) then
+      hasLethal = true
+      break
+    end
+  end
+  local hasNonLethal = false
+  for _, spellId in ipairs(nonLethal) do
+    if HasPoisonAuraById(spellId) then
+      hasNonLethal = true
+      break
+    end
+  end
+  return hasLethal, hasNonLethal
 end
 
 local function GetPlayerClass()
@@ -235,18 +263,13 @@ function ClassBuffReminders:UpdatePoison()
     frame:Show()
     return
   end
-  local hasMain, _, _, hasOff = GetWeaponEnchantInfo()
-  local hasAura = HasAnyPoisonAura()
   local missing = {}
-  if not hasMain then
+  local hasLethal, hasNonLethal = GetPoisonHandState()
+  if not hasLethal then
     table.insert(missing, "MH")
   end
-  if not hasOff then
+  if not hasNonLethal then
     table.insert(missing, "OH")
-  end
-  if #missing == 2 and hasAura then
-    frame:Hide()
-    return
   end
   if #missing > 0 then
     self:UpdateFrameText("rogue", "MISSING POISONS: " .. table.concat(missing, ", "))
