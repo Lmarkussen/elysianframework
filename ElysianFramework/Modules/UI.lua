@@ -202,6 +202,13 @@ local function StyleSubTab(button, selected)
     Elysian.SetBackdropColors(button, bg, border, 0.88)
     Elysian.ApplyTextColor(button.text)
   end
+
+  if button.classColor then
+    local c = button.classColor
+    if button.text then
+      button.text:SetTextColor(c[1], c[2], c[3])
+    end
+  end
 end
 
   local function ShowPanel(activePanel, panels)
@@ -392,7 +399,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.13 BETA")
+  versionText:SetText("v1.00.14 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -2400,6 +2407,11 @@ function Elysian.UI:CreateMainFrame()
 
   local function CreateClassTab(name, index)
     local tab = CreateTabButton(subHeader, name, tabWidth, tabHeight)
+    if RAID_CLASS_COLORS and RAID_CLASS_COLORS[name] and tab.text then
+      local c = RAID_CLASS_COLORS[name]
+      tab.text:SetTextColor(c.r, c.g, c.b)
+      tab.classColor = { c.r, c.g, c.b }
+    end
     local row = index <= row1Count and 1 or 2
     local col = row == 1 and index or (index - row1Count)
     local x = 10 + (col - 1) * (tabWidth + tabSpacing)
