@@ -3,6 +3,24 @@ local _, Elysian = ...
 Elysian.UI = Elysian.UI or {}
 Elysian.UI.SkinDropDown = nil
 
+local function HookButtonPressFeedback(button)
+  if not button or not button.SetBackdropColor then
+    return
+  end
+  local function SetActive(active)
+    if active then
+      Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
+    else
+      Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    end
+  end
+  button:HookScript("OnMouseDown", function() SetActive(true) end)
+  button:HookScript("OnMouseUp", function() SetActive(false) end)
+  button:HookScript("OnHide", function() SetActive(false) end)
+end
+
+Elysian.UI.HookButtonPressFeedback = HookButtonPressFeedback
+
 local function CreateTabButton(parent, label, width, height)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
   local button = CreateFrame("Button", nil, parent, template)
@@ -15,25 +33,9 @@ local function CreateTabButton(parent, label, width, height)
   Elysian.ApplyFont(text, 11, "OUTLINE")
   Elysian.ApplyTextColor(text)
   button.text = text
+  HookButtonPressFeedback(button)
   return button
 end
-
-local function HookButtonPressFeedback(button)
-  if not button or not button.SetBackdropColor then
-    return
-  end
-  local function SetActive(active)
-    local bg = active and Elysian.GetNavBg() or Elysian.GetNavBg()
-    local shade = active and 1.18 or 1
-    local r, g, b = bg[1], bg[2], bg[3]
-    button:SetBackdropColor(r * shade, g * shade, b * shade, 0.95)
-  end
-  button:HookScript("OnMouseDown", function() SetActive(true) end)
-  button:HookScript("OnMouseUp", function() SetActive(false) end)
-  button:HookScript("OnHide", function() SetActive(false) end)
-end
-
-Elysian.UI.HookButtonPressFeedback = HookButtonPressFeedback
 
 local function SkinDropDown(dropdown)
   if not dropdown then
@@ -390,7 +392,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.12 BETA")
+  versionText:SetText("v1.00.13 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -716,6 +718,9 @@ function Elysian.UI:CreateMainFrame()
   Elysian.ApplyFont(profileNameBox, 11, "OUTLINE")
   Elysian.ApplyTextColor(profileNameBox)
   profileNameBox:Hide()
+  profileNameBox:SetScript("OnEnterPressed", function()
+    saveProfileButton:Click()
+  end)
 
   saveProfileButton:SetScript("OnClick", function()
     if Elysian.ClickFeedback then
