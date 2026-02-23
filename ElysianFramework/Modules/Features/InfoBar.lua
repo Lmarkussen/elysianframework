@@ -167,6 +167,23 @@ function InfoBar:EnsureFrame()
     end
     InfoBar:TogglePortalWindow()
   end)
+  local function HookInfoBarButtonFeedback(button)
+    if not button or not button.SetBackdropColor then
+      return
+    end
+    local function SetActive(active)
+      if active then
+        Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
+      else
+        Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+      end
+    end
+    button:HookScript("OnMouseDown", function() SetActive(true) end)
+    button:HookScript("OnMouseUp", function() SetActive(false) end)
+    button:HookScript("OnHide", function() SetActive(false) end)
+    button:HookScript("OnLeave", function() SetActive(false) end)
+  end
+  HookInfoBarButtonFeedback(portalButton)
 
   self.portalButton = portalButton
   self.portalText = portalText
@@ -190,6 +207,7 @@ function InfoBar:EnsureFrame()
     end
     InfoBar:ToggleMageTeleportsWindow()
   end)
+  HookInfoBarButtonFeedback(mageTeleportButton)
 
   local magePortalButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
   magePortalButton:SetSize(140, 22)
@@ -209,11 +227,103 @@ function InfoBar:EnsureFrame()
     end
     InfoBar:ToggleMagePortalsWindow()
   end)
+  HookInfoBarButtonFeedback(magePortalButton)
+
+  local function EnsurePortalCastFeedback(self)
+    if self.portalCastEvents then
+      return
+    end
+    local evt = CreateFrame("Frame")
+    local function SetActive(button, active)
+      if not button or not button.SetBackdrop then
+        return
+      end
+      if active then
+        Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
+      else
+        Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+      end
+    end
+    local function GetCastingSpellID()
+      local spellId = select(9, UnitCastingInfo("player"))
+      if not spellId then
+        spellId = select(9, UnitChannelInfo("player"))
+      end
+      return spellId
+    end
+    local function Refresh()
+      local now = GetTime()
+      local castingSpell = GetCastingSpellID()
+      if not self.portalSpellButtons then
+        return
+      end
+      for _, entry in ipairs(self.portalSpellButtons) do
+        local active = (castingSpell and entry.spellID == castingSpell) or (entry.flashUntil and entry.flashUntil > now)
+        SetActive(entry.button, active)
+      end
+    end
+    evt:RegisterEvent("UNIT_SPELLCAST_START")
+    evt:RegisterEvent("UNIT_SPELLCAST_STOP")
+    evt:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+    evt:RegisterEvent("UNIT_SPELLCAST_FAILED")
+    evt:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+    evt:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    evt:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+    evt:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    evt:SetScript("OnEvent", function(_, event, unit)
+      if unit and unit ~= "player" then
+        return
+      end
+      Refresh()
+    end)
+    self.portalCastEvents = evt
+    self.RefreshPortalButtonCasts = Refresh
+  end
+
+  self.EnsurePortalCastFeedback = EnsurePortalCastFeedback
+  self.AddPortalSpellButton = function(selfObj, button, spellID)
+    if not button or not spellID then
+      return
+    end
+    selfObj.portalSpellButtons = selfObj.portalSpellButtons or {}
+    local entry = { button = button, spellID = spellID, flashUntil = 0 }
+    table.insert(selfObj.portalSpellButtons, entry)
+    button:HookScript("PostClick", function()
+      entry.flashUntil = GetTime() + 0.6
+      if selfObj.RefreshPortalButtonCasts then
+        selfObj:RefreshPortalButtonCasts()
+      end
+      if C_Timer and selfObj.RefreshPortalButtonCasts then
+        C_Timer.After(0.65, function()
+          if selfObj.RefreshPortalButtonCasts then
+            selfObj:RefreshPortalButtonCasts()
+          end
+        end)
+      end
+    end)
+    selfObj:EnsurePortalCastFeedback()
+  end
 
   self.mageTeleportButton = mageTeleportButton
   self.mageTeleportText = mageTeleportText
   self.magePortalButton = magePortalButton
   self.magePortalText = magePortalText
+
+  local function HookPortalListButtonFeedback(button)
+    if not button or not button.SetBackdrop then
+      return
+    end
+    button:HookScript("OnMouseDown", function()
+      Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
+    end)
+    button:HookScript("OnMouseUp", function()
+      Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    end)
+    button:HookScript("OnLeave", function()
+      Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    end)
+  end
+  self.HookPortalListButtonFeedback = HookPortalListButtonFeedback
 
   self:ApplyColors()
   self:UpdateVisibility()
@@ -704,8 +814,15 @@ function InfoBar:EnsurePortalWindow()
 
   local RenderExpansion
 
+  local function RegisterPortalSpellButton(self, button, spellID)
+    if self.AddPortalSpellButton then
+      self:AddPortalSpellButton(button, spellID)
+    end
+  end
+
   local function RenderRoot()
     ClearButtons()
+    self.portalSpellButtons = {}
     backButton:Hide()
     local data = Elysian.PortalData
     if not data then
@@ -769,8 +886,10 @@ function InfoBar:EnsurePortalWindow()
           button:SetAttribute("type", "spell")
           button:SetAttribute("spell", spellID)
           button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
+          button:EnableMouse(true)
         else
           button:SetAttribute("type", nil)
+          button:EnableMouse(false)
         end
 
         if not button.unknownText then
@@ -782,6 +901,11 @@ function InfoBar:EnsurePortalWindow()
           button.unknownText = unknownText
         end
         button.unknownText:SetShown(not known)
+
+        RegisterPortalSpellButton(self, button, spellID)
+        if self.HookPortalListButtonFeedback then
+          self:HookPortalListButtonFeedback(button)
+        end
 
         local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
         cooldown:SetAllPoints()
@@ -881,7 +1005,11 @@ local function BuildMageWindow(titleText, spellList, windowName)
 
       local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
       text:SetPoint("CENTER")
-      text:SetText(name)
+      local label = name
+      label = label:gsub("^Portal:%s*", "")
+      label = label:gsub("^Teleport:%s*", "")
+      label = label:gsub("^Ancient Teleport:%s*", "")
+      text:SetText(label)
       Elysian.ApplyFont(text, 10, "OUTLINE")
       text:SetTextColor(r, g, b)
 
@@ -890,8 +1018,10 @@ local function BuildMageWindow(titleText, spellList, windowName)
         button:SetAttribute("type", "spell")
         button:SetAttribute("spell", spellID)
         button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
+        button:EnableMouse(true)
       else
         button:SetAttribute("type", nil)
+        button:EnableMouse(false)
       end
 
       if not button.unknownText then
@@ -903,6 +1033,10 @@ local function BuildMageWindow(titleText, spellList, windowName)
         button.unknownText = unknownText
       end
       button.unknownText:SetShown(not known)
+      button.spellID = spellID
+      if InfoBar and InfoBar.HookPortalListButtonFeedback then
+        InfoBar:HookPortalListButtonFeedback(button)
+      end
 
       local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
       cooldown:SetAllPoints()
@@ -929,6 +1063,13 @@ function InfoBar:EnsureMageTeleportsWindow()
   self.mageTeleportsWindow = frame
   self.mageTeleportButtons = buttons
   self.mageTeleportCooldowns = cooldowns
+  if self.AddPortalSpellButton then
+    for _, button in ipairs(buttons) do
+      if button.spellID then
+        self:AddPortalSpellButton(button, button.spellID)
+      end
+    end
+  end
   tinsert(UISpecialFrames, frame:GetName())
 end
 
@@ -940,6 +1081,13 @@ function InfoBar:EnsureMagePortalsWindow()
   self.magePortalsWindow = frame
   self.magePortalButtons = buttons
   self.magePortalCooldowns = cooldowns
+  if self.AddPortalSpellButton then
+    for _, button in ipairs(buttons) do
+      if button.spellID then
+        self:AddPortalSpellButton(button, button.spellID)
+      end
+    end
+  end
   tinsert(UISpecialFrames, frame:GetName())
 end
 
