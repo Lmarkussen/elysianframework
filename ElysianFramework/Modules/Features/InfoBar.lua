@@ -764,7 +764,8 @@ function InfoBar:EnsurePortalWindow()
         Elysian.ApplyFont(text, 10, "OUTLINE")
         Elysian.ApplyAccentColor(text)
 
-        if IsSpellKnown and IsSpellKnown(spellID) then
+        local known = IsSpellKnown and IsSpellKnown(spellID)
+        if known then
           button:SetAttribute("type", "spell")
           button:SetAttribute("spell", spellID)
           button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
@@ -772,11 +773,22 @@ function InfoBar:EnsurePortalWindow()
           button:SetAttribute("type", nil)
         end
 
+        if not button.unknownText then
+          local unknownText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+          unknownText:SetPoint("CENTER")
+          unknownText:SetText("X")
+          unknownText:SetTextColor(1, 0.2, 0.2)
+          Elysian.ApplyFont(unknownText, 16, "OUTLINE")
+          button.unknownText = unknownText
+        end
+        button.unknownText:SetShown(not known)
+
         local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
         cooldown:SetAllPoints()
         cooldown:SetDrawBling(false)
         cooldown:SetDrawEdge(false)
-        cooldown:SetSwipeColor(0, 0, 0, 0.6)
+        cooldown:SetDrawSwipe(false)
+        cooldown:SetSwipeColor(0, 0, 0, 0)
         cooldown:Hide()
         table.insert(self.portalCooldowns, { frame = cooldown, spellID = spellID })
 
@@ -873,7 +885,8 @@ local function BuildMageWindow(titleText, spellList, windowName)
       Elysian.ApplyFont(text, 10, "OUTLINE")
       text:SetTextColor(r, g, b)
 
-      if IsSpellKnown and IsSpellKnown(spellID) then
+      local known = IsSpellKnown and IsSpellKnown(spellID)
+      if known then
         button:SetAttribute("type", "spell")
         button:SetAttribute("spell", spellID)
         button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
@@ -881,11 +894,22 @@ local function BuildMageWindow(titleText, spellList, windowName)
         button:SetAttribute("type", nil)
       end
 
+      if not button.unknownText then
+        local unknownText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        unknownText:SetPoint("CENTER")
+        unknownText:SetText("X")
+        unknownText:SetTextColor(1, 0.2, 0.2)
+        Elysian.ApplyFont(unknownText, 16, "OUTLINE")
+        button.unknownText = unknownText
+      end
+      button.unknownText:SetShown(not known)
+
       local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
       cooldown:SetAllPoints()
       cooldown:SetDrawBling(false)
       cooldown:SetDrawEdge(false)
-      cooldown:SetSwipeColor(0, 0, 0, 0.6)
+      cooldown:SetDrawSwipe(false)
+      cooldown:SetSwipeColor(0, 0, 0, 0)
       cooldown:Hide()
 
       table.insert(buttons, button)
