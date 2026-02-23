@@ -17,6 +17,7 @@ local function HookButtonPressFeedback(button)
   button:HookScript("OnMouseDown", function() SetActive(true) end)
   button:HookScript("OnMouseUp", function() SetActive(false) end)
   button:HookScript("OnHide", function() SetActive(false) end)
+  button:HookScript("OnLeave", function() SetActive(false) end)
 end
 
 Elysian.UI.HookButtonPressFeedback = HookButtonPressFeedback
@@ -399,7 +400,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.15 BETA")
+  versionText:SetText("v1.00.16 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
