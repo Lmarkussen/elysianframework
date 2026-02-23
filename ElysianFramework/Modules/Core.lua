@@ -663,6 +663,9 @@ function Elysian.InitSavedVariables()
     if profile.cursorRingTrailRandom == nil then
       profile.cursorRingTrailRandom = false
     end
+    if profile.infoBarShowPortalButton == nil then
+      profile.infoBarShowPortalButton = true
+    end
   end
   if not ElysianDB.charProfiles[Elysian.GetCharacterKey()] then
     local _, class = UnitClass("player")
@@ -1212,6 +1215,9 @@ function Elysian.InitSavedVariables()
     Elysian.state.cursorRingTrailColor,
     { Elysian.HexToRGB(Elysian.theme.accent) }
   )
+  if Elysian.state.infoBarShowPortalButton == nil then
+    Elysian.state.infoBarShowPortalButton = true
+  end
   Elysian.state.uiTextColor = EnsureColorTable(
     Elysian.state.uiTextColor,
     { Elysian.HexToRGB(Elysian.theme.fg) }
