@@ -15,22 +15,78 @@ local function HasKeystone()
 end
 
 local function IsKeystoneForCurrentInstance()
-  if not C_MythicPlus or not C_MythicPlus.GetOwnedKeystoneChallengeMapID or not C_MythicPlus.GetMapUIInfo then
+  if not C_MythicPlus or not C_MythicPlus.GetOwnedKeystoneChallengeMapID then
     return false
   end
   local mapId = C_MythicPlus.GetOwnedKeystoneChallengeMapID()
   if not mapId or mapId <= 0 then
     return false
   end
-  local keystoneName = C_MythicPlus.GetMapUIInfo(mapId)
-  if not keystoneName then
-    return false
+  if C_ChallengeMode and C_ChallengeMode.GetActiveChallengeMapID then
+    local activeId = C_ChallengeMode.GetActiveChallengeMapID()
+    if activeId and activeId > 0 then
+      return activeId == mapId
+    end
+  end
+  local keystoneName = nil
+  if C_ChallengeMode and C_ChallengeMode.GetMapUIInfo then
+    keystoneName = C_ChallengeMode.GetMapUIInfo(mapId)
   end
   local instanceName = GetInstanceInfo()
-  if not instanceName then
-    return false
+  local instanceMapId = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player") or nil
+
+  if instanceMapId then
+    local current = instanceMapId
+    local visited = 0
+    while current and current > 0 and visited < 10 do
+      if current == mapId then
+        return true
+      end
+      local info = C_Map.GetMapInfo(current)
+      if not info or not info.parentMapID or info.parentMapID == current then
+        break
+      end
+      current = info.parentMapID
+      visited = visited + 1
+    end
   end
-  return string.lower(instanceName) == string.lower(keystoneName)
+
+  local function NormalizeName(name)
+    if not name then
+      return nil
+    end
+    local s = string.lower(name)
+    s = s:gsub("'", "")
+    s = s:gsub("[^%w%s]", " ")
+    s = s:gsub("%s+", " ")
+    s = s:gsub("^%s+", ""):gsub("%s+$", "")
+    s = s:gsub(" the ", " ")
+    s = s:gsub(" of ", " ")
+    s = s:gsub(" an ", " ")
+    s = s:gsub(" a ", " ")
+    s = s:gsub("%s+", " ")
+    return s
+  end
+
+  if keystoneName and instanceName then
+    local ks = NormalizeName(keystoneName)
+    local inst = NormalizeName(instanceName)
+    if ks and inst then
+      if ks == inst then
+        return true
+      end
+      if inst:find(ks, 1, true) or ks:find(inst, 1, true) then
+        return true
+      end
+      if ks:find("streets") or ks:find("gambit") then
+        if inst:find("tazavesh", 1, true) then
+          return true
+        end
+      end
+    end
+  end
+
+  return false
 end
 
 function KeystoneReminder:IsEnabled()
@@ -145,6 +201,25 @@ function KeystoneReminder:UpdateVisibility(force)
   end
   if not self:IsEnabled() then
     self.frame:Hide()
+    return
+  end
+  local active = false
+  if C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive() then
+    active = true
+  elseif C_ChallengeMode and C_ChallengeMode.GetActiveChallengeMapID then
+    local activeMap = C_ChallengeMode.GetActiveChallengeMapID()
+    if activeMap and activeMap > 0 then
+      active = true
+    end
+  elseif C_ChallengeMode and C_ChallengeMode.GetActiveKeystoneInfo then
+    local activeMap = C_ChallengeMode.GetActiveKeystoneInfo()
+    if activeMap and type(activeMap) == "number" and activeMap > 0 then
+      active = true
+    end
+  end
+  if active then
+    self.frame:Hide()
+    self.wasShown = false
     return
   end
   local inInstance, instanceType = IsInInstance()

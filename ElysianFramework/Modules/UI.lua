@@ -390,7 +390,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.08 BETA")
+  versionText:SetText("v1.00.09 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -2376,14 +2376,10 @@ function Elysian.UI:CreateMainFrame()
   local classAlertPanels = {}
 
   local classTabOrder = {
-    "DEATHKNIGHT",
-    "DEMONHUNTER",
     "DRUID",
     "EVOKER",
     "HUNTER",
     "MAGE",
-    "MONK",
-    "PALADIN",
     "PRIEST",
     "ROGUE",
     "SHAMAN",

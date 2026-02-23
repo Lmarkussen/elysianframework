@@ -263,9 +263,19 @@ function ClassBuffReminders:UpdateVisibility()
     end
     return
   end
+  local inInstance, instanceType = IsInInstance()
+  local inDungeon = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
   local class = GetPlayerClass()
   if class == "ROGUE" then
     self:UpdatePoison()
+    return
+  end
+  if inDungeon then
+    for key, frame in pairs(self.frames or {}) do
+      if key ~= "rogue" and key ~= "warlockPet" and key ~= "hunterPet" then
+        frame:Hide()
+      end
+    end
     return
   end
   local entry = BUFFS[class]

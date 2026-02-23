@@ -963,11 +963,12 @@ function CursorRing:CreatePanel(parent)
     ToggleDropDownMenu(1, nil, shapeDrop, shapeDropButton, 0, 0)
   end)
 
+  local rightOffset = -50
   CreateSlider(
     panel,
     "Ring size",
     rightX,
-    leftStartY - 40,
+    leftStartY - 40 + rightOffset,
     8,
     64,
     1,
@@ -980,13 +981,13 @@ function CursorRing:CreatePanel(parent)
   )
 
   local trailShapeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  trailShapeLabel:SetPoint("TOPLEFT", rightX, leftStartY - 90)
+  trailShapeLabel:SetPoint("TOPLEFT", rightX, leftStartY - 90 + rightOffset)
   trailShapeLabel:SetText("Trail Shape")
   Elysian.ApplyFont(trailShapeLabel, 11)
   Elysian.ApplyTextColor(trailShapeLabel)
 
   local trailShapeButton = CreateFrame("Button", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
-  trailShapeButton:SetPoint("TOPLEFT", rightX, leftStartY - 114)
+  trailShapeButton:SetPoint("TOPLEFT", rightX, leftStartY - 114 + rightOffset)
   trailShapeButton:SetSize(140, 22)
   Elysian.SetBackdrop(trailShapeButton)
   Elysian.SetBackdropColors(trailShapeButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1106,7 +1107,7 @@ function CursorRing:CreatePanel(parent)
     panel,
     "Trail length",
     rightX,
-    leftStartY - 160,
+    leftStartY - 160 + rightOffset,
     4,
     30,
     1,
@@ -1129,7 +1130,7 @@ function CursorRing:CreatePanel(parent)
     panel,
     "Trail fade",
     rightX,
-    leftStartY - 226,
+    leftStartY - 226 + rightOffset,
     0,
     1,
     0.05,
@@ -1151,7 +1152,7 @@ function CursorRing:CreatePanel(parent)
     panel,
     "Trail Color",
     rightX,
-    leftStartY - 300,
+    leftStartY - 300 + rightOffset,
     function()
       return Elysian.state.cursorRingTrailColor or { Elysian.HexToRGB(Elysian.theme.accent) }
     end,
