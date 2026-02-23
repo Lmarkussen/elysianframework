@@ -6,35 +6,32 @@ Elysian.Features.ClassBuffReminders = ClassBuffReminders
 
 local BUFFS = {
   WARRIOR = { key = "warrior", buff = "Battle Shout", spellId = 6673, label = "MISSING BATTLE SHOUT" },
-  MAGE = { key = "mage", buff = "Arcane Intellect", label = "MISSING ARCANE INTELLECT" },
-  PRIEST = { key = "priest", buff = "Power Word: Fortitude", label = "MISSING FORTITUDE" },
-  DRUID = { key = "druid", buff = "Mark of the Wild", label = "MISSING MARK OF THE WILD" },
-  SHAMAN = { key = "shaman", buff = "Skyfury", label = "MISSING SKYFURY" },
-  EVOKER = { key = "evoker", buff = "Blessing of the Bronze", label = "MISSING BRONZE" },
+  MAGE = { key = "mage", buff = "Arcane Intellect", spellId = 1459, label = "MISSING ARCANE INTELLECT" },
+  PRIEST = { key = "priest", buff = "Power Word: Fortitude", spellId = 21562, label = "MISSING FORTITUDE" },
+  DRUID = { key = "druid", buff = "Mark of the Wild", spellId = 1126, label = "MISSING MARK OF THE WILD" },
+  SHAMAN = { key = "shaman", buff = "Skyfury", spellId = 462854, label = "MISSING SKYFURY" },
+  EVOKER = { key = "evoker", buff = "Blessing of the Bronze", spellId = 381748, label = "MISSING BRONZE" },
 }
 
 local function HasBuff(name, spellId)
+  if spellId and C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+    if C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
+      return true
+    end
+  end
   if spellId and AuraUtil and AuraUtil.FindAuraBySpellId then
     if AuraUtil.FindAuraBySpellId(spellId, "player") then
       return true
     end
   end
-  if AuraUtil and AuraUtil.FindAuraByName then
-    return AuraUtil.FindAuraByName(name, "player") ~= nil
-  end
-  local i = 1
-  while true do
-    local auraName, _, _, _, _, _, _, _, _, auraSpellId = UnitAura("player", i)
-    if not auraName then
-      break
-    end
-    if spellId and auraSpellId == spellId then
+  if name == "Skyfury" then
+    local alias = 462854
+    if AuraUtil and AuraUtil.FindAuraBySpellId and AuraUtil.FindAuraBySpellId(alias, "player") then
       return true
     end
-    if auraName == name then
+    if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID and C_UnitAuras.GetPlayerAuraBySpellID(alias) then
       return true
     end
-    i = i + 1
   end
   return false
 end
@@ -260,6 +257,12 @@ function ClassBuffReminders:UpdatePoison()
 end
 
 function ClassBuffReminders:UpdateVisibility()
+  if self.runActive then
+    for _, frame in pairs(self.frames or {}) do
+      frame:Hide()
+    end
+    return
+  end
   local class = GetPlayerClass()
   if class == "ROGUE" then
     self:UpdatePoison()
@@ -304,7 +307,14 @@ function ClassBuffReminders:EnsureEvents()
   events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+  events:RegisterEvent("CHALLENGE_MODE_START")
+  events:RegisterEvent("CHALLENGE_MODE_RESET")
   events:SetScript("OnEvent", function(_, event, unit)
+    if event == "CHALLENGE_MODE_START" then
+      self.runActive = true
+    elseif event == "CHALLENGE_MODE_RESET" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+      self.runActive = false
+    end
     if event == "UNIT_AURA" and unit ~= "player" then
       return
     end
@@ -314,6 +324,7 @@ function ClassBuffReminders:EnsureEvents()
 end
 
 function ClassBuffReminders:Initialize()
+  self.runActive = false
   self:EnsureFrames()
   self:EnsureEvents()
   self:UpdateVisibility()

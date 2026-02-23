@@ -203,7 +203,8 @@ function RepairReminder:UpdateVisibility(force)
     return
   end
   local pct = GetLowestDurability()
-  if pct and pct <= 70 then
+  local threshold = Elysian.state.autoRepairThreshold or 70
+  if pct and pct <= threshold then
     self.frame:Show()
     if not self.wasShown then
       self.wasShown = true

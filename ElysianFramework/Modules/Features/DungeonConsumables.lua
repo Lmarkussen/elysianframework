@@ -16,52 +16,53 @@ local FLASK_BUFFS = {
   "Vicious Flask of the Wrecking Ball",
 }
 
-local function ForEachPlayerAura(callback)
-  if AuraUtil and AuraUtil.ForEachAura then
-    AuraUtil.ForEachAura("player", "HELPFUL", nil, callback)
-    return
+local function HasWellFed()
+  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
+    return false
   end
-  local i = 1
+  local index = 1
   while true do
-    local name = UnitAura("player", i)
-    if not name then
+    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
+    if not aura then
       break
     end
-    callback(name)
-    i = i + 1
-  end
-end
-
-local function HasWellFed()
-  local found = false
-  ForEachPlayerAura(function(name)
-    if name and name:lower():find("well fed", 1, true) then
-      found = true
-      return true
-    end
-  end)
-  return found
-end
-
-local function HasFlask()
-  local found = false
-  ForEachPlayerAura(function(name)
-    if not name then
-      return
-    end
-    for _, buff in ipairs(FLASK_BUFFS) do
-      if name == buff then
-        found = true
+    local spellId = aura.spellId
+    if spellId then
+      local info = C_Spell.GetSpellInfo(spellId)
+      local name = info and info.name or nil
+      if name and name:lower():find("well fed", 1, true) then
         return true
       end
     end
-    local lower = name:lower()
-    if lower:find("flask", 1, true) or lower:find("phial", 1, true) then
-      found = true
-      return true
+    index = index + 1
+  end
+  return false
+end
+
+local function HasFlask()
+  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
+    return false
+  end
+  local index = 1
+  while true do
+    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
+    if not aura then
+      break
     end
-  end)
-  return found
+    local spellId = aura.spellId
+    if spellId then
+      local info = C_Spell.GetSpellInfo(spellId)
+      local name = info and info.name or nil
+      if name then
+        local lower = name:lower()
+        if lower:find("flask", 1, true) or lower:find("phial", 1, true) then
+          return true
+        end
+      end
+    end
+    index = index + 1
+  end
+  return false
 end
 
 function DungeonConsumables:IsEnabled()
@@ -213,6 +214,13 @@ function DungeonConsumables:UpdateVisibility(force)
     self.frame:Hide()
     return
   end
+  if self.runActive and C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and not C_ChallengeMode.IsChallengeModeActive() then
+    self.runActive = false
+  end
+  if self.runActive then
+    self.frame:Hide()
+    return
+  end
   local inInstance, instanceType = IsInInstance()
   local validInstance = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
   if not validInstance and not Elysian.state.dungeonConsumablesTest then
@@ -241,7 +249,14 @@ function DungeonConsumables:EnsureEvents()
   events:RegisterEvent("PLAYER_ENTERING_WORLD")
   events:RegisterEvent("UNIT_AURA")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+  events:RegisterEvent("CHALLENGE_MODE_START")
+  events:RegisterEvent("CHALLENGE_MODE_RESET")
   events:SetScript("OnEvent", function(_, event, unit)
+    if event == "CHALLENGE_MODE_START" then
+      self.runActive = true
+    elseif event == "CHALLENGE_MODE_RESET" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+      self.runActive = false
+    end
     if event == "UNIT_AURA" and unit ~= "player" then
       return
     end
@@ -251,6 +266,7 @@ function DungeonConsumables:EnsureEvents()
 end
 
 function DungeonConsumables:Initialize()
+  self.runActive = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive() or false
   self:EnsureFrame()
   self:ApplyColors()
   self:UpdateVisibility(true)

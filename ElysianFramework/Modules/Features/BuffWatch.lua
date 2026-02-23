@@ -13,20 +13,39 @@ local CLASS_BUFFS = {
   SHAMAN = { "Skyfury" },
 }
 
+local BUFF_SPELLS = {
+  ["Battle Shout"] = 6673,
+  ["Arcane Intellect"] = 1459,
+  ["Power Word: Fortitude"] = 21562,
+  ["Mark of the Wild"] = 1126,
+  ["Blessing of the Bronze"] = 381748,
+  ["Skyfury"] = 462854,
+}
+
+local BUFF_ALIASES = {
+  ["Skyfury"] = { 462854 },
+  ["Blessing of the Bronze"] = { 381748 },
+}
+
 local function HasBuff(name)
-  if AuraUtil and AuraUtil.FindAuraByName then
-    return AuraUtil.FindAuraByName(name, "player") ~= nil
+  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
+    return false
   end
-  local i = 1
+  local index = 1
   while true do
-    local auraName = UnitAura("player", i)
-    if not auraName then
+    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
+    if not aura then
       break
     end
-    if auraName == name then
-      return true
+    local spellId = aura.spellId
+    if spellId then
+      local info = C_Spell.GetSpellInfo(spellId)
+      local auraName = info and info.name or nil
+      if auraName == name then
+        return true
+      end
     end
-    i = i + 1
+    index = index + 1
   end
   return false
 end
@@ -208,6 +227,11 @@ function BuffWatch:UpdateVisibility(force)
     self.frame:Hide()
     return
   end
+  self.runActive = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive() or false
+  if self.runActive then
+    self.frame:Hide()
+    return
+  end
   local inInstance, instanceType = IsInInstance()
   local validInstance = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
   if not validInstance and not Elysian.state.buffWatchTest then
@@ -238,7 +262,14 @@ function BuffWatch:EnsureEvents()
   events:RegisterEvent("UNIT_AURA")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
+  events:RegisterEvent("CHALLENGE_MODE_START")
+  events:RegisterEvent("CHALLENGE_MODE_RESET")
   events:SetScript("OnEvent", function(_, event, unit)
+    if event == "CHALLENGE_MODE_START" then
+      self.runActive = true
+    elseif event == "CHALLENGE_MODE_RESET" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+      self.runActive = false
+    end
     if event == "UNIT_AURA" and unit ~= "player" then
       return
     end
