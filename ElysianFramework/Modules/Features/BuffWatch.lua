@@ -28,24 +28,26 @@ local BUFF_ALIASES = {
 }
 
 local function HasBuff(name)
-  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
-    return false
-  end
-  local index = 1
-  while true do
-    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
-    if not aura then
-      break
+  if AuraUtil and AuraUtil.FindAuraByName then
+    local ok, result = pcall(AuraUtil.FindAuraByName, name, "player", "HELPFUL")
+    if ok and result then
+      return true
     end
-    local spellId = aura.spellId
-    if spellId then
-      local info = C_Spell.GetSpellInfo(spellId)
-      local auraName = info and info.name or nil
-      if auraName == name then
-        return true
+  end
+
+  if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+    local spellId = BUFF_SPELLS[name]
+    if spellId and C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
+      return true
+    end
+    local aliases = BUFF_ALIASES[name]
+    if type(aliases) == "table" then
+      for _, aliasId in ipairs(aliases) do
+        if C_UnitAuras.GetPlayerAuraBySpellID(aliasId) then
+          return true
+        end
       end
     end
-    index = index + 1
   end
   return false
 end
@@ -239,7 +241,14 @@ function BuffWatch:UpdateVisibility(force)
     return
   end
 
+  local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
+  if inCombat and not Elysian.state.buffWatchTest then
+    self.frame:Hide()
+    return
+  end
+
   local missing = self:BuildMissingList()
+  self.lastMissing = missing
   if Elysian.state.buffWatchTest then
     missing = { "Battle Shout", "Arcane Intellect", "Skyfury" }
   end

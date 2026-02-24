@@ -254,6 +254,16 @@ function WarlockReminders:UpdateVisibility(force)
     end
     if enabled and (Elysian.state.warlockRushReminderTest or active) then
       self.rushFrame:Show()
+      if Elysian.state.warlockRushReminderSoundEnabled and not self.rushSoundPlayed then
+        local path = "Interface\\AddOns\\ElysianFramework\\Sounds\\deja-vu.ogg"
+        if PlaySoundFile then
+          local willPlay, handle = PlaySoundFile(path, "Master")
+          if willPlay then
+            self.rushSoundHandle = handle
+          end
+        end
+        self.rushSoundPlayed = true
+      end
       if Elysian.state.warlockRushReminderFlash then
         self:StartRushFlash()
       else
@@ -261,6 +271,11 @@ function WarlockReminders:UpdateVisibility(force)
       end
     else
       self.rushFrame:Hide()
+      if self.rushSoundHandle and StopSound then
+        StopSound(self.rushSoundHandle)
+      end
+      self.rushSoundHandle = nil
+      self.rushSoundPlayed = false
     end
   end
 end

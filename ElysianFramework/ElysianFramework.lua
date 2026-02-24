@@ -28,6 +28,9 @@ local function ApplySavedSettings()
   if Elysian.Features and Elysian.Features.DungeonReminder then
     Elysian.Features.DungeonReminder:Initialize()
   end
+  if Elysian.Features and Elysian.Features.DeathSound then
+    Elysian.Features.DeathSound:Initialize()
+  end
   if Elysian.Features and Elysian.Features.BuffWatch then
     Elysian.Features.BuffWatch:Initialize()
   end

@@ -3,24 +3,133 @@ local _, Elysian = ...
 Elysian.UI = Elysian.UI or {}
 Elysian.UI.SkinDropDown = nil
 
+local function Clamp(value, minValue, maxValue)
+  if value < minValue then
+    return minValue
+  end
+  if value > maxValue then
+    return maxValue
+  end
+  return value
+end
+
+local function ShiftColor(color, delta)
+  if not color then
+    return { 0, 0, 0 }
+  end
+  local r, g, b = color[1] or 0, color[2] or 0, color[3] or 0
+  return {
+    Clamp(r + delta, 0, 1),
+    Clamp(g + delta, 0, 1),
+    Clamp(b + delta, 0, 1),
+  }
+end
+
 local function HookButtonPressFeedback(button)
   if not button or not button.SetBackdropColor then
     return
   end
-  local function SetActive(active)
-    if active then
-      Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
+  if button.__elysianButtonSkinned then
+    return
+  end
+  button.__elysianButtonSkinned = true
+
+  local function ApplyState()
+    local baseBg = button.efBaseBg or Elysian.GetNavBg()
+    local border = button.efBorder or Elysian.GetThemeBorder()
+    local alpha = button.efAlpha or 0.95
+    local hoverBg = button.efHoverBg or ShiftColor(baseBg, 0.05)
+    local activeBg = button.efActiveBg or { 0.92, 0.92, 0.92 }
+    local disabledBg = button.efDisabledBg or ShiftColor(baseBg, -0.08)
+
+    if button.efLockedActive then
+      Elysian.SetBackdropColors(button, activeBg, border, alpha)
+    elseif button:IsEnabled() == false then
+      Elysian.SetBackdropColors(button, disabledBg, border, alpha)
+    elseif button.efPressed then
+      Elysian.SetBackdropColors(button, activeBg, border, alpha)
+    elseif button.efHover then
+      Elysian.SetBackdropColors(button, hoverBg, border, alpha)
     else
-      Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+      Elysian.SetBackdropColors(button, baseBg, border, alpha)
     end
   end
-  button:HookScript("OnMouseDown", function() SetActive(true) end)
-  button:HookScript("OnMouseUp", function() SetActive(false) end)
-  button:HookScript("OnHide", function() SetActive(false) end)
-  button:HookScript("OnLeave", function() SetActive(false) end)
+
+  button.efApplyState = ApplyState
+  button:HookScript("OnMouseDown", function()
+    button.efPressed = true
+    ApplyState()
+  end)
+  button:HookScript("OnMouseUp", function()
+    button.efPressed = false
+    ApplyState()
+  end)
+  button:HookScript("OnHide", function()
+    button.efPressed = false
+    button.efHover = false
+    ApplyState()
+  end)
+  button:HookScript("OnLeave", function()
+    button.efHover = false
+    ApplyState()
+  end)
+  button:HookScript("OnEnter", function()
+    button.efHover = true
+    ApplyState()
+  end)
+  button:HookScript("OnEnable", ApplyState)
+  button:HookScript("OnDisable", ApplyState)
+  ApplyState()
 end
 
 Elysian.UI.HookButtonPressFeedback = HookButtonPressFeedback
+
+local function SetToggleButtonActive(button, active)
+  if not button then
+    return
+  end
+  button.efLockedActive = active and true or false
+  button.efActiveBg = { 0.75, 0.75, 0.75 }
+  if button.efApplyState then
+    button.efApplyState()
+  else
+    local bg = button.efLockedActive and button.efActiveBg or Elysian.GetNavBg()
+    Elysian.SetBackdropColors(button, bg, Elysian.GetThemeBorder(), 0.9)
+  end
+end
+
+local function FadeInPanel(panel)
+  if not panel or not panel.SetAlpha then
+    return
+  end
+  panel:SetAlpha(0)
+  if UIFrameFadeIn then
+    UIFrameFadeIn(panel, 0.12, 0, 1)
+  else
+    panel:SetAlpha(1)
+  end
+end
+
+Elysian.UI.FadeInPanel = FadeInPanel
+
+local function SkinCustomScrollBar(customBar)
+  if not customBar then
+    return
+  end
+  Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  customBar:EnableMouse(true)
+  customBar:SetScript("OnEnter", function()
+    Elysian.SetBackdropColors(customBar, ShiftColor(Elysian.GetNavBg(), 0.05), Elysian.GetThemeBorder(), 0.95)
+  end)
+  customBar:SetScript("OnLeave", function()
+    Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  end)
+end
+
+Elysian.UI.SkinCustomScrollBar = SkinCustomScrollBar
+
+local INPUT_WIDTH = 190
+local INPUT_HEIGHT = 22
 
 local function CreateTabButton(parent, label, width, height)
   local template = BackdropTemplateMixin and "BackdropTemplate" or nil
@@ -216,6 +325,7 @@ end
     for _, panel in ipairs(panels) do
       if panel == activePanel then
         panel:Show()
+        FadeInPanel(panel)
       else
         panel:Hide()
       end
@@ -400,7 +510,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.22 BETA")
+  versionText:SetText("v1.00.25")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -717,7 +827,7 @@ function Elysian.UI:CreateMainFrame()
 
   local profileNameBox = CreateFrame("EditBox", nil, generalPanel, BackdropTemplateMixin and "BackdropTemplate" or nil)
   profileNameBox:SetPoint("TOPLEFT", saveProfileButton, "BOTTOMLEFT", 0, -8)
-  profileNameBox:SetSize(180, 22)
+  profileNameBox:SetSize(INPUT_WIDTH, INPUT_HEIGHT)
   profileNameBox:SetAutoFocus(false)
   Elysian.SetBackdrop(profileNameBox)
   Elysian.SetBackdropColors(profileNameBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -824,56 +934,6 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
 
-  local minimapInfoButton = CreateFrame("Button", nil, generalPanel, template)
-  minimapInfoButton:SetPoint("LEFT", minimapToggle.text, "RIGHT", 8, 0)
-  minimapInfoButton:SetSize(18, 18)
-  Elysian.SetBackdrop(minimapInfoButton)
-  Elysian.SetBackdropColors(minimapInfoButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
-  local infoText = minimapInfoButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  infoText:SetPoint("CENTER")
-  infoText:SetText("?")
-  Elysian.ApplyFont(infoText, 11, "OUTLINE")
-  Elysian.ApplyAccentColor(infoText)
-  HookButtonPressFeedback(minimapInfoButton)
-
-  local function EnsureMinimapInfoFrame()
-    if minimapInfoButton.infoFrame then
-      return
-    end
-    local infoFrame = CreateFrame("Frame", nil, generalPanel, template)
-    infoFrame:SetSize(260, 52)
-    infoFrame:SetPoint("TOPLEFT", minimapInfoButton, "BOTTOMLEFT", -6, -6)
-    Elysian.SetBackdrop(infoFrame)
-    Elysian.SetBackdropColors(infoFrame, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
-    local infoLabel = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    infoLabel:SetPoint("CENTER")
-    infoLabel:SetText("Show or hide minimap button")
-    Elysian.ApplyFont(infoLabel, 11, "OUTLINE")
-    infoLabel:SetTextColor(1, 1, 1)
-    infoFrame:Hide()
-    minimapInfoButton.infoFrame = infoFrame
-  end
-
-  minimapInfoButton:SetScript("OnMouseDown", function()
-    if Elysian.ClickFeedback then
-      Elysian.ClickFeedback()
-    end
-    EnsureMinimapInfoFrame()
-    minimapInfoButton.infoFrame:Show()
-  end)
-
-  minimapInfoButton:SetScript("OnMouseUp", function()
-    if minimapInfoButton.infoFrame then
-      minimapInfoButton.infoFrame:Hide()
-    end
-  end)
-
-  minimapInfoButton:SetScript("OnLeave", function()
-    if minimapInfoButton.infoFrame then
-      minimapInfoButton.infoFrame:Hide()
-    end
-  end)
-
   local showAllClasses = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
   showAllClasses:SetPoint("TOPLEFT", minimapToggle, "BOTTOMLEFT", 0, -10)
   showAllClasses.text = showAllClasses.text or _G[showAllClasses:GetName() .. "Text"]
@@ -920,56 +980,6 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
   self.showOnStartCheck = showOnStart
-
-  local showOnStartInfo = CreateFrame("Button", nil, generalPanel, template)
-  showOnStartInfo:SetPoint("LEFT", showOnStart.text, "RIGHT", 8, 0)
-  showOnStartInfo:SetSize(18, 18)
-  Elysian.SetBackdrop(showOnStartInfo)
-  Elysian.SetBackdropColors(showOnStartInfo, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
-  local showOnStartInfoText = showOnStartInfo:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  showOnStartInfoText:SetPoint("CENTER")
-  showOnStartInfoText:SetText("?")
-  Elysian.ApplyFont(showOnStartInfoText, 11, "OUTLINE")
-  Elysian.ApplyAccentColor(showOnStartInfoText)
-  HookButtonPressFeedback(showOnStartInfo)
-
-  local function EnsureShowOnStartInfoFrame()
-    if showOnStartInfo.infoFrame then
-      return
-    end
-    local infoFrame = CreateFrame("Frame", nil, generalPanel, template)
-    infoFrame:SetSize(220, 48)
-    infoFrame:SetPoint("TOPLEFT", showOnStartInfo, "BOTTOMLEFT", -6, -6)
-    Elysian.SetBackdrop(infoFrame)
-    Elysian.SetBackdropColors(infoFrame, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
-    local infoLabel = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    infoLabel:SetPoint("CENTER")
-    infoLabel:SetText("Do not show ??")
-    Elysian.ApplyFont(infoLabel, 11, "OUTLINE")
-    infoLabel:SetTextColor(1, 1, 1)
-    infoFrame:Hide()
-    showOnStartInfo.infoFrame = infoFrame
-  end
-
-  showOnStartInfo:SetScript("OnMouseDown", function()
-    if Elysian.ClickFeedback then
-      Elysian.ClickFeedback()
-    end
-    EnsureShowOnStartInfoFrame()
-    showOnStartInfo.infoFrame:Show()
-  end)
-
-  showOnStartInfo:SetScript("OnMouseUp", function()
-    if showOnStartInfo.infoFrame then
-      showOnStartInfo.infoFrame:Hide()
-    end
-  end)
-
-  showOnStartInfo:SetScript("OnLeave", function()
-    if showOnStartInfo.infoFrame then
-      showOnStartInfo.infoFrame:Hide()
-    end
-  end)
 
 
   table.insert(panels, generalPanel)
@@ -1051,6 +1061,7 @@ function Elysian.UI:CreateMainFrame()
       customBar:SetWidth(10)
       Elysian.SetBackdrop(customBar)
       Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+      SkinCustomScrollBar(customBar)
 
       local thumb = customBar:CreateTexture(nil, "OVERLAY")
       thumb:SetTexture("Interface/Buttons/WHITE8x8")
@@ -1280,7 +1291,7 @@ function Elysian.UI:CreateMainFrame()
 
       local textOverrideBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
       textOverrideBox:SetPoint("LEFT", colorButton, "RIGHT", 10, 0)
-      textOverrideBox:SetSize(180, 22)
+      textOverrideBox:SetSize(INPUT_WIDTH, INPUT_HEIGHT)
       textOverrideBox:SetAutoFocus(false)
       Elysian.SetBackdrop(textOverrideBox)
       Elysian.SetBackdropColors(textOverrideBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1465,8 +1476,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.ApplyAccentColor(testBannerText)
 
       local function UpdateTestButtonStyle(active)
-        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-        Elysian.SetBackdropColors(testBanner, bg, Elysian.GetThemeBorder(), 0.9)
+        SetToggleButtonActive(testBanner, active)
       end
       UpdateTestButtonStyle(Elysian.state.repairReminderTest)
 
@@ -1481,6 +1491,28 @@ function Elysian.UI:CreateMainFrame()
         end
       end)
       HookButtonPressFeedback(testBanner)
+
+      local deathSoundToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+      deathSoundToggle:SetPoint("TOPLEFT", heightSlider, "BOTTOMLEFT", -4, -26)
+      deathSoundToggle.text = deathSoundToggle.text or _G[deathSoundToggle:GetName() .. "Text"]
+      deathSoundToggle.text:SetText("Play sound on death")
+      Elysian.ApplyFont(deathSoundToggle.text, 12)
+      Elysian.ApplyTextColor(deathSoundToggle.text)
+      Elysian.StyleCheckbox(deathSoundToggle)
+      deathSoundToggle:SetChecked(Elysian.state.deathSoundEnabled)
+      deathSoundToggle:SetScript("OnClick", function(selfButton)
+        if Elysian.ClickFeedback then
+          Elysian.ClickFeedback()
+        end
+        if Elysian.Features and Elysian.Features.DeathSound then
+          Elysian.Features.DeathSound:SetEnabled(selfButton:GetChecked())
+        else
+          Elysian.state.deathSoundEnabled = selfButton:GetChecked()
+          if Elysian.SaveState then
+            Elysian.SaveState()
+          end
+        end
+      end)
     end
 
     if className == "DUNGEONS" then
@@ -1565,7 +1597,7 @@ function Elysian.UI:CreateMainFrame()
 
       local textOverrideBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
       textOverrideBox:SetPoint("LEFT", dungeonColor, "RIGHT", 10, 0)
-      textOverrideBox:SetSize(180, 22)
+      textOverrideBox:SetSize(INPUT_WIDTH, INPUT_HEIGHT)
       textOverrideBox:SetAutoFocus(false)
       Elysian.SetBackdrop(textOverrideBox)
       Elysian.SetBackdropColors(textOverrideBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -1750,8 +1782,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.ApplyAccentColor(dungeonTestText)
 
       local function UpdateDungeonTestStyle(active)
-        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-        Elysian.SetBackdropColors(dungeonTest, bg, Elysian.GetThemeBorder(), 0.9)
+        SetToggleButtonActive(dungeonTest, active)
       end
       UpdateDungeonTestStyle(Elysian.state.dungeonReminderTest)
 
@@ -2004,8 +2035,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.ApplyAccentColor(buffTestText)
 
       local function UpdateBuffTestStyle(active)
-        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-        Elysian.SetBackdropColors(buffTest, bg, Elysian.GetThemeBorder(), 0.9)
+        SetToggleButtonActive(buffTest, active)
       end
       UpdateBuffTestStyle(Elysian.state.buffWatchTest)
 
@@ -2258,8 +2288,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.ApplyAccentColor(consumableTestText)
 
       local function UpdateConsumableTestStyle(active)
-        local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-        Elysian.SetBackdropColors(consumableTest, bg, Elysian.GetThemeBorder(), 0.9)
+        SetToggleButtonActive(consumableTest, active)
       end
       UpdateConsumableTestStyle(Elysian.state.dungeonConsumablesTest)
 
@@ -2480,8 +2509,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.ApplyAccentColor(keystoneTestText)
 
       local function UpdateKeystoneTestStyle(active)
-        local bg = active and { Elysian.HexToRGB("#e6e6e6") } or Elysian.GetNavBg()
-        Elysian.SetBackdropColors(keystoneTest, bg, Elysian.GetThemeBorder(), 0.9)
+        SetToggleButtonActive(keystoneTest, active)
       end
       UpdateKeystoneTestStyle(Elysian.state.keystoneReminderTest)
       keystoneTest:SetScript("OnClick", function()
@@ -2578,6 +2606,7 @@ function Elysian.UI:CreateMainFrame()
     customBar:SetWidth(10)
     Elysian.SetBackdrop(customBar)
     Elysian.SetBackdropColors(customBar, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+    SkinCustomScrollBar(customBar)
 
     local thumb = customBar:CreateTexture(nil, "OVERLAY")
     thumb:SetTexture("Interface/Buttons/WHITE8x8")
@@ -2917,8 +2946,7 @@ function Elysian.UI:CreateMainFrame()
   Elysian.ApplyAccentColor(petTestText)
 
   local function UpdatePetTestStyle(active)
-    local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-    Elysian.SetBackdropColors(petTest, bg, Elysian.GetThemeBorder(), 0.9)
+    SetToggleButtonActive(petTest, active)
   end
   UpdatePetTestStyle(Elysian.state.warlockPetReminderTest)
 
@@ -3170,8 +3198,7 @@ function Elysian.UI:CreateMainFrame()
   Elysian.ApplyAccentColor(stoneTestText)
 
   local function UpdateStoneTestStyle(active)
-    local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-    Elysian.SetBackdropColors(stoneTest, bg, Elysian.GetThemeBorder(), 0.9)
+    SetToggleButtonActive(stoneTest, active)
   end
   UpdateStoneTestStyle(Elysian.state.warlockStoneReminderTest)
 
@@ -3250,8 +3277,26 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
 
+  local rushSoundToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  rushSoundToggle:SetPoint("TOPLEFT", rushFlashToggle, "BOTTOMLEFT", 0, -12)
+  rushSoundToggle.text = rushSoundToggle.text or _G[rushSoundToggle:GetName() .. "Text"]
+  rushSoundToggle.text:SetText("Play sound")
+  Elysian.ApplyFont(rushSoundToggle.text, 12)
+  Elysian.ApplyTextColor(rushSoundToggle.text)
+  Elysian.StyleCheckbox(rushSoundToggle)
+  rushSoundToggle:SetChecked(Elysian.state.warlockRushReminderSoundEnabled)
+  rushSoundToggle:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.warlockRushReminderSoundEnabled = selfButton:GetChecked()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+
   local rushColorButton = CreateFrame("Button", nil, panel, template)
-  rushColorButton:SetPoint("TOPLEFT", rushFlashToggle, "BOTTOMLEFT", 0, -12)
+  rushColorButton:SetPoint("TOPLEFT", rushSoundToggle, "BOTTOMLEFT", 0, -12)
   rushColorButton:SetSize(180, 22)
   Elysian.SetBackdrop(rushColorButton)
   Elysian.SetBackdropColors(rushColorButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -3368,7 +3413,7 @@ function Elysian.UI:CreateMainFrame()
 
   local rushTextBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
   rushTextBox:SetPoint("TOPLEFT", rushTextLabel, "BOTTOMLEFT", 0, -6)
-  rushTextBox:SetSize(180, 22)
+  rushTextBox:SetSize(INPUT_WIDTH, INPUT_HEIGHT)
   rushTextBox:SetAutoFocus(false)
   Elysian.SetBackdrop(rushTextBox)
   Elysian.SetBackdropColors(rushTextBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
@@ -3401,8 +3446,7 @@ function Elysian.UI:CreateMainFrame()
   Elysian.ApplyAccentColor(rushTestText)
 
   local function UpdateRushTestStyle(active)
-    local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-    Elysian.SetBackdropColors(rushTest, bg, Elysian.GetThemeBorder(), 0.9)
+    SetToggleButtonActive(rushTest, active)
   end
   UpdateRushTestStyle(Elysian.state.warlockRushReminderTest)
 
@@ -3662,8 +3706,7 @@ function Elysian.UI:CreateMainFrame()
     Elysian.ApplyAccentColor(testText)
 
     local function UpdateTestStyle(active)
-      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+      SetToggleButtonActive(testButton, active)
     end
     UpdateTestStyle(Elysian.state[prefix .. "BuffTest"])
 
@@ -3923,8 +3966,7 @@ function Elysian.UI:CreateMainFrame()
     Elysian.ApplyAccentColor(testText)
 
     local function UpdateTestStyle(active)
-      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+      SetToggleButtonActive(testButton, active)
     end
     UpdateTestStyle(Elysian.state.roguePoisonTest)
 
@@ -4184,8 +4226,7 @@ function Elysian.UI:CreateMainFrame()
     Elysian.ApplyAccentColor(testText)
 
     local function UpdateTestStyle(active)
-      local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
-      Elysian.SetBackdropColors(testButton, bg, Elysian.GetThemeBorder(), 0.9)
+      SetToggleButtonActive(testButton, active)
     end
     UpdateTestStyle(Elysian.state.hunterPetReminderTest)
 

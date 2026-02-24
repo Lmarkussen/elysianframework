@@ -66,6 +66,7 @@ Elysian.state = Elysian.state or {
   infoBarTextColor = nil,
   infoBarBgColor = nil,
   infoBarShowPortalButton = true,
+  deathSoundEnabled = true,
   repairReminderEnabled = false,
   repairReminderUnlocked = true,
   repairReminderTextColor = nil,
@@ -127,6 +128,7 @@ Elysian.state = Elysian.state or {
   warlockRushReminderAlpha = 0.95,
   warlockRushReminderShowBg = false,
   warlockRushReminderFlash = true,
+  warlockRushReminderSoundEnabled = true,
   warlockRushReminderTextOverride = "",
   warlockRushReminderWidth = 0,
   warlockRushReminderHeight = 0,
@@ -243,6 +245,7 @@ function Elysian.GetDefaultState()
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     infoBarBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
     infoBarShowPortalButton = true,
+    deathSoundEnabled = true,
     repairReminderEnabled = true,
     repairReminderUnlocked = false,
     repairReminderTextColor = { 1, 1, 1 },
@@ -254,7 +257,7 @@ function Elysian.GetDefaultState()
     repairReminderAlpha = 0.95,
     repairReminderTextOverride = "",
     dungeonReminderEnabled = true,
-    dungeonReminderUnlocked = false,
+    dungeonReminderUnlocked = true,
     dungeonReminderTextColor = { 1, 1, 1 },
     dungeonReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
     dungeonReminderAlpha = 0.95,
@@ -312,6 +315,7 @@ function Elysian.GetDefaultState()
     warlockRushReminderAlpha = 0.95,
     warlockRushReminderShowBg = false,
     warlockRushReminderFlash = true,
+    warlockRushReminderSoundEnabled = true,
     warlockRushReminderTextOverride = "",
     warlockRushReminderWidth = 0,
     warlockRushReminderHeight = 0,
@@ -400,6 +404,7 @@ local function BuildClassProfile(class)
   state.buffWatchEnabled = true
   state.dungeonConsumablesEnabled = true
   state.dungeonRoleMarksEnabled = true
+  state.deathSoundEnabled = true
 
   -- Class-specific alerts
   if class == "WARLOCK" then
@@ -521,6 +526,10 @@ function Elysian.RefreshFeatures()
   if Elysian.Features and Elysian.Features.DungeonReminder then
     Elysian.Features.DungeonReminder:Initialize()
     Elysian.Features.DungeonReminder:Refresh()
+  end
+  if Elysian.Features and Elysian.Features.DeathSound then
+    Elysian.Features.DeathSound:Initialize()
+    Elysian.Features.DeathSound:Refresh()
   end
   if Elysian.Features and Elysian.Features.BuffWatch then
     Elysian.Features.BuffWatch:Initialize()
@@ -649,6 +658,7 @@ function Elysian.ResetSettings()
       Elysian.state.warlockRushReminderEnabled = true
       Elysian.state.warlockRushReminderShowBg = false
       Elysian.state.warlockRushReminderFlash = true
+      Elysian.state.warlockRushReminderSoundEnabled = true
     elseif class == "HUNTER" then
       Elysian.state.hunterPetReminderEnabled = true
     elseif class == "WARRIOR" then
@@ -703,6 +713,9 @@ function Elysian.InitSavedVariables()
     if profile.warlockRushReminderFlash == nil then
       profile.warlockRushReminderFlash = true
     end
+    if profile.warlockRushReminderSoundEnabled == nil then
+      profile.warlockRushReminderSoundEnabled = true
+    end
   end
   if ElysianDB.profiles.WARLOCK then
     if ElysianDB.profiles.WARLOCK.warlockRushReminderEnabled == nil then
@@ -713,6 +726,9 @@ function Elysian.InitSavedVariables()
     end
     if ElysianDB.profiles.WARLOCK.warlockRushReminderFlash == nil then
       ElysianDB.profiles.WARLOCK.warlockRushReminderFlash = true
+    end
+    if ElysianDB.profiles.WARLOCK.warlockRushReminderSoundEnabled == nil then
+      ElysianDB.profiles.WARLOCK.warlockRushReminderSoundEnabled = true
     end
   end
   local charKey = Elysian.GetCharacterKey()
@@ -867,6 +883,9 @@ function Elysian.InitSavedVariables()
   if ElysianDB.repairReminderEnabled == nil then
     ElysianDB.repairReminderEnabled = true
   end
+  if ElysianDB.deathSoundEnabled == nil then
+    ElysianDB.deathSoundEnabled = true
+  end
   if ElysianDB.repairReminderUnlocked == nil then
     ElysianDB.repairReminderUnlocked = false
   end
@@ -898,7 +917,7 @@ function Elysian.InitSavedVariables()
     ElysianDB.dungeonReminderEnabled = true
   end
   if ElysianDB.dungeonReminderUnlocked == nil then
-    ElysianDB.dungeonReminderUnlocked = false
+    ElysianDB.dungeonReminderUnlocked = true
   end
   if ElysianDB.dungeonReminderTextColor == nil then
     ElysianDB.dungeonReminderTextColor = { 1, 1, 1 }
@@ -1070,6 +1089,9 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.warlockRushReminderFlash == nil then
     ElysianDB.warlockRushReminderFlash = true
+  end
+  if ElysianDB.warlockRushReminderSoundEnabled == nil then
+    ElysianDB.warlockRushReminderSoundEnabled = true
   end
   if ElysianDB.warlockRushReminderTextOverride == nil then
     ElysianDB.warlockRushReminderTextOverride = ""

@@ -370,7 +370,7 @@ function InfoBar:CreatePanel(parent)
     end
   end)
 
-  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 6) - 100)
+  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 6) - 120)
   unlock:SetChecked(Elysian.state.infoBarUnlocked)
   unlock:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then

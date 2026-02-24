@@ -3,7 +3,7 @@
 ## Notes: Minimal UI frame and menu theming for the Elysian Framework addon.
 ## Author: @EvilHaxxor
 ## IconTexture: Interface\\AddOns\\ElysianFramework\\Assets\\eframe.png
-## Version: 1.00.22 BETA
+## Version: 1.00.25
 ## SavedVariables: ElysianDB
 
 Modules/Core.lua
@@ -14,6 +14,7 @@ Modules/Features/AutoRepair.lua
 Modules/Features/InfoBar.lua
 Modules/Features/RepairReminder.lua
 Modules/Features/DungeonReminder.lua
+Modules/Features/DeathSound.lua
 Modules/Features/BuffWatch.lua
 Modules/Features/DungeonConsumables.lua
 Modules/Features/KeystoneReminder.lua

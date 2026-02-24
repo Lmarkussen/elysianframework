@@ -16,53 +16,50 @@ local FLASK_BUFFS = {
   "Vicious Flask of the Wrecking Ball",
 }
 
-local function HasWellFed()
-  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
-    return false
-  end
-  local index = 1
-  while true do
-    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
-    if not aura then
-      break
+local FLASK_SPELL_IDS = {}
+do
+  if C_Spell and C_Spell.GetSpellInfo then
+    for _, name in ipairs(FLASK_BUFFS) do
+      local info = C_Spell.GetSpellInfo(name)
+      local id = info and info.spellID or nil
+      if id then
+        FLASK_SPELL_IDS[id] = true
+      end
     end
-    local spellId = aura.spellId
-    if spellId then
-      local info = C_Spell.GetSpellInfo(spellId)
-      local name = info and info.name or nil
-      if name and name:lower():find("well fed", 1, true) then
+  end
+end
+
+
+local function HasAuraByNameList(names)
+  if AuraUtil and AuraUtil.FindAuraByName then
+    for _, name in ipairs(names) do
+      local ok, result = pcall(AuraUtil.FindAuraByName, name, "player", "HELPFUL")
+      if ok and result then
         return true
       end
     end
-    index = index + 1
+  end
+  if C_Spell and C_Spell.GetSpellInfo and C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+    for _, name in ipairs(names) do
+      local info = C_Spell.GetSpellInfo(name)
+      local spellId = info and info.spellID or nil
+      if spellId and C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
+        return true
+      end
+    end
   end
   return false
 end
 
 local function HasFlask()
-  if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex and C_Spell and C_Spell.GetSpellInfo) then
-    return false
-  end
-  local index = 1
-  while true do
-    local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
-    if not aura then
-      break
-    end
-    local spellId = aura.spellId
-    if spellId then
-      local info = C_Spell.GetSpellInfo(spellId)
-      local name = info and info.name or nil
-      if name then
-        local lower = name:lower()
-        if lower:find("flask", 1, true) or lower:find("phial", 1, true) then
-          return true
-        end
+  if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+    for spellId in pairs(FLASK_SPELL_IDS) do
+      if C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
+        return true
       end
     end
-    index = index + 1
   end
-  return false
+  return HasAuraByNameList(FLASK_BUFFS)
 end
 
 function DungeonConsumables:IsEnabled()
@@ -170,13 +167,13 @@ function DungeonConsumables:ApplyColors()
   Elysian.SetBackdropColors(self.frame, bg, Elysian.GetThemeBorder(), alpha)
 end
 
-function DungeonConsumables:BuildMissingList()
+function DungeonConsumables:BuildMissingList(hasFlask)
   local missing = {}
-  if not HasFlask() then
-    table.insert(missing, "Flask")
+  if hasFlask == nil then
+    hasFlask = HasFlask()
   end
-  if not HasWellFed() then
-    table.insert(missing, "Well Fed")
+  if not hasFlask then
+    table.insert(missing, "Flask")
   end
   return missing
 end
@@ -228,7 +225,15 @@ function DungeonConsumables:UpdateVisibility(force)
     return
   end
 
-  local missing = self:BuildMissingList()
+  local inCombat = UnitAffectingCombat and UnitAffectingCombat("player")
+  if inCombat and not Elysian.state.dungeonConsumablesTest then
+    self.frame:Hide()
+    return
+  end
+
+  local hasFlask = HasFlask()
+  self.lastHasFlask = hasFlask
+  local missing = self:BuildMissingList(hasFlask)
   if Elysian.state.dungeonConsumablesTest then
     missing = { "Flask", "Well Fed" }
   end
