@@ -67,7 +67,7 @@ function RepairReminder:EnsureFrame()
   frame:EnableMouse(false)
   frame:RegisterForDrag()
   frame:SetScript("OnDragStart", function(selfFrame)
-    if Elysian.state.repairReminderUnlocked or Elysian.state.repairReminderTest then
+    if selfFrame:IsShown() then
       selfFrame:StartMoving()
     end
   end)
@@ -170,14 +170,9 @@ function RepairReminder:UpdateMouse()
   if not self.frame then
     return
   end
-  local canMove = Elysian.state.repairReminderUnlocked or Elysian.state.repairReminderTest
-  self.frame:SetMovable(canMove)
-  self.frame:EnableMouse(canMove)
-  if canMove then
-    self.frame:RegisterForDrag("LeftButton")
-  else
-    self.frame:RegisterForDrag()
-  end
+  self.frame:SetMovable(true)
+  self.frame:EnableMouse(true)
+  self.frame:RegisterForDrag("LeftButton")
 end
 
 function RepairReminder:UpdateVisibility(force)
