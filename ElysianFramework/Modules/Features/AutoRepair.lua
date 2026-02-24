@@ -96,6 +96,64 @@ function AutoRepair:CreatePanel(parent)
   end)
   self.toggle = toggle
 
+  local infoButton = CreateFrame("Button", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  infoButton:SetPoint("LEFT", toggle.text, "RIGHT", 8, 0)
+  infoButton:SetSize(18, 18)
+  Elysian.SetBackdrop(infoButton)
+  Elysian.SetBackdropColors(infoButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local infoText = infoButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  infoText:SetPoint("CENTER")
+  infoText:SetText("?")
+  Elysian.ApplyFont(infoText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(infoText)
+  if Elysian.UI and Elysian.UI.HookButtonPressFeedback then
+    Elysian.UI.HookButtonPressFeedback(infoButton)
+  end
+
+  local function EnsureInfoFrame()
+    if infoButton.infoFrame then
+      return
+    end
+    local infoFrame = CreateFrame("Frame", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    infoFrame:SetPoint("BOTTOMLEFT", infoButton, "TOPLEFT", -6, -38)
+    infoFrame:SetFrameStrata("DIALOG")
+    infoFrame:SetFrameLevel(panel:GetFrameLevel() + 20)
+    Elysian.SetBackdrop(infoFrame)
+    Elysian.SetBackdropColors(infoFrame, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    local label = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("CENTER", 0, -2)
+    label:SetText("Automatically repairs gear when damaged")
+    Elysian.ApplyFont(label, 11, "OUTLINE")
+    label:SetTextColor(1, 1, 1)
+    label:SetWordWrap(true)
+    label:SetJustifyH("CENTER")
+    label:SetJustifyV("MIDDLE")
+    local maxWidth = 300
+    label:SetWidth(maxWidth)
+    local height = (label:GetStringHeight() or 0) + 28
+    infoFrame:SetSize(maxWidth + 20, height)
+    infoFrame:Hide()
+    infoButton.infoFrame = infoFrame
+  end
+
+  infoButton:SetScript("OnMouseDown", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    EnsureInfoFrame()
+    infoButton.infoFrame:Show()
+  end)
+  infoButton:SetScript("OnMouseUp", function()
+    if infoButton.infoFrame then
+      infoButton.infoFrame:Hide()
+    end
+  end)
+  infoButton:SetScript("OnLeave", function()
+    if infoButton.infoFrame then
+      infoButton.infoFrame:Hide()
+    end
+  end)
+
   local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   hint:SetPoint("TOPLEFT", toggle, "BOTTOMLEFT", 4, -4)
   hint:SetText("Repairs all gear when you open a repair-capable vendor.")

@@ -400,7 +400,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.18 BETA")
+  versionText:SetText("v1.00.19 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -824,6 +824,56 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
 
+  local minimapInfoButton = CreateFrame("Button", nil, generalPanel, template)
+  minimapInfoButton:SetPoint("LEFT", minimapToggle.text, "RIGHT", 8, 0)
+  minimapInfoButton:SetSize(18, 18)
+  Elysian.SetBackdrop(minimapInfoButton)
+  Elysian.SetBackdropColors(minimapInfoButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local infoText = minimapInfoButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  infoText:SetPoint("CENTER")
+  infoText:SetText("?")
+  Elysian.ApplyFont(infoText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(infoText)
+  HookButtonPressFeedback(minimapInfoButton)
+
+  local function EnsureMinimapInfoFrame()
+    if minimapInfoButton.infoFrame then
+      return
+    end
+    local infoFrame = CreateFrame("Frame", nil, generalPanel, template)
+    infoFrame:SetSize(260, 52)
+    infoFrame:SetPoint("TOPLEFT", minimapInfoButton, "BOTTOMLEFT", -6, -6)
+    Elysian.SetBackdrop(infoFrame)
+    Elysian.SetBackdropColors(infoFrame, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    local infoLabel = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    infoLabel:SetPoint("CENTER")
+    infoLabel:SetText("Show or hide minimap button")
+    Elysian.ApplyFont(infoLabel, 11, "OUTLINE")
+    infoLabel:SetTextColor(1, 1, 1)
+    infoFrame:Hide()
+    minimapInfoButton.infoFrame = infoFrame
+  end
+
+  minimapInfoButton:SetScript("OnMouseDown", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    EnsureMinimapInfoFrame()
+    minimapInfoButton.infoFrame:Show()
+  end)
+
+  minimapInfoButton:SetScript("OnMouseUp", function()
+    if minimapInfoButton.infoFrame then
+      minimapInfoButton.infoFrame:Hide()
+    end
+  end)
+
+  minimapInfoButton:SetScript("OnLeave", function()
+    if minimapInfoButton.infoFrame then
+      minimapInfoButton.infoFrame:Hide()
+    end
+  end)
+
   local showOnStart = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
   showOnStart:SetPoint("BOTTOMLEFT", 0, -15)
   showOnStart.text = showOnStart.text or _G[showOnStart:GetName() .. "Text"]
@@ -845,6 +895,56 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
   self.showOnStartCheck = showOnStart
+
+  local showOnStartInfo = CreateFrame("Button", nil, generalPanel, template)
+  showOnStartInfo:SetPoint("LEFT", showOnStart.text, "RIGHT", 8, 0)
+  showOnStartInfo:SetSize(18, 18)
+  Elysian.SetBackdrop(showOnStartInfo)
+  Elysian.SetBackdropColors(showOnStartInfo, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  local showOnStartInfoText = showOnStartInfo:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  showOnStartInfoText:SetPoint("CENTER")
+  showOnStartInfoText:SetText("?")
+  Elysian.ApplyFont(showOnStartInfoText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(showOnStartInfoText)
+  HookButtonPressFeedback(showOnStartInfo)
+
+  local function EnsureShowOnStartInfoFrame()
+    if showOnStartInfo.infoFrame then
+      return
+    end
+    local infoFrame = CreateFrame("Frame", nil, generalPanel, template)
+    infoFrame:SetSize(220, 48)
+    infoFrame:SetPoint("TOPLEFT", showOnStartInfo, "BOTTOMLEFT", -6, -6)
+    Elysian.SetBackdrop(infoFrame)
+    Elysian.SetBackdropColors(infoFrame, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+    local infoLabel = infoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    infoLabel:SetPoint("CENTER")
+    infoLabel:SetText("Do not show ??")
+    Elysian.ApplyFont(infoLabel, 11, "OUTLINE")
+    infoLabel:SetTextColor(1, 1, 1)
+    infoFrame:Hide()
+    showOnStartInfo.infoFrame = infoFrame
+  end
+
+  showOnStartInfo:SetScript("OnMouseDown", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    EnsureShowOnStartInfoFrame()
+    showOnStartInfo.infoFrame:Show()
+  end)
+
+  showOnStartInfo:SetScript("OnMouseUp", function()
+    if showOnStartInfo.infoFrame then
+      showOnStartInfo.infoFrame:Hide()
+    end
+  end)
+
+  showOnStartInfo:SetScript("OnLeave", function()
+    if showOnStartInfo.infoFrame then
+      showOnStartInfo.infoFrame:Hide()
+    end
+  end)
 
 
   table.insert(panels, generalPanel)
