@@ -44,6 +44,7 @@ Elysian.state = Elysian.state or {
   autoRepairLastUsedGuild = false,
   minimapButtonAngle = nil,
   minimapButtonHidden = false,
+  showAllClassAlerts = false,
   uiFontScale = 1.1,
   uiTextUseClassColor = true,
   uiTextColor = nil,
@@ -59,6 +60,7 @@ Elysian.state = Elysian.state or {
   infoBarShowMS = true,
   infoBarShowMemory = false,
   infoBarShowItemLevel = false,
+  infoBarShowHearthstone = false,
   infoBarUnlocked = false,
   infoBarOpacity = 0.35,
   infoBarTextColor = nil,
@@ -219,6 +221,7 @@ function Elysian.GetDefaultState()
     autoRepairLastUsedGuild = false,
     minimapButtonAngle = 225,
     minimapButtonHidden = false,
+    showAllClassAlerts = false,
     uiFontScale = 1.1,
     uiTextUseClassColor = true,
     uiTextColor = { Elysian.HexToRGB(Elysian.theme.fg) },
@@ -234,6 +237,7 @@ function Elysian.GetDefaultState()
     infoBarShowMS = true,
     infoBarShowMemory = false,
     infoBarShowItemLevel = false,
+    infoBarShowHearthstone = false,
     infoBarUnlocked = false,
     infoBarOpacity = 0.35,
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
@@ -842,6 +846,9 @@ function Elysian.InitSavedVariables()
   if ElysianDB.infoBarShowItemLevel == nil then
     ElysianDB.infoBarShowItemLevel = false
   end
+  if ElysianDB.infoBarShowHearthstone == nil then
+    ElysianDB.infoBarShowHearthstone = false
+  end
   if ElysianDB.infoBarUnlocked == nil then
     ElysianDB.infoBarUnlocked = false
   end
@@ -1259,6 +1266,9 @@ function Elysian.InitSavedVariables()
   if ElysianDB.minimapButtonHidden == nil then
     ElysianDB.minimapButtonHidden = false
   end
+  if ElysianDB.showAllClassAlerts == nil then
+    ElysianDB.showAllClassAlerts = false
+  end
 
   if ElysianDB.version < 2 then
     ElysianDB.scrapSellerEnabled = false
@@ -1296,6 +1306,13 @@ function Elysian.InitSavedVariables()
     Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
   elseif Elysian.state.minimapButtonAngle == nil then
     Elysian.state.minimapButtonAngle = 225
+  end
+  if ElysianDB.showAllClassAlerts ~= nil then
+    Elysian.state.showAllClassAlerts = ElysianDB.showAllClassAlerts
+  end
+  if ElysianDB.showAllClassAlerts == nil then
+    ElysianDB.showAllClassAlerts = false
+    Elysian.state.showAllClassAlerts = false
   end
   Elysian.state.scrapSellerEnabled = Elysian.state.scrapSellerEnabled or false
   Elysian.state.showOnStart = Elysian.state.showOnStart ~= false

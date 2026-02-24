@@ -393,6 +393,39 @@ function InfoBar:UpdateText()
     table.insert(parts, string.format("MS: %d", home or 0))
   end
 
+  if Elysian.state.infoBarShowMemory then
+    local memKb = collectgarbage and collectgarbage("count") or 0
+    local memMb = memKb / 1024
+    table.insert(parts, string.format("Addon Mem: %.1f MB", memMb))
+  end
+
+  if Elysian.state.infoBarShowItemLevel then
+    local avg = GetAverageItemLevel and select(2, GetAverageItemLevel()) or nil
+    if avg then
+      table.insert(parts, string.format("iLvl: %.1f", avg))
+    end
+  end
+
+  if Elysian.state.infoBarShowHearthstone then
+    local start, duration = GetItemCooldown(6948)
+    if start and duration and duration > 0 then
+      local remaining = math.max(0, (start + duration) - GetTime())
+      if remaining <= 0 then
+        table.insert(parts, "HS: Ready")
+      else
+        local mins = math.floor(remaining / 60)
+        local secs = math.floor(remaining % 60)
+        if mins >= 1 then
+          table.insert(parts, string.format("HS: %dm", mins))
+        else
+          table.insert(parts, string.format("HS: %ds", secs))
+        end
+      end
+    else
+      table.insert(parts, "HS: Ready")
+    end
+  end
+
   self.text:SetText(table.concat(parts, "  |  "))
   if self.frame then
     self.text:Show()
@@ -621,7 +654,46 @@ function InfoBar:CreatePanel(parent)
     end
   end)
 
-  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 6) - 100)
+  local showMemory = CreateCheckbox(panel, "Show memory", leftX, leftStartY - (rowGap * 6))
+  showMemory:SetChecked(Elysian.state.infoBarShowMemory)
+  showMemory:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowMemory = selfButton:GetChecked()
+    InfoBar:UpdateText()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+
+  local showItemLevel = CreateCheckbox(panel, "Show item level", leftX, leftStartY - (rowGap * 8))
+  showItemLevel:SetChecked(Elysian.state.infoBarShowItemLevel)
+  showItemLevel:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowItemLevel = selfButton:GetChecked()
+    InfoBar:UpdateText()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+
+  local showHearth = CreateCheckbox(panel, "Show hearthstone", leftX, leftStartY - (rowGap * 9))
+  showHearth:SetChecked(Elysian.state.infoBarShowHearthstone)
+  showHearth:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowHearthstone = selfButton:GetChecked()
+    InfoBar:UpdateText()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+  end)
+
+  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 10) - 155)
   unlock:SetChecked(Elysian.state.infoBarUnlocked)
   unlock:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then
@@ -633,7 +705,7 @@ function InfoBar:CreatePanel(parent)
     end
   end)
 
-  local showPortal = CreateCheckbox(panel, "Show portal button", leftX, leftStartY - (rowGap * 6))
+  local showPortal = CreateCheckbox(panel, "Show portal button", leftX, leftStartY - (rowGap * 10))
   showPortal:SetChecked(Elysian.state.infoBarShowPortalButton)
   showPortal:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then

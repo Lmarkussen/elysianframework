@@ -68,6 +68,13 @@ function AutoRepair:OnMerchantShow()
   if self.summaryText then
     self.summaryText:SetText("")
   end
+  if cost > 0 then
+    local gold = floor(cost / (100 * 100))
+    local silver = floor((cost % (100 * 100)) / 100)
+    local copper = cost % 100
+    local source = useGuild and "Guild" or "Personal"
+    print(string.format("Elysian: Repaired for %dg %ds %dc (%s)", gold, silver, copper, source))
+  end
 end
 
 function AutoRepair:CreatePanel(parent)

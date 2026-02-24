@@ -16,14 +16,26 @@ function ScrapSeller:SetEnabled(enabled)
 end
 
 function ScrapSeller:SellScrap()
+  local total = 0
+  local count = 0
   for bag = 0, 4 do
     local slots = C_Container.GetContainerNumSlots(bag)
     for slot = 1, slots do
       local info = C_Container.GetContainerItemInfo(bag, slot)
       if info and info.quality == 0 and not info.isLocked then
+        local itemCount = info.stackCount or 1
+        local itemPrice = info.sellPrice or 0
         C_Container.UseContainerItem(bag, slot)
+        total = total + (itemPrice * itemCount)
+        count = count + itemCount
       end
     end
+  end
+  if count > 0 then
+    local gold = floor(total / (100 * 100))
+    local silver = floor((total % (100 * 100)) / 100)
+    local copper = total % 100
+    print(string.format("Elysian: Sold %d items for %dg %ds %dc", count, gold, silver, copper))
   end
 end
 
