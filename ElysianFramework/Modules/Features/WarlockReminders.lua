@@ -87,8 +87,12 @@ function WarlockReminders:EnsureFrames()
   if not self.stoneFrame then
     self.stoneFrame, self.stoneText = EnsureFrame("ElysianWarlockStoneReminder", "MISSING HEALTHSTONE")
   end
+  if not self.rushFrame then
+    self.rushFrame, self.rushText = EnsureFrame("ElysianWarlockRushReminder", "BURNING RUSH")
+  end
   ApplyPosition(self.petFrame, "warlockPetReminderPos")
   ApplyPosition(self.stoneFrame, "warlockStoneReminderPos")
+  ApplyPosition(self.rushFrame, "warlockRushReminderPos")
 
   if self.petFrame and not self.petFrame.hooked then
     self.petFrame:HookScript("OnDragStop", function()
@@ -102,16 +106,25 @@ function WarlockReminders:EnsureFrames()
     end)
     self.stoneFrame.hooked = true
   end
+  if self.rushFrame and not self.rushFrame.hooked then
+    self.rushFrame:HookScript("OnDragStop", function()
+      self:SavePositions()
+    end)
+    self.rushFrame.hooked = true
+  end
 end
 
 function WarlockReminders:ApplyColors()
   local classColor = GetClassColor()
   local petColor = Elysian.state.warlockPetReminderTextColor or classColor
   local stoneColor = Elysian.state.warlockStoneReminderTextColor or classColor
+  local rushColor = Elysian.state.warlockRushReminderTextColor or classColor
   local petBg = Elysian.state.warlockPetReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
   local stoneBg = Elysian.state.warlockStoneReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  local rushBg = Elysian.state.warlockRushReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
   local petAlpha = Elysian.state.warlockPetReminderAlpha or 0.95
   local stoneAlpha = Elysian.state.warlockStoneReminderAlpha or 0.95
+  local rushAlpha = Elysian.state.warlockRushReminderAlpha or 0.95
   local override = Elysian.GetBannerOverride()
 
   if self.petText then
@@ -130,12 +143,34 @@ function WarlockReminders:ApplyColors()
     end
     self.stoneText:SetTextColor(stoneColor[1], stoneColor[2], stoneColor[3])
   end
+  if self.rushText then
+    local rushOverride = Elysian.state.warlockRushReminderTextOverride
+    if type(rushOverride) == "string" and rushOverride:match("%S") then
+      self.rushText:SetText(rushOverride)
+    elseif override then
+      self.rushText:SetText(override)
+    else
+      self.rushText:SetText("BURNING RUSH")
+    end
+    self.rushText:SetTextColor(rushColor[1], rushColor[2], rushColor[3])
+  end
 
   if self.petFrame then
     Elysian.SetBackdropColors(self.petFrame, petBg, Elysian.GetThemeBorder(), petAlpha)
   end
   if self.stoneFrame then
     Elysian.SetBackdropColors(self.stoneFrame, stoneBg, Elysian.GetThemeBorder(), stoneAlpha)
+  end
+  if self.rushFrame then
+    if Elysian.state.warlockRushReminderShowBg then
+      Elysian.SetBackdrop(self.rushFrame)
+      Elysian.SetBackdropColors(self.rushFrame, rushBg, Elysian.GetThemeBorder(), rushAlpha)
+    else
+      Elysian.SetBackdropColors(self.rushFrame, { 0, 0, 0 }, { 0, 0, 0 }, 0)
+      if self.rushFrame.SetBackdropBorderColor then
+        self.rushFrame:SetBackdropBorderColor(0, 0, 0, 0)
+      end
+    end
   end
 end
 
@@ -144,17 +179,25 @@ function WarlockReminders:ApplySize()
   local h = (Elysian.state.warlockPetReminderHeight and Elysian.state.warlockPetReminderHeight > 0) and Elysian.state.warlockPetReminderHeight or 46
   local stoneW = (Elysian.state.warlockStoneReminderWidth and Elysian.state.warlockStoneReminderWidth > 0) and Elysian.state.warlockStoneReminderWidth or 360
   local stoneH = (Elysian.state.warlockStoneReminderHeight and Elysian.state.warlockStoneReminderHeight > 0) and Elysian.state.warlockStoneReminderHeight or 46
+  local rushW = (Elysian.state.warlockRushReminderWidth and Elysian.state.warlockRushReminderWidth > 0) and Elysian.state.warlockRushReminderWidth or 360
+  local rushH = (Elysian.state.warlockRushReminderHeight and Elysian.state.warlockRushReminderHeight > 0) and Elysian.state.warlockRushReminderHeight or 46
   if self.petFrame then
     self.petFrame:SetSize(w, h)
   end
   if self.stoneFrame then
     self.stoneFrame:SetSize(stoneW, stoneH)
   end
+  if self.rushFrame then
+    self.rushFrame:SetSize(rushW, rushH)
+  end
   if self.petText then
     self.petText:SetWidth(w - 40)
   end
   if self.stoneText then
     self.stoneText:SetWidth(stoneW - 40)
+  end
+  if self.rushText then
+    self.rushText:SetWidth(rushW - 40)
   end
 end
 
@@ -200,6 +243,26 @@ function WarlockReminders:UpdateVisibility(force)
       self.stoneShown = false
     end
   end
+
+  if self.rushFrame then
+    local enabled = Elysian.state.warlockRushReminderEnabled
+    local active = false
+    if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+      active = C_UnitAuras.GetPlayerAuraBySpellID(111400) ~= nil
+    elseif AuraUtil and AuraUtil.FindAuraBySpellId then
+      active = AuraUtil.FindAuraBySpellId(111400, "player") ~= nil
+    end
+    if enabled and (Elysian.state.warlockRushReminderTest or active) then
+      self.rushFrame:Show()
+      if Elysian.state.warlockRushReminderFlash then
+        self:StartRushFlash()
+      else
+        self:ApplyColors()
+      end
+    else
+      self.rushFrame:Hide()
+    end
+  end
 end
 
 function WarlockReminders:EnsureEvents()
@@ -212,10 +275,38 @@ function WarlockReminders:EnsureEvents()
   events:RegisterEvent("UNIT_INVENTORY_CHANGED")
   events:RegisterEvent("BAG_UPDATE_DELAYED")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
+  events:RegisterEvent("UNIT_AURA")
   events:SetScript("OnEvent", function()
     self:UpdateVisibility(true)
   end)
   self.eventFrame = events
+end
+
+function WarlockReminders:StartRushFlash()
+  if self.rushFlashFrame then
+    return
+  end
+  local ticker = CreateFrame("Frame")
+  ticker.elapsed = 0
+  ticker:SetScript("OnUpdate", function(_, dt)
+    if not self.rushFrame or not self.rushFrame:IsShown() or not Elysian.state.warlockRushReminderEnabled then
+      return
+    end
+    if not Elysian.state.warlockRushReminderFlash then
+      return
+    end
+    ticker.elapsed = ticker.elapsed + dt
+    if ticker.elapsed >= 0.2 then
+      ticker.elapsed = 0
+      local r = math.random(80, 255) / 255
+      local g = math.random(80, 255) / 255
+      local b = math.random(80, 255) / 255
+      if self.rushText then
+        self.rushText:SetTextColor(r, g, b)
+      end
+    end
+  end)
+  self.rushFlashFrame = ticker
 end
 
 function WarlockReminders:Initialize()
@@ -265,9 +356,26 @@ function WarlockReminders:SetStoneTest(enabled)
   self:UpdateVisibility(true)
 end
 
+function WarlockReminders:SetRushEnabled(enabled)
+  Elysian.state.warlockRushReminderEnabled = enabled and true or false
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  self:UpdateVisibility(true)
+end
+
+function WarlockReminders:SetRushTest(enabled)
+  Elysian.state.warlockRushReminderTest = enabled and true or false
+  if Elysian.SaveState then
+    Elysian.SaveState()
+  end
+  self:UpdateVisibility(true)
+end
+
 function WarlockReminders:SavePositions()
   ApplyCenterSave(self.petFrame, "warlockPetReminderPos")
   ApplyCenterSave(self.stoneFrame, "warlockStoneReminderPos")
+  ApplyCenterSave(self.rushFrame, "warlockRushReminderPos")
   if Elysian.SaveState then
     Elysian.SaveState()
   end

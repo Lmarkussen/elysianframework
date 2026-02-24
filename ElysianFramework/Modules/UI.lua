@@ -400,7 +400,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.19 BETA")
+  versionText:SetText("v1.00.20 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -3159,6 +3159,237 @@ function Elysian.UI:CreateMainFrame()
     end
   end)
   HookButtonPressFeedback(stoneTest)
+
+  local rushToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  rushToggle:SetPoint("TOPLEFT", stoneHeightSlider, "BOTTOMLEFT", -4, -24)
+  rushToggle.text = rushToggle.text or _G[rushToggle:GetName() .. "Text"]
+  rushToggle.text:SetText("Enable Burning Rush warning")
+  Elysian.ApplyFont(rushToggle.text, 12)
+  Elysian.ApplyTextColor(rushToggle.text)
+  Elysian.StyleCheckbox(rushToggle)
+  rushToggle:SetChecked(Elysian.state.warlockRushReminderEnabled)
+  rushToggle:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      Elysian.Features.WarlockReminders:SetRushEnabled(selfButton:GetChecked())
+    end
+  end)
+
+  local rushBgToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  rushBgToggle:SetPoint("TOPLEFT", rushToggle, "BOTTOMLEFT", 0, -12)
+  rushBgToggle.text = rushBgToggle.text or _G[rushBgToggle:GetName() .. "Text"]
+  rushBgToggle.text:SetText("Show background")
+  Elysian.ApplyFont(rushBgToggle.text, 12)
+  Elysian.ApplyTextColor(rushBgToggle.text)
+  Elysian.StyleCheckbox(rushBgToggle)
+  rushBgToggle:SetChecked(Elysian.state.warlockRushReminderShowBg)
+  rushBgToggle:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.warlockRushReminderShowBg = selfButton:GetChecked()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      Elysian.Features.WarlockReminders:ApplyColors()
+    end
+  end)
+
+  local rushFlashToggle = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+  rushFlashToggle:SetPoint("TOPLEFT", rushBgToggle, "BOTTOMLEFT", 0, -12)
+  rushFlashToggle.text = rushFlashToggle.text or _G[rushFlashToggle:GetName() .. "Text"]
+  rushFlashToggle.text:SetText("Flash colors")
+  Elysian.ApplyFont(rushFlashToggle.text, 12)
+  Elysian.ApplyTextColor(rushFlashToggle.text)
+  Elysian.StyleCheckbox(rushFlashToggle)
+  rushFlashToggle:SetChecked(Elysian.state.warlockRushReminderFlash ~= false)
+  rushFlashToggle:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.warlockRushReminderFlash = selfButton:GetChecked()
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      Elysian.Features.WarlockReminders:ApplyColors()
+      Elysian.Features.WarlockReminders:UpdateVisibility(true)
+      if Elysian.state.warlockRushReminderFlash then
+        Elysian.Features.WarlockReminders:StartRushFlash()
+      end
+    end
+  end)
+
+  local rushColorButton = CreateFrame("Button", nil, panel, template)
+  rushColorButton:SetPoint("TOPLEFT", rushFlashToggle, "BOTTOMLEFT", 0, -12)
+  rushColorButton:SetSize(180, 22)
+  Elysian.SetBackdrop(rushColorButton)
+  Elysian.SetBackdropColors(rushColorButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local rushColorText = rushColorButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  rushColorText:SetPoint("CENTER")
+  rushColorText:SetText("Text Color")
+  Elysian.ApplyFont(rushColorText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(rushColorText)
+
+  local rushSwatch = rushColorButton:CreateTexture(nil, "OVERLAY")
+  rushSwatch:SetSize(12, 12)
+  rushSwatch:SetPoint("RIGHT", -8, 0)
+  local rushStart = Elysian.state.warlockRushReminderTextColor or { 0.58, 0.51, 0.79 }
+  rushSwatch:SetColorTexture(rushStart[1], rushStart[2], rushStart[3], 1)
+
+  rushColorButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    local color = Elysian.state.warlockRushReminderTextColor or { 0.58, 0.51, 0.79 }
+    local function apply(r, g, b)
+      Elysian.state.warlockRushReminderTextColor = { r, g, b }
+      rushSwatch:SetColorTexture(r, g, b, 1)
+      if Elysian.Features and Elysian.Features.WarlockReminders then
+        Elysian.Features.WarlockReminders:ApplyColors()
+      end
+      if Elysian.SaveState then
+        Elysian.SaveState()
+      end
+    end
+    if Elysian.OpenColorPicker then
+      Elysian.OpenColorPicker({
+        r = color[1],
+        g = color[2],
+        b = color[3],
+        opacity = 1,
+        hasOpacity = false,
+        swatchFunc = function()
+          local r, g, b = ColorPickerFrame:GetColorRGB()
+          apply(r, g, b)
+        end,
+        cancelFunc = function(prev)
+          local pr = prev.r or prev[1] or color[1]
+          local pg = prev.g or prev[2] or color[2]
+          local pb = prev.b or prev[3] or color[3]
+          apply(pr, pg, pb)
+        end,
+      })
+    end
+  end)
+  HookButtonPressFeedback(rushColorButton)
+
+  local rushBgButton = CreateFrame("Button", nil, panel, template)
+  rushBgButton:SetPoint("TOPLEFT", rushColorButton, "BOTTOMLEFT", 0, -10)
+  rushBgButton:SetSize(180, 22)
+  Elysian.SetBackdrop(rushBgButton)
+  Elysian.SetBackdropColors(rushBgButton, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local rushBgText = rushBgButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  rushBgText:SetPoint("CENTER")
+  rushBgText:SetText("Background Color")
+  Elysian.ApplyFont(rushBgText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(rushBgText)
+
+  local rushBgSwatch = rushBgButton:CreateTexture(nil, "OVERLAY")
+  rushBgSwatch:SetSize(12, 12)
+  rushBgSwatch:SetPoint("RIGHT", -8, 0)
+  local rushBgStart = Elysian.state.warlockRushReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+  rushBgSwatch:SetColorTexture(rushBgStart[1], rushBgStart[2], rushBgStart[3], 1)
+
+  rushBgButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    local color = Elysian.state.warlockRushReminderBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+    local function apply(r, g, b)
+      Elysian.state.warlockRushReminderBgColor = { r, g, b }
+      rushBgSwatch:SetColorTexture(r, g, b, 1)
+      if Elysian.Features and Elysian.Features.WarlockReminders then
+        Elysian.Features.WarlockReminders:ApplyColors()
+      end
+      if Elysian.SaveState then
+        Elysian.SaveState()
+      end
+    end
+    if Elysian.OpenColorPicker then
+      Elysian.OpenColorPicker({
+        r = color[1],
+        g = color[2],
+        b = color[3],
+        opacity = 1,
+        hasOpacity = false,
+        swatchFunc = function()
+          local r, g, b = ColorPickerFrame:GetColorRGB()
+          apply(r, g, b)
+        end,
+        cancelFunc = function(prev)
+          local pr = prev.r or prev[1] or color[1]
+          local pg = prev.g or prev[2] or color[2]
+          local pb = prev.b or prev[3] or color[3]
+          apply(pr, pg, pb)
+        end,
+      })
+    end
+  end)
+  HookButtonPressFeedback(rushBgButton)
+
+  local rushTextLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  rushTextLabel:SetPoint("TOPLEFT", rushBgButton, "BOTTOMLEFT", 0, -12)
+  rushTextLabel:SetText("Custom Text:")
+  Elysian.ApplyFont(rushTextLabel, 11, "OUTLINE")
+  Elysian.ApplyTextColor(rushTextLabel)
+
+  local rushTextBox = CreateFrame("EditBox", nil, panel, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  rushTextBox:SetPoint("TOPLEFT", rushTextLabel, "BOTTOMLEFT", 0, -6)
+  rushTextBox:SetSize(180, 22)
+  rushTextBox:SetAutoFocus(false)
+  Elysian.SetBackdrop(rushTextBox)
+  Elysian.SetBackdropColors(rushTextBox, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+  rushTextBox:SetTextInsets(6, 6, 2, 2)
+  rushTextBox:SetText(Elysian.state.warlockRushReminderTextOverride or "")
+  Elysian.ApplyFont(rushTextBox, 11, "OUTLINE")
+  Elysian.ApplyTextColor(rushTextBox)
+  rushTextBox:SetScript("OnEnterPressed", function(selfBox)
+    local text = selfBox:GetText() or ""
+    Elysian.state.warlockRushReminderTextOverride = text
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      Elysian.Features.WarlockReminders:ApplyColors()
+    end
+    selfBox:ClearFocus()
+  end)
+
+  local rushTest = CreateFrame("Button", nil, panel, template)
+  rushTest:SetPoint("LEFT", rushTextBox, "RIGHT", 10, 0)
+  rushTest:SetSize(120, 22)
+  Elysian.SetBackdrop(rushTest)
+  Elysian.SetBackdropColors(rushTest, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.9)
+
+  local rushTestText = rushTest:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  rushTestText:SetPoint("CENTER")
+  rushTestText:SetText("Test Banner")
+  Elysian.ApplyFont(rushTestText, 11, "OUTLINE")
+  Elysian.ApplyAccentColor(rushTestText)
+
+  local function UpdateRushTestStyle(active)
+    local bg = active and { 0.75, 0.75, 0.75 } or Elysian.GetNavBg()
+    Elysian.SetBackdropColors(rushTest, bg, Elysian.GetThemeBorder(), 0.9)
+  end
+  UpdateRushTestStyle(Elysian.state.warlockRushReminderTest)
+
+  rushTest:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      local enabled = not Elysian.state.warlockRushReminderTest
+      Elysian.Features.WarlockReminders:SetRushTest(enabled)
+      UpdateRushTestStyle(enabled)
+    end
+  end)
+  HookButtonPressFeedback(rushTest)
   end
 
   local function BuildSimpleBuffPanel(panel, className, prefix, labelText)

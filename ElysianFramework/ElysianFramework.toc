@@ -1,8 +1,9 @@
 ## Interface: 120001
 ## Title: Elysian Framework
 ## Notes: Minimal UI frame and menu theming for the Elysian Framework addon.
-## Author: Elysian
-## Version: 1.00.19 BETA
+## Author: @EvilHaxxor
+## IconTexture: Interface\\AddOns\\ElysianFramework\\Assets\\eframe.png
+## Version: 1.00.20 BETA
 ## SavedVariables: ElysianDB
 
 Modules/Core.lua

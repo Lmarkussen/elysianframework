@@ -119,6 +119,17 @@ Elysian.state = Elysian.state or {
   warlockStoneReminderTextColor = nil,
   warlockStoneReminderTest = false,
   warlockStoneReminderPos = nil,
+  warlockRushReminderEnabled = false,
+  warlockRushReminderTextColor = nil,
+  warlockRushReminderBgColor = nil,
+  warlockRushReminderAlpha = 0.95,
+  warlockRushReminderShowBg = false,
+  warlockRushReminderFlash = true,
+  warlockRushReminderTextOverride = "",
+  warlockRushReminderWidth = 0,
+  warlockRushReminderHeight = 0,
+  warlockRushReminderTest = false,
+  warlockRushReminderPos = nil,
   autoKeystoneEnabled = true,
   warriorBuffEnabled = false,
   warriorBuffTextColor = nil,
@@ -291,6 +302,17 @@ function Elysian.GetDefaultState()
     warlockStoneReminderHeight = 0,
     warlockStoneReminderTest = false,
     warlockStoneReminderPos = nil,
+    warlockRushReminderEnabled = false,
+    warlockRushReminderTextColor = { 1, 1, 1 },
+    warlockRushReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    warlockRushReminderAlpha = 0.95,
+    warlockRushReminderShowBg = false,
+    warlockRushReminderFlash = true,
+    warlockRushReminderTextOverride = "",
+    warlockRushReminderWidth = 0,
+    warlockRushReminderHeight = 0,
+    warlockRushReminderTest = false,
+    warlockRushReminderPos = nil,
     hunterPetReminderEnabled = false,
     hunterPetReminderTextColor = { 1, 1, 1 },
     hunterPetReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
@@ -379,6 +401,7 @@ local function BuildClassProfile(class)
   if class == "WARLOCK" then
     state.warlockPetReminderEnabled = true
     state.warlockStoneReminderEnabled = true
+    state.warlockRushReminderEnabled = true
   elseif class == "HUNTER" then
     state.hunterPetReminderEnabled = true
   elseif class == "WARRIOR" then
@@ -619,6 +642,9 @@ function Elysian.ResetSettings()
     if class == "WARLOCK" then
       Elysian.state.warlockPetReminderEnabled = true
       Elysian.state.warlockStoneReminderEnabled = true
+      Elysian.state.warlockRushReminderEnabled = true
+      Elysian.state.warlockRushReminderShowBg = false
+      Elysian.state.warlockRushReminderFlash = true
     elseif class == "HUNTER" then
       Elysian.state.hunterPetReminderEnabled = true
     elseif class == "WARRIOR" then
@@ -669,6 +695,20 @@ function Elysian.InitSavedVariables()
     end
     if profile.infoBarShowPortalButton == nil then
       profile.infoBarShowPortalButton = true
+    end
+    if profile.warlockRushReminderFlash == nil then
+      profile.warlockRushReminderFlash = true
+    end
+  end
+  if ElysianDB.profiles.WARLOCK then
+    if ElysianDB.profiles.WARLOCK.warlockRushReminderEnabled == nil then
+      ElysianDB.profiles.WARLOCK.warlockRushReminderEnabled = true
+    end
+    if ElysianDB.profiles.WARLOCK.warlockRushReminderShowBg == nil then
+      ElysianDB.profiles.WARLOCK.warlockRushReminderShowBg = false
+    end
+    if ElysianDB.profiles.WARLOCK.warlockRushReminderFlash == nil then
+      ElysianDB.profiles.WARLOCK.warlockRushReminderFlash = true
     end
   end
   local charKey = Elysian.GetCharacterKey()
@@ -1006,6 +1046,39 @@ function Elysian.InitSavedVariables()
   if ElysianDB.warlockStoneReminderPos == nil then
     ElysianDB.warlockStoneReminderPos = nil
   end
+  if ElysianDB.warlockRushReminderEnabled == nil then
+    ElysianDB.warlockRushReminderEnabled = false
+  end
+  if ElysianDB.warlockRushReminderTextColor == nil then
+    ElysianDB.warlockRushReminderTextColor = { 1, 1, 1 }
+  end
+  if ElysianDB.warlockRushReminderBgColor == nil then
+    ElysianDB.warlockRushReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) }
+  end
+  if ElysianDB.warlockRushReminderAlpha == nil then
+    ElysianDB.warlockRushReminderAlpha = 0.95
+  end
+  if ElysianDB.warlockRushReminderShowBg == nil then
+    ElysianDB.warlockRushReminderShowBg = false
+  end
+  if ElysianDB.warlockRushReminderFlash == nil then
+    ElysianDB.warlockRushReminderFlash = true
+  end
+  if ElysianDB.warlockRushReminderTextOverride == nil then
+    ElysianDB.warlockRushReminderTextOverride = ""
+  end
+  if ElysianDB.warlockRushReminderWidth == nil then
+    ElysianDB.warlockRushReminderWidth = 0
+  end
+  if ElysianDB.warlockRushReminderHeight == nil then
+    ElysianDB.warlockRushReminderHeight = 0
+  end
+  if ElysianDB.warlockRushReminderTest == nil then
+    ElysianDB.warlockRushReminderTest = false
+  end
+  if ElysianDB.warlockRushReminderPos == nil then
+    ElysianDB.warlockRushReminderPos = nil
+  end
   if ElysianDB.hunterPetReminderEnabled == nil then
     ElysianDB.hunterPetReminderEnabled = false
   end
@@ -1210,6 +1283,15 @@ function Elysian.InitSavedVariables()
   if profileName == "ROGUE" then
     Elysian.state.roguePoisonEnabled = true
   end
+  if profileName == "WARLOCK" and Elysian.state.warlockRushReminderEnabled == nil then
+    Elysian.state.warlockRushReminderEnabled = true
+  end
+  if profileName == "WARLOCK" and Elysian.state.warlockRushReminderShowBg == nil then
+    Elysian.state.warlockRushReminderShowBg = false
+  end
+  if profileName == "WARLOCK" and Elysian.state.warlockRushReminderFlash == nil then
+    Elysian.state.warlockRushReminderFlash = true
+  end
   if ElysianDB.minimapButtonAngle ~= nil then
     Elysian.state.minimapButtonAngle = ElysianDB.minimapButtonAngle
   elseif Elysian.state.minimapButtonAngle == nil then
@@ -1345,6 +1427,10 @@ function Elysian.InitSavedVariables()
   )
   Elysian.state.roguePoisonBgColor = EnsureColorTable(
     Elysian.state.roguePoisonBgColor,
+    { Elysian.HexToRGB(Elysian.theme.bg) }
+  )
+  Elysian.state.warlockRushReminderBgColor = EnsureColorTable(
+    Elysian.state.warlockRushReminderBgColor,
     { Elysian.HexToRGB(Elysian.theme.bg) }
   )
 
