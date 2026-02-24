@@ -400,7 +400,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.20 BETA")
+  versionText:SetText("v1.00.21 BETA")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -871,6 +871,31 @@ function Elysian.UI:CreateMainFrame()
   minimapInfoButton:SetScript("OnLeave", function()
     if minimapInfoButton.infoFrame then
       minimapInfoButton.infoFrame:Hide()
+    end
+  end)
+
+  local showAllClasses = CreateFrame("CheckButton", nil, generalPanel, "UICheckButtonTemplate")
+  showAllClasses:SetPoint("TOPLEFT", minimapToggle, "BOTTOMLEFT", 0, -10)
+  showAllClasses.text = showAllClasses.text or _G[showAllClasses:GetName() .. "Text"]
+  showAllClasses.text:SetText("Show all classes in class alerts")
+  Elysian.ApplyFont(showAllClasses.text, 12)
+  Elysian.ApplyTextColor(showAllClasses.text)
+  Elysian.StyleCheckbox(showAllClasses)
+  showAllClasses:SetChecked(Elysian.state.showAllClassAlerts)
+  showAllClasses:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.showAllClassAlerts = selfButton:GetChecked()
+    if ElysianDB then
+      ElysianDB.showAllClassAlerts = Elysian.state.showAllClassAlerts
+    end
+    if Elysian.SaveState then
+      Elysian.SaveState()
+    end
+    if Elysian.UI and Elysian.UI.Rebuild then
+      Elysian.UI:Rebuild()
+      Elysian.UI:Show()
     end
   end)
 
@@ -2499,9 +2524,11 @@ function Elysian.UI:CreateMainFrame()
     "WARLOCK",
     "WARRIOR",
   }
-  local _, playerClass = UnitClass("player")
-  if playerClass then
-    classTabOrder = { playerClass }
+  if not (Elysian.state and Elysian.state.showAllClassAlerts) then
+    local _, playerClass = UnitClass("player")
+    if playerClass then
+      classTabOrder = { playerClass }
+    end
   end
 
   local row1Count = 6

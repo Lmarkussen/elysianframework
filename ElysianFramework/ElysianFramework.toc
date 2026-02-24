@@ -3,7 +3,7 @@
 ## Notes: Minimal UI frame and menu theming for the Elysian Framework addon.
 ## Author: @EvilHaxxor
 ## IconTexture: Interface\\AddOns\\ElysianFramework\\Assets\\eframe.png
-## Version: 1.00.20 BETA
+## Version: 1.00.21 BETA
 ## SavedVariables: ElysianDB
 
 Modules/Core.lua
