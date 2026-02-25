@@ -165,16 +165,32 @@ Elysian.state = Elysian.state or {
   roguePoisonPos = nil,
 }
 
-local function CopyTable(value)
+local function CopyTable(value, seen)
   if type(value) ~= "table" then
     return value
   end
+  if value.GetObjectType or value.IsObjectType then
+    return nil
+  end
+  seen = seen or {}
+  if seen[value] then
+    return nil
+  end
+  seen[value] = true
   local out = {}
   for k, v in pairs(value) do
-    if type(v) == "table" then
-      out[k] = CopyTable(v)
+    local kt = type(k)
+    if kt == "function" or kt == "userdata" or kt == "thread" or kt == "table" then
+      -- skip non-serializable or recursive keys
     else
-      out[k] = v
+      local vt = type(v)
+      if vt == "table" then
+        out[k] = CopyTable(v, seen)
+      elseif vt == "function" or vt == "userdata" or vt == "thread" then
+        -- skip non-serializable values
+      else
+        out[k] = v
+      end
     end
   end
   return out
