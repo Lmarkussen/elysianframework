@@ -33,6 +33,13 @@ local function HasPet()
   return UnitExists("pet") and not UnitIsDeadOrGhost("pet")
 end
 
+local function IsPlayerAlive()
+  if UnitIsDeadOrGhost("player") or UnitIsDead("player") or UnitIsGhost("player") then
+    return false
+  end
+  return true
+end
+
 local function ApplyCenterSave(frame, key)
   if not frame then
     return
@@ -83,9 +90,19 @@ end
 function WarlockReminders:EnsureFrames()
   if not self.petFrame then
     self.petFrame, self.petText = EnsureFrame("ElysianWarlockPetReminder", "PET MISSING")
+    self.petFrame:HookScript("OnShow", function(frame)
+      if UnitIsDeadOrGhost("player") then
+        frame:Hide()
+      end
+    end)
   end
   if not self.stoneFrame then
     self.stoneFrame, self.stoneText = EnsureFrame("ElysianWarlockStoneReminder", "MISSING HEALTHSTONE")
+    self.stoneFrame:HookScript("OnShow", function(frame)
+      if UnitIsDeadOrGhost("player") then
+        frame:Hide()
+      end
+    end)
   end
   if not self.rushFrame then
     self.rushFrame, self.rushText = EnsureFrame("ElysianWarlockRushReminder", "BURNING RUSH")
@@ -202,6 +219,20 @@ function WarlockReminders:ApplySize()
 end
 
 function WarlockReminders:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.petFrame then
+      self.petFrame:Hide()
+    end
+    if self.stoneFrame then
+      self.stoneFrame:Hide()
+    end
+    if self.rushFrame then
+      self.rushFrame:Hide()
+    end
+    self.petShown = false
+    self.stoneShown = false
+    return
+  end
   if not IsWarlock() then
     if self.petFrame then
       self.petFrame:Hide()
@@ -209,12 +240,26 @@ function WarlockReminders:UpdateVisibility(force)
     if self.stoneFrame then
       self.stoneFrame:Hide()
     end
+    if self.rushFrame then
+      self.rushFrame:Hide()
+    end
+    return
+  end
+  if not IsPlayerAlive() then
+    if self.petFrame then
+      self.petFrame:Hide()
+    end
+    if self.stoneFrame then
+      self.stoneFrame:Hide()
+    end
+    self.petShown = false
+    self.stoneShown = false
     return
   end
 
   if self.petFrame then
     local enabled = Elysian.state.warlockPetReminderEnabled
-    if enabled and (Elysian.state.warlockPetReminderTest or not HasPet()) then
+    if enabled and not UnitIsDeadOrGhost("player") and (Elysian.state.warlockPetReminderTest or not HasPet()) then
       self.petFrame:Show()
       if not self.petShown then
         self.petShown = true
@@ -230,7 +275,7 @@ function WarlockReminders:UpdateVisibility(force)
 
   if self.stoneFrame then
     local enabled = Elysian.state.warlockStoneReminderEnabled
-    if enabled and (Elysian.state.warlockStoneReminderTest or not HasHealthstone()) then
+    if enabled and not UnitIsDeadOrGhost("player") and (Elysian.state.warlockStoneReminderTest or not HasHealthstone()) then
       self.stoneFrame:Show()
       if not self.stoneShown then
         self.stoneShown = true
@@ -286,12 +331,26 @@ function WarlockReminders:EnsureEvents()
   end
   local events = CreateFrame("Frame")
   events:RegisterEvent("PLAYER_ENTERING_WORLD")
+  events:RegisterEvent("PLAYER_DEAD")
+  events:RegisterEvent("PLAYER_ALIVE")
+  events:RegisterEvent("PLAYER_UNGHOST")
   events:RegisterEvent("UNIT_PET")
   events:RegisterEvent("UNIT_INVENTORY_CHANGED")
   events:RegisterEvent("BAG_UPDATE_DELAYED")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
   events:RegisterEvent("UNIT_AURA")
-  events:SetScript("OnEvent", function()
+  events:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_DEAD" then
+      if self.petFrame then
+        self.petFrame:Hide()
+      end
+      if self.stoneFrame then
+        self.stoneFrame:Hide()
+      end
+      self.petShown = false
+      self.stoneShown = false
+      return
+    end
     self:UpdateVisibility(true)
   end)
   self.eventFrame = events
@@ -342,7 +401,7 @@ end
 function WarlockReminders:SetPetEnabled(enabled)
   Elysian.state.warlockPetReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -350,7 +409,7 @@ end
 function WarlockReminders:SetStoneEnabled(enabled)
   Elysian.state.warlockStoneReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -358,7 +417,7 @@ end
 function WarlockReminders:SetPetTest(enabled)
   Elysian.state.warlockPetReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -366,7 +425,7 @@ end
 function WarlockReminders:SetStoneTest(enabled)
   Elysian.state.warlockStoneReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -374,7 +433,7 @@ end
 function WarlockReminders:SetRushEnabled(enabled)
   Elysian.state.warlockRushReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -382,7 +441,7 @@ end
 function WarlockReminders:SetRushTest(enabled)
   Elysian.state.warlockRushReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -392,6 +451,6 @@ function WarlockReminders:SavePositions()
   ApplyCenterSave(self.stoneFrame, "warlockStoneReminderPos")
   ApplyCenterSave(self.rushFrame, "warlockRushReminderPos")
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end

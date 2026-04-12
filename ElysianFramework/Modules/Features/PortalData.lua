@@ -165,4 +165,7 @@ Elysian.PortalData = {
     [903] = 1254563,
     [904] = 1254400,
   },
+  mapIDToSpellNameOverride = {
+    [305] = "Path of the Skies",
+  },
 }

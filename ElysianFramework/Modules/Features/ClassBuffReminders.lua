@@ -148,7 +148,7 @@ function ClassBuffReminders:EnsureFrame(prefix, label)
       if px and py and fx and fy then
         Elysian.state[keys.pos] = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -280,6 +280,12 @@ function ClassBuffReminders:UpdatePoison()
 end
 
 function ClassBuffReminders:UpdateVisibility()
+  if UnitIsDeadOrGhost("player") then
+    for _, frame in pairs(self.frames or {}) do
+      frame:Hide()
+    end
+    return
+  end
   if self.runActive then
     for _, frame in pairs(self.frames or {}) do
       frame:Hide()
@@ -379,7 +385,7 @@ function ClassBuffReminders:SetEnabled(prefix, enabled)
   end
   Elysian.state[keys.enabled] = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility()
 end
@@ -391,7 +397,7 @@ function ClassBuffReminders:SetTestEnabled(prefix, enabled)
   end
   Elysian.state[keys.test] = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility()
 end

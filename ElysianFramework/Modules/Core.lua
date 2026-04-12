@@ -196,6 +196,38 @@ local function CopyTable(value, seen)
   return out
 end
 
+local function IsSimpleArray(value)
+  if type(value) ~= "table" then
+    return false
+  end
+  local count = 0
+  for k, v in pairs(value) do
+    if type(k) ~= "number" then
+      return false
+    end
+    local vt = type(v)
+    if vt ~= "number" and vt ~= "string" and vt ~= "boolean" then
+      return false
+    end
+    count = count + 1
+    if count > 12 then
+      return false
+    end
+  end
+  return true
+end
+
+local function CopySimpleArray(value)
+  if not IsSimpleArray(value) then
+    return nil
+  end
+  local out = {}
+  for k, v in pairs(value) do
+    out[k] = v
+  end
+  return out
+end
+
 local function EnsureColorTable(value, fallback)
   if type(value) == "table" and #value >= 3 then
     return { value[1], value[2], value[3] }
@@ -254,6 +286,8 @@ function Elysian.GetDefaultState()
     infoBarShowFPS = true,
     infoBarShowMS = true,
     infoBarShowMemory = false,
+    infoBarShowXPPerHour = true,
+    infoBarShowTimeToLevel = true,
     infoBarShowItemLevel = false,
     infoBarShowHearthstone = false,
     infoBarUnlocked = false,
@@ -261,6 +295,8 @@ function Elysian.GetDefaultState()
     infoBarTextColor = { Elysian.HexToRGB(Elysian.theme.accent) },
     infoBarBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
     infoBarShowPortalButton = true,
+    infoBarShowPullButtons = true,
+    infoBarPullSeconds = 10,
     deathSoundEnabled = true,
     repairReminderEnabled = true,
     repairReminderUnlocked = false,
@@ -275,7 +311,7 @@ function Elysian.GetDefaultState()
     dungeonReminderEnabled = true,
     dungeonReminderUnlocked = true,
     dungeonReminderTextColor = { 1, 1, 1 },
-    dungeonReminderBgColor = { Elysian.HexToRGB(Elysian.theme.bg) },
+    dungeonReminderBgColor = { 214 / 255, 0, 3 / 255 },
     dungeonReminderAlpha = 0.95,
     dungeonReminderWidth = 0,
     dungeonReminderHeight = 0,
@@ -593,7 +629,7 @@ function Elysian.SaveProfile(name)
   ElysianDB.profiles[name] = CopyTable(Elysian.state or {})
   Elysian.SetActiveProfile(name)
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -609,7 +645,7 @@ function Elysian.DeleteProfile(name)
     Elysian.SetActiveProfile("Default")
     Elysian.state = MergeProfile(ElysianDB.profiles.Default or Elysian.GetDefaultState())
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.UI and Elysian.UI.Rebuild then
       Elysian.UI:Rebuild()
@@ -649,7 +685,7 @@ function Elysian.LoadProfile(name)
   Elysian.state = MergeProfile(profile)
   Elysian.SetActiveProfile(name)
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   if Elysian.UI and Elysian.UI.Rebuild then
     Elysian.UI:Rebuild()
@@ -694,7 +730,7 @@ function Elysian.ResetSettings()
     end
   end
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -726,6 +762,18 @@ function Elysian.InitSavedVariables()
     if profile.infoBarShowPortalButton == nil then
       profile.infoBarShowPortalButton = true
     end
+    if profile.infoBarShowPullButtons == nil then
+      profile.infoBarShowPullButtons = true
+    end
+    if profile.infoBarPullSeconds == nil then
+      profile.infoBarPullSeconds = 10
+    end
+    if profile.infoBarShowXPPerHour == nil then
+      profile.infoBarShowXPPerHour = true
+    end
+    if profile.infoBarShowTimeToLevel == nil then
+      profile.infoBarShowTimeToLevel = true
+    end
     if profile.warlockRushReminderFlash == nil then
       profile.warlockRushReminderFlash = true
     end
@@ -746,6 +794,9 @@ function Elysian.InitSavedVariables()
     if ElysianDB.profiles.WARLOCK.warlockRushReminderSoundEnabled == nil then
       ElysianDB.profiles.WARLOCK.warlockRushReminderSoundEnabled = true
     end
+  end
+  if ElysianDB.dungeonReminderBgColor == nil then
+    ElysianDB.dungeonReminderBgColor = { 214 / 255, 0, 3 / 255 }
   end
   local charKey = Elysian.GetCharacterKey()
   if not ElysianDB.charProfiles[charKey] or ElysianDB.charProfiles[charKey] == "Default" then
@@ -875,6 +926,12 @@ function Elysian.InitSavedVariables()
   if ElysianDB.infoBarShowMemory == nil then
     ElysianDB.infoBarShowMemory = false
   end
+  if ElysianDB.infoBarShowXPPerHour == nil then
+    ElysianDB.infoBarShowXPPerHour = true
+  end
+  if ElysianDB.infoBarShowTimeToLevel == nil then
+    ElysianDB.infoBarShowTimeToLevel = true
+  end
   if ElysianDB.infoBarShowItemLevel == nil then
     ElysianDB.infoBarShowItemLevel = false
   end
@@ -895,6 +952,12 @@ function Elysian.InitSavedVariables()
   end
   if ElysianDB.infoBarShowPortalButton == nil then
     ElysianDB.infoBarShowPortalButton = true
+  end
+  if ElysianDB.infoBarShowPullButtons == nil then
+    ElysianDB.infoBarShowPullButtons = true
+  end
+  if ElysianDB.infoBarPullSeconds == nil then
+    ElysianDB.infoBarPullSeconds = 10
   end
   if ElysianDB.repairReminderEnabled == nil then
     ElysianDB.repairReminderEnabled = true
@@ -1371,6 +1434,18 @@ function Elysian.InitSavedVariables()
   if Elysian.state.infoBarShowPortalButton == nil then
     Elysian.state.infoBarShowPortalButton = true
   end
+  if Elysian.state.infoBarShowPullButtons == nil then
+    Elysian.state.infoBarShowPullButtons = true
+  end
+  if Elysian.state.infoBarPullSeconds == nil then
+    Elysian.state.infoBarPullSeconds = 10
+  end
+  if Elysian.state.infoBarShowXPPerHour == nil then
+    Elysian.state.infoBarShowXPPerHour = true
+  end
+  if Elysian.state.infoBarShowTimeToLevel == nil then
+    Elysian.state.infoBarShowTimeToLevel = true
+  end
   Elysian.state.uiTextColor = EnsureColorTable(
     Elysian.state.uiTextColor,
     { Elysian.HexToRGB(Elysian.theme.fg) }
@@ -1490,20 +1565,72 @@ function Elysian.InitSavedVariables()
   )
 
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
 function Elysian.SaveState()
+  if Elysian._savingState then
+    return
+  end
+  Elysian._savingState = true
   if type(ElysianDB) ~= "table" then
     ElysianDB = {}
   end
   ElysianDB.profiles = ElysianDB.profiles or {}
   ElysianDB.charProfiles = ElysianDB.charProfiles or {}
   local active = Elysian.GetActiveProfile()
-  ElysianDB.profiles[active] = CopyTable(Elysian.state or {})
+  local defaults = Elysian.GetDefaultState()
+  local out = {}
+  for key, def in pairs(defaults) do
+    local v = Elysian.state and Elysian.state[key] or nil
+    if def == nil then
+      local vt = type(v)
+      if vt == "number" or vt == "string" or vt == "boolean" then
+        out[key] = v
+      elseif IsSimpleArray(v) then
+        out[key] = CopySimpleArray(v)
+      end
+    elseif type(def) == "table" then
+      if IsSimpleArray(v) then
+        out[key] = CopySimpleArray(v)
+      elseif IsSimpleArray(def) then
+        out[key] = CopySimpleArray(def)
+      end
+    else
+      if v ~= nil and type(v) == type(def) then
+        out[key] = v
+      else
+        out[key] = def
+      end
+    end
+  end
+  ElysianDB.profiles[active] = out
   if Elysian.state and Elysian.state.minimapButtonAngle ~= nil then
     ElysianDB.minimapButtonAngle = Elysian.state.minimapButtonAngle
+  end
+  Elysian._savingState = false
+end
+
+function Elysian.QueueSaveState()
+  if Elysian._saveQueued then
+    return
+  end
+  Elysian._saveQueued = true
+  if C_Timer and C_Timer.After then
+    C_Timer.After(0.2, function()
+      Elysian._saveQueued = false
+      if InCombatLockdown and InCombatLockdown() then
+        return
+      end
+      Elysian.SaveState()
+    end)
+  else
+    Elysian._saveQueued = false
+    if InCombatLockdown and InCombatLockdown() then
+      return
+    end
+    Elysian.SaveState()
   end
 end
 

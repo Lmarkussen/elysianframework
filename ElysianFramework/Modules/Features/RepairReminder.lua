@@ -27,7 +27,7 @@ end
 function RepairReminder:SetEnabled(enabled)
   Elysian.state.repairReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility()
@@ -36,7 +36,7 @@ end
 function RepairReminder:SetUnlocked(unlocked)
   Elysian.state.repairReminderUnlocked = unlocked and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateMouse()
 end
@@ -44,7 +44,7 @@ end
 function RepairReminder:SetTestEnabled(enabled)
   Elysian.state.repairReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateMouse()
@@ -79,7 +79,7 @@ function RepairReminder:EnsureFrame()
       if px and py and fx and fy then
         Elysian.state.repairReminderPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -176,6 +176,13 @@ function RepairReminder:UpdateMouse()
 end
 
 function RepairReminder:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.frame then
+      self.frame:Hide()
+    end
+    self.shown = false
+    return
+  end
   if not self.frame then
     return
   end

@@ -19,7 +19,7 @@ end
 function AutoKeystone:SetEnabled(enabled)
   Elysian.state.autoKeystoneEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 

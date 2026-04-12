@@ -120,7 +120,7 @@ function Elysian.MinimapButton:Create()
       local angle = math.deg(math.atan2(py - my, px - mx)) % 360
       Elysian.state.minimapButtonAngle = angle
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if ElysianDB then
         ElysianDB.minimapButtonAngle = angle
@@ -160,7 +160,7 @@ end
 function Elysian.MinimapButton:SetHidden(hidden)
   Elysian.state.minimapButtonHidden = hidden and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:ApplyVisibility()
 end

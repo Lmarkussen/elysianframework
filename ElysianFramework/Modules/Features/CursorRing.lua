@@ -48,7 +48,7 @@ end
 function CursorRing:SetEnabled(enabled)
   Elysian.state.cursorRingEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   if enabled then
     self:EnsureFrame()
@@ -76,7 +76,7 @@ function CursorRing:SetSize(size)
     end
   end
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -86,7 +86,7 @@ function CursorRing:SetColor(color)
     self.texture:SetVertexColor(color[1], color[2], color[3], 1)
   end
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -97,7 +97,7 @@ function CursorRing:SetCastColor(color)
   end
   self:UpdateCastProgress()
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -105,7 +105,7 @@ function CursorRing:SetTrailColor(color)
   Elysian.state.cursorRingTrailColor = color
   if Elysian.state.cursorRingTrailRandom then
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     return
   end
@@ -116,7 +116,7 @@ function CursorRing:SetTrailColor(color)
     end
   end
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -134,7 +134,7 @@ function CursorRing:SetTrailShape(shape)
     end
   end
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -609,7 +609,7 @@ local function CreateColorButton(parent, label, x, y, getColor, setColor)
       setColor({ r, g, b })
       swatch:SetColorTexture(r, g, b, 1)
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
 
@@ -859,7 +859,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingClassColor = selfButton:GetChecked()
     CursorRing:ApplyColors()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -898,7 +898,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingCastProgress = selfButton:GetChecked()
     CursorRing:UpdateCastProgress()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -928,7 +928,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingShape = value
     CursorRing:ApplyShape()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     UIDropDownMenu_SetText(shapeDrop, value)
     shapeText:SetText(value)
@@ -1047,7 +1047,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingShowInCombat = selfButton:GetChecked()
     CursorRing:UpdateVisibility()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -1060,7 +1060,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingShowOutCombat = selfButton:GetChecked()
     CursorRing:UpdateVisibility()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -1073,7 +1073,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingShowInInstances = selfButton:GetChecked()
     CursorRing:UpdateVisibility()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -1086,7 +1086,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingShowInWorld = selfButton:GetChecked()
     CursorRing:UpdateVisibility()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -1099,7 +1099,7 @@ function CursorRing:CreatePanel(parent)
     Elysian.state.cursorRingTrailEnabled = selfButton:GetChecked()
     CursorRing:UpdateTrail(0, 0, 0)
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -1121,7 +1121,7 @@ function CursorRing:CreatePanel(parent)
       CursorRing:EnsureTrail()
       CursorRing:ApplyColors()
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
   )
@@ -1140,7 +1140,7 @@ function CursorRing:CreatePanel(parent)
     function(value)
       Elysian.state.cursorRingTrailFadeTime = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end,
     function(value)
@@ -1175,7 +1175,7 @@ function CursorRing:CreatePanel(parent)
     end
     CursorRing:ApplyColors()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 

@@ -101,6 +101,128 @@ local function GetDamagePercent()
   return lowest
 end
 
+local function ResolveSpellKey(spellKey)
+  if not spellKey then
+    return nil
+  end
+  if type(spellKey) == "number" then
+    return spellKey
+  end
+  if type(spellKey) == "string" and C_Spell and C_Spell.GetSpellInfo then
+    local info = C_Spell.GetSpellInfo(spellKey)
+    return info and info.spellID or nil
+  end
+  return nil
+end
+
+local function IsKnownSpellKey(spellKey)
+  local spellID = ResolveSpellKey(spellKey)
+  if not spellID then
+    return false, nil
+  end
+  return (IsSpellKnown and IsSpellKnown(spellID)) and true or false, spellID
+end
+
+local function FormatLargeNumber(value)
+  if not value or value <= 0 then
+    return "0"
+  end
+  if value >= 1000000 then
+    return string.format("%.1fm", value / 1000000)
+  end
+  if value >= 1000 then
+    return string.format("%.1fk", value / 1000)
+  end
+  return string.format("%d", math.floor(value + 0.5))
+end
+
+local function FormatTTL(seconds)
+  if not seconds or seconds <= 0 or seconds == math.huge then
+    return "--"
+  end
+  local total = math.floor(seconds + 0.5)
+  local hours = math.floor(total / 3600)
+  local minutes = math.floor((total % 3600) / 60)
+  if hours > 0 then
+    return string.format("%dh %dm", hours, minutes)
+  end
+  if minutes > 0 then
+    return string.format("%dm", minutes)
+  end
+  return string.format("%ds", total)
+end
+
+function InfoBar:ResetXPTracking()
+  self.xpSessionStart = GetTime and GetTime() or 0
+  self.xpGained = 0
+  self.lastXP = UnitXP and UnitXP("player") or 0
+  self.lastXPMax = UnitXPMax and UnitXPMax("player") or 0
+  self.lastLevel = UnitLevel and UnitLevel("player") or 0
+end
+
+function InfoBar:EnsureXPTracking()
+  if self.xpSessionStart == nil then
+    self:ResetXPTracking()
+  end
+end
+
+function InfoBar:UpdateXPTracking()
+  self:EnsureXPTracking()
+  local currentXP = UnitXP and UnitXP("player") or 0
+  local currentXPMax = UnitXPMax and UnitXPMax("player") or 0
+  local currentLevel = UnitLevel and UnitLevel("player") or 0
+
+  if currentLevel ~= self.lastLevel then
+    if currentLevel > (self.lastLevel or 0) then
+      local rollover = math.max(0, (self.lastXPMax or 0) - (self.lastXP or 0))
+      self.xpGained = (self.xpGained or 0) + rollover + currentXP
+    else
+      self.xpGained = 0
+    end
+    self.xpSessionStart = GetTime and GetTime() or 0
+  elseif currentXP >= (self.lastXP or 0) then
+    self.xpGained = (self.xpGained or 0) + (currentXP - (self.lastXP or 0))
+  elseif (self.lastXPMax or 0) > 0 then
+    local rollover = math.max(0, (self.lastXPMax or 0) - (self.lastXP or 0))
+    self.xpGained = (self.xpGained or 0) + rollover + currentXP
+  end
+
+  self.lastXP = currentXP
+  self.lastXPMax = currentXPMax
+  self.lastLevel = currentLevel
+end
+
+function InfoBar:GetXPStats()
+  self:EnsureXPTracking()
+  local currentXP = UnitXP and UnitXP("player") or 0
+  local currentXPMax = UnitXPMax and UnitXPMax("player") or 0
+  if currentXPMax <= 0 then
+    return nil
+  end
+
+  local elapsed = math.max(1, (GetTime and GetTime() or 0) - (self.xpSessionStart or 0))
+  local gained = math.max(0, self.xpGained or 0)
+  if gained <= 0 then
+    return {
+      xpPerHour = 0,
+      timeToLevel = nil,
+    }
+  end
+
+  local xpPerHour = (gained / elapsed) * 3600
+  if xpPerHour <= 0 then
+    return {
+      xpPerHour = 0,
+      timeToLevel = nil,
+    }
+  end
+
+  return {
+    xpPerHour = xpPerHour,
+    timeToLevel = (currentXPMax - currentXP) / (xpPerHour / 3600),
+  }
+end
+
 function InfoBar:IsEnabled()
   return Elysian.state.infoBarEnabled and true or false
 end
@@ -108,7 +230,7 @@ end
 function InfoBar:SetEnabled(enabled)
   Elysian.state.infoBarEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   if enabled then
     self:EnsureFrame()
@@ -149,6 +271,52 @@ function InfoBar:EnsureFrame()
   Elysian.ApplyTextColor(text)
   self.text = text
 
+  local readyButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  readyButton:SetSize(90, 22)
+  readyButton:SetPoint("RIGHT", frame, "LEFT", -8, 0)
+  Elysian.SetBackdrop(readyButton)
+
+  local readyText = readyButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  readyText:SetPoint("CENTER")
+  readyText:SetText("Ready?")
+  Elysian.ApplyFont(readyText, 11, "OUTLINE")
+
+  readyButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    if DoReadyCheck then
+      DoReadyCheck()
+    elseif SlashCmdList and SlashCmdList.READYCHECK then
+      SlashCmdList.READYCHECK("")
+    end
+  end)
+
+  local pullButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+  pullButton:SetSize(90, 22)
+  pullButton:SetPoint("TOP", readyButton, "BOTTOM", 0, -6)
+  Elysian.SetBackdrop(pullButton)
+
+  local pullText = pullButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  pullText:SetPoint("CENTER")
+  pullText:SetText("Pull")
+  Elysian.ApplyFont(pullText, 11, "OUTLINE")
+
+  pullButton:SetScript("OnClick", function()
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    local seconds = tonumber(Elysian.state.infoBarPullSeconds) or 10
+    seconds = math.max(3, math.min(20, seconds))
+    if C_PartyInfo and C_PartyInfo.DoCountdown then
+      C_PartyInfo.DoCountdown(seconds)
+    elseif DoCountdown then
+      DoCountdown(seconds)
+    elseif SlashCmdList and SlashCmdList.COUNTDOWN then
+      SlashCmdList.COUNTDOWN(tostring(seconds))
+    end
+  end)
+
   local portalButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
   portalButton:SetSize(140, 22)
   portalButton:SetPoint("TOP", frame, "BOTTOM", 0, -8)
@@ -175,7 +343,9 @@ function InfoBar:EnsureFrame()
       if active then
         Elysian.SetBackdropColors(button, { 0.92, 0.92, 0.92 }, Elysian.GetThemeBorder(), 0.95)
       else
-        Elysian.SetBackdropColors(button, Elysian.GetNavBg(), Elysian.GetThemeBorder(), 0.95)
+        local bg = Elysian.state.infoBarBgColor or { Elysian.HexToRGB(Elysian.theme.bg) }
+        local opacity = Elysian.state.infoBarOpacity or 0.35
+        Elysian.SetBackdropColors(button, bg, Elysian.GetThemeBorder(), opacity)
       end
     end
     button:HookScript("OnMouseDown", function() SetActive(true) end)
@@ -185,8 +355,15 @@ function InfoBar:EnsureFrame()
   end
   HookInfoBarButtonFeedback(portalButton)
 
+  HookInfoBarButtonFeedback(readyButton)
+  HookInfoBarButtonFeedback(pullButton)
+
   self.portalButton = portalButton
   self.portalText = portalText
+  self.readyButton = readyButton
+  self.readyText = readyText
+  self.pullButton = pullButton
+  self.pullText = pullText
 
   local mageTeleportButton = CreateFrame("Button", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
   mageTeleportButton:SetSize(140, 22)
@@ -349,10 +526,22 @@ function InfoBar:ApplyColors()
   if self.text then
     self.text:SetTextColor(textColor[1], textColor[2], textColor[3])
   end
+  if self.readyText then
+    self.readyText:SetTextColor(textColor[1], textColor[2], textColor[3])
+  end
+  if self.pullText then
+    self.pullText:SetTextColor(textColor[1], textColor[2], textColor[3])
+  end
 
   Elysian.SetBackdropColors(self.frame, bgColor, Elysian.GetThemeBorder(), opacity)
   if self.portalButton then
     Elysian.SetBackdropColors(self.portalButton, bgColor, Elysian.GetThemeBorder(), opacity)
+  end
+  if self.readyButton then
+    Elysian.SetBackdropColors(self.readyButton, bgColor, Elysian.GetThemeBorder(), opacity)
+  end
+  if self.pullButton then
+    Elysian.SetBackdropColors(self.pullButton, bgColor, Elysian.GetThemeBorder(), opacity)
   end
   if self.mageTeleportButton then
     Elysian.SetBackdropColors(self.mageTeleportButton, bgColor, Elysian.GetThemeBorder(), opacity)
@@ -366,6 +555,8 @@ function InfoBar:UpdateText()
   if not self.text then
     return
   end
+
+  self:UpdateXPTracking()
 
   local parts = {}
 
@@ -397,6 +588,15 @@ function InfoBar:UpdateText()
     local memKb = collectgarbage and collectgarbage("count") or 0
     local memMb = memKb / 1024
     table.insert(parts, string.format("Addon Mem: %.1f MB", memMb))
+  end
+
+  local xpStats = self:GetXPStats()
+  if Elysian.state.infoBarShowXPPerHour and xpStats then
+    table.insert(parts, string.format("XP/hr: %s", FormatLargeNumber(xpStats.xpPerHour)))
+  end
+
+  if Elysian.state.infoBarShowTimeToLevel and xpStats then
+    table.insert(parts, string.format("TTL: %s", FormatTTL(xpStats.timeToLevel)))
   end
 
   if Elysian.state.infoBarShowItemLevel then
@@ -443,6 +643,20 @@ function InfoBar:UpdateVisibility()
   end
   if self:IsEnabled() then
     self.frame:Show()
+    if self.readyButton then
+      if Elysian.state.infoBarShowPullButtons ~= false then
+        self.readyButton:Show()
+      else
+        self.readyButton:Hide()
+      end
+    end
+    if self.pullButton then
+      if Elysian.state.infoBarShowPullButtons ~= false then
+        self.pullButton:Show()
+      else
+        self.pullButton:Hide()
+      end
+    end
     if self.portalButton then
       if Elysian.state.infoBarShowPortalButton then
         self.portalButton:Show()
@@ -475,6 +689,12 @@ function InfoBar:UpdateVisibility()
     self.frame:Hide()
     if self.portalButton then
       self.portalButton:Hide()
+    end
+    if self.readyButton then
+      self.readyButton:Hide()
+    end
+    if self.pullButton then
+      self.pullButton:Hide()
     end
     if self.mageTeleportButton then
       self.mageTeleportButton:Hide()
@@ -535,7 +755,7 @@ local function CreateColorButton(parent, label, x, y, getColor, setColor)
       setColor({ r, g, b })
       swatch:SetColorTexture(r, g, b, 1)
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
 
@@ -598,7 +818,7 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowTime = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -611,7 +831,7 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowGold = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -624,7 +844,7 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowDurability = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -637,7 +857,7 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowFPS = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -650,7 +870,7 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowMS = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -663,11 +883,37 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowMemory = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
-  local showItemLevel = CreateCheckbox(panel, "Show item level", leftX, leftStartY - (rowGap * 8))
+  local showXPPerHour = CreateCheckbox(panel, "Show XP/hr", leftX, leftStartY - (rowGap * 14))
+  showXPPerHour:SetChecked(Elysian.state.infoBarShowXPPerHour ~= false)
+  showXPPerHour:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowXPPerHour = selfButton:GetChecked()
+    InfoBar:UpdateText()
+    if Elysian.SaveState then
+      Elysian.QueueSaveState()
+    end
+  end)
+
+  local showTimeToLevel = CreateCheckbox(panel, "Show time to level", leftX, leftStartY - (rowGap * 15))
+  showTimeToLevel:SetChecked(Elysian.state.infoBarShowTimeToLevel ~= false)
+  showTimeToLevel:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowTimeToLevel = selfButton:GetChecked()
+    InfoBar:UpdateText()
+    if Elysian.SaveState then
+      Elysian.QueueSaveState()
+    end
+  end)
+
+  local showItemLevel = CreateCheckbox(panel, "Show item level", leftX, leftStartY - (rowGap * 11))
   showItemLevel:SetChecked(Elysian.state.infoBarShowItemLevel)
   showItemLevel:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then
@@ -676,11 +922,11 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowItemLevel = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
-  local showHearth = CreateCheckbox(panel, "Show hearthstone", leftX, leftStartY - (rowGap * 9))
+  local showHearth = CreateCheckbox(panel, "Show hearthstone", leftX, leftStartY - (rowGap * 12))
   showHearth:SetChecked(Elysian.state.infoBarShowHearthstone)
   showHearth:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then
@@ -689,11 +935,11 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarShowHearthstone = selfButton:GetChecked()
     InfoBar:UpdateText()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
-  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 10) - 155)
+  local unlock = CreateCheckbox(panel, "Unlock and move", leftX, leftStartY - (rowGap * 16) - 155)
   unlock:SetChecked(Elysian.state.infoBarUnlocked)
   unlock:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then
@@ -701,11 +947,11 @@ function InfoBar:CreatePanel(parent)
     end
     Elysian.state.infoBarUnlocked = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
-  local showPortal = CreateCheckbox(panel, "Show portal button", leftX, leftStartY - (rowGap * 10))
+  local showPortal = CreateCheckbox(panel, "Show portal button", leftX, leftStartY - (rowGap * 9))
   showPortal:SetChecked(Elysian.state.infoBarShowPortalButton)
   showPortal:SetScript("OnClick", function(selfButton)
     if Elysian.ClickFeedback then
@@ -713,7 +959,20 @@ function InfoBar:CreatePanel(parent)
     end
     Elysian.state.infoBarShowPortalButton = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
+    end
+    InfoBar:UpdateVisibility()
+  end)
+
+  local showPull = CreateCheckbox(panel, "Show ready/pull", leftX, leftStartY - (rowGap * 10))
+  showPull:SetChecked(Elysian.state.infoBarShowPullButtons ~= false)
+  showPull:SetScript("OnClick", function(selfButton)
+    if Elysian.ClickFeedback then
+      Elysian.ClickFeedback()
+    end
+    Elysian.state.infoBarShowPullButtons = selfButton:GetChecked()
+    if Elysian.SaveState then
+      Elysian.QueueSaveState()
     end
     InfoBar:UpdateVisibility()
   end)
@@ -777,7 +1036,47 @@ function InfoBar:CreatePanel(parent)
     Elysian.state.infoBarOpacity = rounded
     InfoBar:ApplyColors()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
+    end
+  end)
+
+  local pullLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  pullLabel:SetPoint("TOPLEFT", opacitySlider, "BOTTOMLEFT", 0, -22)
+  pullLabel:SetText("Pull Timer")
+  Elysian.ApplyFont(pullLabel, 11)
+  Elysian.ApplyTextColor(pullLabel)
+
+  local pullSlider = CreateFrame("Slider", nil, panel, "OptionsSliderTemplate")
+  pullSlider:SetPoint("TOPLEFT", pullLabel, "BOTTOMLEFT", 0, -16)
+  pullSlider:SetWidth(180)
+  pullSlider:SetMinMaxValues(3, 20)
+  pullSlider:SetValueStep(1)
+  pullSlider:SetObeyStepOnDrag(true)
+  pullSlider:EnableMouse(true)
+  pullSlider:SetHitRectInsets(-10, -10, -6, -6)
+  pullSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+  if pullSlider:GetThumbTexture() then
+    pullSlider:GetThumbTexture():SetSize(16, 16)
+  end
+  local pullValue = tonumber(Elysian.state.infoBarPullSeconds) or 10
+  pullSlider:SetValue(pullValue)
+  if pullSlider.Low then
+    pullSlider.Low:SetText("")
+  end
+  if pullSlider.High then
+    pullSlider.High:SetText("")
+  end
+  if pullSlider.Text then
+    pullSlider.Text:SetText(string.format("%ds", pullValue))
+  end
+  pullSlider:SetScript("OnValueChanged", function(selfSlider, value)
+    local rounded = math.max(3, math.min(20, math.floor(value + 0.5)))
+    Elysian.state.infoBarPullSeconds = rounded
+    if selfSlider.Text then
+      selfSlider.Text:SetText(string.format("%ds", rounded))
+    end
+    if Elysian.SaveState then
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -797,6 +1096,7 @@ end
 
 function InfoBar:Initialize()
   self:EnsureFrame()
+  self:EnsureXPTracking()
   self:UpdateText()
   self:ApplyColors()
   self:UpdateVisibility()
@@ -935,10 +1235,22 @@ function InfoBar:EnsurePortalWindow()
       return
     end
     local mapIDs = data.expansionToMapIDs and data.expansionToMapIDs[expansion] or {}
-    local y = -10
+    local entries = {}
     for _, mapID in ipairs(mapIDs) do
-      local spellID = data.mapIDToSpellID and data.mapIDToSpellID[mapID]
-      if spellID and spellID ~= 0 then
+      local label = (data.mapIDToName and data.mapIDToName[mapID]) or GetMapName(mapID)
+      table.insert(entries, { mapID = mapID, label = label })
+    end
+    table.sort(entries, function(a, b)
+      return string.lower(a.label) < string.lower(b.label)
+    end)
+    local y = -10
+    for _, entry in ipairs(entries) do
+      local mapID = entry.mapID
+      local spellKey = data.mapIDToSpellNameOverride and data.mapIDToSpellNameOverride[mapID]
+      if not spellKey then
+        spellKey = data.mapIDToSpellID and data.mapIDToSpellID[mapID]
+      end
+      if spellKey and spellKey ~= 0 then
         local button = CreateFrame("Button", nil, content, "SecureActionButtonTemplate,BackdropTemplate")
         button:SetPoint("TOP", 0, y)
         button:SetSize(340, 22)
@@ -948,15 +1260,14 @@ function InfoBar:EnsurePortalWindow()
 
         local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("CENTER")
-        local label = (data.mapIDToName and data.mapIDToName[mapID]) or GetMapName(mapID)
-        text:SetText(label)
+        text:SetText(entry.label)
         Elysian.ApplyFont(text, 10, "OUTLINE")
         Elysian.ApplyAccentColor(text)
 
-        local known = IsSpellKnown and IsSpellKnown(spellID)
+        local known, resolvedSpellID = IsKnownSpellKey(spellKey)
         if known then
           button:SetAttribute("type", "spell")
-          button:SetAttribute("spell", spellID)
+          button:SetAttribute("spell", resolvedSpellID)
           button:RegisterForClicks("LeftButtonUp", "LeftButtonDown")
           button:EnableMouse(true)
         else
@@ -974,7 +1285,7 @@ function InfoBar:EnsurePortalWindow()
         end
         button.unknownText:SetShown(not known)
 
-        RegisterPortalSpellButton(self, button, spellID)
+        RegisterPortalSpellButton(self, button, resolvedSpellID or spellKey)
         if self.HookPortalListButtonFeedback then
           self:HookPortalListButtonFeedback(button)
         end
@@ -986,7 +1297,7 @@ function InfoBar:EnsurePortalWindow()
         cooldown:SetDrawSwipe(false)
         cooldown:SetSwipeColor(0, 0, 0, 0)
         cooldown:Hide()
-        table.insert(self.portalCooldowns, { frame = cooldown, spellID = spellID })
+        table.insert(self.portalCooldowns, { frame = cooldown, spellID = resolvedSpellID or spellKey })
 
         table.insert(self.portalButtons, button)
         y = y - 24
@@ -1169,7 +1480,8 @@ function InfoBar:UpdatePortalCooldowns()
       return
     end
     for _, entry in ipairs(list) do
-      local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(entry.spellID) or nil
+      local spellID = ResolveSpellKey(entry.spellID)
+      local info = spellID and C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(spellID) or nil
       local start = info and info.startTime or 0
       local duration = info and info.duration or 0
       if start > 0 and duration > 0 then

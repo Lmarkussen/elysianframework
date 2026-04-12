@@ -27,7 +27,7 @@ end
 function AutoRepair:SetEnabled(enabled)
   Elysian.state.autoRepairEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 
@@ -63,7 +63,7 @@ function AutoRepair:OnMerchantShow()
   Elysian.state.autoRepairLastCost = cost
   Elysian.state.autoRepairLastUsedGuild = useGuild and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   if self.summaryText then
     self.summaryText:SetText("")
@@ -123,7 +123,7 @@ function AutoRepair:CreatePanel(parent)
     end
     Elysian.state.autoRepairUseGuild = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
   self.guildToggle = guildToggle
@@ -150,7 +150,7 @@ function AutoRepair:CreatePanel(parent)
     selfSlider.Text:SetText(string.format("%d%%", value))
     Elysian.state.autoRepairThreshold = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
   self.thresholdSlider = slider

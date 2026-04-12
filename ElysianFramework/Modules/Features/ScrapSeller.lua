@@ -11,7 +11,7 @@ end
 function ScrapSeller:SetEnabled(enabled)
   Elysian.state.scrapSellerEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end
 

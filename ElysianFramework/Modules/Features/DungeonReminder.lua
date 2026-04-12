@@ -11,7 +11,7 @@ end
 function DungeonReminder:SetEnabled(enabled)
   Elysian.state.dungeonReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility()
@@ -20,7 +20,7 @@ end
 function DungeonReminder:SetUnlocked(unlocked)
   Elysian.state.dungeonReminderUnlocked = unlocked and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateMouse()
 end
@@ -28,7 +28,7 @@ end
 function DungeonReminder:SetTestEnabled(enabled)
   Elysian.state.dungeonReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateMouse()
@@ -63,7 +63,7 @@ function DungeonReminder:EnsureFrame()
       if px and py and fx and fy then
         Elysian.state.dungeonReminderPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -149,7 +149,7 @@ function DungeonReminder:UpdateMouse()
   if not self.frame then
     return
   end
-  local canMove = Elysian.state.dungeonReminderUnlocked or Elysian.state.dungeonReminderTest
+  local canMove = Elysian.state.dungeonReminderUnlocked or Elysian.state.dungeonReminderTest or UnitIsDeadOrGhost("player")
   self.frame:SetMovable(canMove)
   self.frame:EnableMouse(canMove)
   if canMove then
@@ -182,6 +182,7 @@ function DungeonReminder:UpdateVisibility(force)
   local validInstance = inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "scenario")
   if validInstance and UnitIsDeadOrGhost("player") then
     self.frame:Show()
+    self:UpdateMouse()
     if not self.wasShown then
       self.wasShown = true
       if Elysian.PlayFlagCaptureSound then

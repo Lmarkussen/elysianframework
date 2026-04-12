@@ -6,6 +6,9 @@ events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("MERCHANT_SHOW")
 events:RegisterEvent("PLAYER_LOGOUT")
+events:RegisterEvent("PLAYER_DEAD")
+events:RegisterEvent("PLAYER_ALIVE")
+events:RegisterEvent("PLAYER_UNGHOST")
 
 local savedReady = false
 
@@ -137,6 +140,51 @@ events:SetScript("OnEvent", function(_, event, arg1)
   elseif event == "PLAYER_LOGOUT" then
     if Elysian.SaveState then
       Elysian.SaveState()
+    end
+  elseif event == "PLAYER_DEAD" then
+    if Elysian.state then
+      Elysian.state.playerDead = true
+    end
+    if Elysian.Features and Elysian.Features.WarlockReminders then
+      local wr = Elysian.Features.WarlockReminders
+      if wr.petFrame then wr.petFrame:Hide() end
+      if wr.stoneFrame then wr.stoneFrame:Hide() end
+      wr.petShown = false
+      wr.stoneShown = false
+    end
+    if Elysian.Features and Elysian.Features.HunterReminders then
+      local hr = Elysian.Features.HunterReminders
+      if hr.petFrame then hr.petFrame:Hide() end
+      hr.petShown = false
+    end
+    if Elysian.Features and Elysian.Features.RepairReminder then
+      local rr = Elysian.Features.RepairReminder
+      if rr.frame then rr.frame:Hide() end
+      rr.shown = false
+    end
+    if Elysian.Features and Elysian.Features.BuffWatch then
+      local bw = Elysian.Features.BuffWatch
+      if bw.frame then bw.frame:Hide() end
+      bw.shown = false
+    end
+    if Elysian.Features and Elysian.Features.DungeonConsumables then
+      local dc = Elysian.Features.DungeonConsumables
+      if dc.frame then dc.frame:Hide() end
+      dc.shown = false
+    end
+    if Elysian.Features and Elysian.Features.ClassBuffReminders then
+      local cr = Elysian.Features.ClassBuffReminders
+      if cr.frames then
+        for _, frame in pairs(cr.frames) do
+          if frame and frame.Hide then
+            frame:Hide()
+          end
+        end
+      end
+    end
+  elseif event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+    if Elysian.state then
+      Elysian.state.playerDead = UnitIsDeadOrGhost("player") and true or false
     end
   end
 end)

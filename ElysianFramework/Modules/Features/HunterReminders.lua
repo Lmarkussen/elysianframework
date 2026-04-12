@@ -48,6 +48,13 @@ local function HasPet()
   return UnitExists("pet") and not UnitIsDeadOrGhost("pet")
 end
 
+local function IsPlayerAlive()
+  if UnitIsDeadOrGhost("player") or UnitIsDead("player") or UnitIsGhost("player") then
+    return false
+  end
+  return true
+end
+
 local function ApplyCenterSave(frame, key)
   if not frame then
     return
@@ -98,6 +105,11 @@ end
 function HunterReminders:EnsureFrames()
   if not self.petFrame then
     self.petFrame, self.petText = EnsureFrame("ElysianHunterPetReminder", "PET MISSING")
+    self.petFrame:HookScript("OnShow", function(frame)
+      if UnitIsDeadOrGhost("player") then
+        frame:Hide()
+      end
+    end)
   end
   ApplyPosition(self.petFrame, "hunterPetReminderPos")
 
@@ -142,10 +154,24 @@ function HunterReminders:ApplySize()
 end
 
 function HunterReminders:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.petFrame then
+      self.petFrame:Hide()
+    end
+    self.petShown = false
+    return
+  end
   if not IsHunter() then
     if self.petFrame then
       self.petFrame:Hide()
     end
+    return
+  end
+  if not IsPlayerAlive() then
+    if self.petFrame then
+      self.petFrame:Hide()
+    end
+    self.petShown = false
     return
   end
   if not Elysian.state.hunterPetReminderTest then
@@ -163,10 +189,10 @@ function HunterReminders:UpdateVisibility(force)
       enabled = true
       Elysian.state.hunterPetReminderEnabled = true
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
-    if Elysian.state.hunterPetReminderTest or (enabled and not HasPet()) then
+    if not UnitIsDeadOrGhost("player") and (Elysian.state.hunterPetReminderTest or (enabled and not HasPet())) then
       self.petFrame:Show()
       if not self.petShown then
         self.petShown = true
@@ -192,12 +218,20 @@ function HunterReminders:EnsureEvents()
   events:RegisterEvent("TRAIT_CONFIG_UPDATED")
   events:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
   events:RegisterEvent("UNIT_PET")
+  events:RegisterEvent("PLAYER_DEAD")
   events:RegisterEvent("PLAYER_ALIVE")
   events:RegisterEvent("PLAYER_UNGHOST")
   events:RegisterEvent("PLAYER_REGEN_DISABLED")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
-  events:SetScript("OnEvent", function()
+  events:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_DEAD" then
+      if self.petFrame then
+        self.petFrame:Hide()
+      end
+      self.petShown = false
+      return
+    end
     self:UpdateVisibility(true)
   end)
   self.eventFrame = events
@@ -235,7 +269,7 @@ end
 function HunterReminders:SetPetEnabled(enabled)
   Elysian.state.hunterPetReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:UpdateVisibility(true)
 end
@@ -243,7 +277,7 @@ end
 function HunterReminders:SetPetTest(enabled)
   Elysian.state.hunterPetReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrames()
   self:ApplyColors()
@@ -253,6 +287,6 @@ end
 function HunterReminders:SavePositions()
   ApplyCenterSave(self.petFrame, "hunterPetReminderPos")
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
 end

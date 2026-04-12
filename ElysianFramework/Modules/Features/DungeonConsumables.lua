@@ -5,15 +5,11 @@ local DungeonConsumables = {}
 Elysian.Features.DungeonConsumables = DungeonConsumables
 
 local FLASK_BUFFS = {
-  "Flask of Alchemical Chaos",
-  "Flask of Saving Graces",
-  "Flask of Tempered Aggression",
-  "Flask of Tempered Mastery",
-  "Flask of Tempered Swiftness",
-  "Flask of Tempered Versatility",
-  "Vicious Flask of Honor",
-  "Vicious Flask of Classical Spirits",
-  "Vicious Flask of the Wrecking Ball",
+  "Flask of Thalassian Resistance",
+  "Flask of the Blood Knights",
+  "Flask of the Magisters",
+  "Flask of the Shattered Sun",
+  "Vicious Thalassian Flask of Honor",
 }
 
 local FLASK_SPELL_IDS = {}
@@ -69,7 +65,7 @@ end
 function DungeonConsumables:SetEnabled(enabled)
   Elysian.state.dungeonConsumablesEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -78,7 +74,7 @@ end
 function DungeonConsumables:SetTestEnabled(enabled)
   Elysian.state.dungeonConsumablesTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -108,7 +104,7 @@ function DungeonConsumables:EnsureFrame()
       if px and py and fx and fy then
         Elysian.state.dungeonConsumablesPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -204,6 +200,13 @@ function DungeonConsumables:UpdateText(missing)
 end
 
 function DungeonConsumables:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.frame then
+      self.frame:Hide()
+    end
+    self.shown = false
+    return
+  end
   if not self.frame then
     return
   end

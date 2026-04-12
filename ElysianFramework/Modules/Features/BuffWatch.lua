@@ -82,7 +82,7 @@ end
 function BuffWatch:SetEnabled(enabled)
   Elysian.state.buffWatchEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -91,7 +91,7 @@ end
 function BuffWatch:SetTestEnabled(enabled)
   Elysian.state.buffWatchTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -121,7 +121,7 @@ function BuffWatch:EnsureFrame()
       if px and py and fx and fy then
         Elysian.state.buffWatchPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -222,6 +222,13 @@ function BuffWatch:UpdateText(missing)
 end
 
 function BuffWatch:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.frame then
+      self.frame:Hide()
+    end
+    self.shown = false
+    return
+  end
   if not self.frame then
     return
   end

@@ -510,7 +510,7 @@ function Elysian.UI:CreateMainFrame()
 
   local versionText = generalPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
   versionText:SetPoint("TOP", signatureHandle, "BOTTOM", 0, -2)
-  versionText:SetText("v1.00.26")
+  versionText:SetText("v1.00.29")
   Elysian.ApplyFont(versionText, 10)
   versionText:SetTextColor(1, 1, 1)
 
@@ -602,7 +602,7 @@ function Elysian.UI:CreateMainFrame()
     Elysian.state.evokerBuffTest = enabled and true or false
     Elysian.state.roguePoisonTest = enabled and true or false
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.RepairReminder then
       Elysian.Features.RepairReminder:SetTestEnabled(enabled)
@@ -650,7 +650,7 @@ function Elysian.UI:CreateMainFrame()
   local function SetFontScale(scale)
     Elysian.state.uiFontScale = scale
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.UI and Elysian.UI.Rebuild then
       Elysian.UI:Rebuild()
@@ -746,7 +746,7 @@ function Elysian.UI:CreateMainFrame()
       Elysian.state.uiTextUseClassColor = false
       textSwatch:SetColorTexture(r, g, b, 1)
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.UI and Elysian.UI.Rebuild then
         Elysian.UI:Rebuild()
@@ -926,7 +926,7 @@ function Elysian.UI:CreateMainFrame()
     end
     Elysian.state.minimapButtonHidden = not selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.MinimapButton then
       Elysian.MinimapButton:Create()
@@ -951,7 +951,7 @@ function Elysian.UI:CreateMainFrame()
       ElysianDB.showAllClassAlerts = Elysian.state.showAllClassAlerts
     end
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.UI and Elysian.UI.Rebuild then
       Elysian.UI:Rebuild()
@@ -976,7 +976,7 @@ function Elysian.UI:CreateMainFrame()
       ElysianDB.showOnStart = showAtStart
     end
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
   self.showOnStartCheck = showOnStart
@@ -1258,7 +1258,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.RepairReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1305,7 +1305,7 @@ function Elysian.UI:CreateMainFrame()
       textOverrideBox:SetScript("OnEditFocusLost", function(selfBox)
         Elysian.state.repairReminderTextOverride = selfBox:GetText() or ""
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.RepairReminder then
           Elysian.Features.RepairReminder:ApplyColors()
@@ -1342,7 +1342,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.RepairReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1390,7 +1390,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
         Elysian.state.repairReminderAlpha = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.RepairReminder then
           Elysian.Features.RepairReminder:ApplyColors()
@@ -1423,7 +1423,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.repairReminderWidth = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.RepairReminder then
           Elysian.Features.RepairReminder:ApplySize()
@@ -1456,7 +1456,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.repairReminderHeight = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.RepairReminder then
           Elysian.Features.RepairReminder:ApplySize()
@@ -1509,7 +1509,7 @@ function Elysian.UI:CreateMainFrame()
         else
           Elysian.state.deathSoundEnabled = selfButton:GetChecked()
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
       end)
@@ -1564,7 +1564,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.DungeonReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1611,7 +1611,7 @@ function Elysian.UI:CreateMainFrame()
       textOverrideBox:SetScript("OnEditFocusLost", function(selfBox)
         Elysian.state.dungeonReminderTextOverride = selfBox:GetText() or ""
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonReminder then
           Elysian.Features.DungeonReminder:ApplyColors()
@@ -1648,7 +1648,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.DungeonReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1696,7 +1696,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
         Elysian.state.dungeonReminderAlpha = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonReminder then
           Elysian.Features.DungeonReminder:ApplyColors()
@@ -1729,7 +1729,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.dungeonReminderWidth = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonReminder then
           Elysian.Features.DungeonReminder:ApplySize()
@@ -1762,7 +1762,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.dungeonReminderHeight = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonReminder then
           Elysian.Features.DungeonReminder:ApplySize()
@@ -1846,7 +1846,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.BuffWatch:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1901,7 +1901,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.BuffWatch:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -1949,7 +1949,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
         Elysian.state.buffWatchAlpha = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.BuffWatch then
           Elysian.Features.BuffWatch:ApplyColors()
@@ -1982,7 +1982,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.buffWatchWidth = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.BuffWatch then
           Elysian.Features.BuffWatch:ApplySize()
@@ -2015,7 +2015,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.buffWatchHeight = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.BuffWatch then
           Elysian.Features.BuffWatch:ApplySize()
@@ -2099,7 +2099,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.DungeonConsumables:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -2154,7 +2154,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.DungeonConsumables:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end
         if Elysian.OpenColorPicker then
@@ -2202,7 +2202,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
         Elysian.state.dungeonConsumablesAlpha = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonConsumables then
           Elysian.Features.DungeonConsumables:ApplyColors()
@@ -2235,7 +2235,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.dungeonConsumablesWidth = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonConsumables then
           Elysian.Features.DungeonConsumables:ApplySize()
@@ -2268,7 +2268,7 @@ function Elysian.UI:CreateMainFrame()
         selfSlider.Text:SetText(string.format("%d", value))
         Elysian.state.dungeonConsumablesHeight = value
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
         if Elysian.Features and Elysian.Features.DungeonConsumables then
           Elysian.Features.DungeonConsumables:ApplySize()
@@ -2321,7 +2321,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.KeystoneReminder:SetEnabled(selfButton:GetChecked())
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end)
 
@@ -2355,7 +2355,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.KeystoneReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end)
       end)
@@ -2391,7 +2391,7 @@ function Elysian.UI:CreateMainFrame()
             Elysian.Features.KeystoneReminder:ApplyColors()
           end
           if Elysian.SaveState then
-            Elysian.SaveState()
+            Elysian.QueueSaveState()
           end
         end)
       end)
@@ -2424,7 +2424,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.KeystoneReminder:ApplyColors()
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end)
 
@@ -2458,7 +2458,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.KeystoneReminder:ApplySize()
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end)
 
@@ -2492,7 +2492,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.KeystoneReminder:ApplySize()
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end)
 
@@ -2523,7 +2523,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.KeystoneReminder:SetTestEnabled(enabled)
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end)
       HookButtonPressFeedback(keystoneTest)
@@ -2757,7 +2757,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -2812,7 +2812,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -2860,7 +2860,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
     Elysian.state.warlockPetReminderAlpha = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplyColors()
@@ -2893,7 +2893,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d", value))
     Elysian.state.warlockPetReminderWidth = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplySize()
@@ -2926,7 +2926,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d", value))
     Elysian.state.warlockPetReminderHeight = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplySize()
@@ -3009,7 +3009,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -3064,7 +3064,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -3112,7 +3112,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
     Elysian.state.warlockStoneReminderAlpha = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplyColors()
@@ -3145,7 +3145,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d", value))
     Elysian.state.warlockStoneReminderWidth = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplySize()
@@ -3178,7 +3178,7 @@ function Elysian.UI:CreateMainFrame()
     selfSlider.Text:SetText(string.format("%d", value))
     Elysian.state.warlockStoneReminderHeight = value
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplySize()
@@ -3245,7 +3245,7 @@ function Elysian.UI:CreateMainFrame()
     end
     Elysian.state.warlockRushReminderShowBg = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplyColors()
@@ -3266,7 +3266,7 @@ function Elysian.UI:CreateMainFrame()
     end
     Elysian.state.warlockRushReminderFlash = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplyColors()
@@ -3291,7 +3291,7 @@ function Elysian.UI:CreateMainFrame()
     end
     Elysian.state.warlockRushReminderSoundEnabled = selfButton:GetChecked()
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -3325,7 +3325,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -3380,7 +3380,7 @@ function Elysian.UI:CreateMainFrame()
         Elysian.Features.WarlockReminders:ApplyColors()
       end
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
     end
     if Elysian.OpenColorPicker then
@@ -3425,7 +3425,7 @@ function Elysian.UI:CreateMainFrame()
     local text = selfBox:GetText() or ""
     Elysian.state.warlockRushReminderTextOverride = text
     if Elysian.SaveState then
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
     if Elysian.Features and Elysian.Features.WarlockReminders then
       Elysian.Features.WarlockReminders:ApplyColors()
@@ -3517,7 +3517,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.ClassBuffReminders:ApplyColors(prefix)
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -3572,7 +3572,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.ClassBuffReminders:ApplyColors(prefix)
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -3620,7 +3620,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
       Elysian.state[prefix .. "BuffAlpha"] = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplyColors(prefix)
@@ -3653,7 +3653,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state[prefix .. "BuffWidth"] = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplySize(prefix)
@@ -3686,7 +3686,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state[prefix .. "BuffHeight"] = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplySize(prefix)
@@ -3777,7 +3777,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.ClassBuffReminders:ApplyColors("rogue")
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -3832,7 +3832,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.ClassBuffReminders:ApplyColors("rogue")
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -3880,7 +3880,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
       Elysian.state.roguePoisonAlpha = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplyColors("rogue")
@@ -3913,7 +3913,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state.roguePoisonWidth = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplySize("rogue")
@@ -3946,7 +3946,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state.roguePoisonHeight = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.ClassBuffReminders then
         Elysian.Features.ClassBuffReminders:ApplySize("rogue")
@@ -4037,7 +4037,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.HunterReminders:ApplyColors()
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -4092,7 +4092,7 @@ function Elysian.UI:CreateMainFrame()
           Elysian.Features.HunterReminders:ApplyColors()
         end
         if Elysian.SaveState then
-          Elysian.SaveState()
+          Elysian.QueueSaveState()
         end
       end
       if Elysian.OpenColorPicker then
@@ -4140,7 +4140,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d%%", math.floor(value * 100 + 0.5)))
       Elysian.state.hunterPetReminderAlpha = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.HunterReminders then
         Elysian.Features.HunterReminders:ApplyColors()
@@ -4173,7 +4173,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state.hunterPetReminderWidth = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.HunterReminders then
         Elysian.Features.HunterReminders:ApplySize()
@@ -4206,7 +4206,7 @@ function Elysian.UI:CreateMainFrame()
       selfSlider.Text:SetText(string.format("%d", value))
       Elysian.state.hunterPetReminderHeight = value
       if Elysian.SaveState then
-        Elysian.SaveState()
+        Elysian.QueueSaveState()
       end
       if Elysian.Features and Elysian.Features.HunterReminders then
         Elysian.Features.HunterReminders:ApplySize()
@@ -4509,7 +4509,7 @@ function Elysian.UI:CreateMainFrame()
     Elysian.state.infoBarShowMS = enabled and true or Elysian.state.infoBarShowMS
     Elysian.state.infoBarShowPortalButton = enabled and true or Elysian.state.infoBarShowPortalButton
     Elysian.state.infoBarUnlocked = false
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
 
     if Elysian.Features and Elysian.Features.ScrapSeller then
       Elysian.Features.ScrapSeller:SetEnabled(enabled)

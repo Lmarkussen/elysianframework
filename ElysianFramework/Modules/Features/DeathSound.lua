@@ -11,7 +11,7 @@ end
 function DeathSound:SetEnabled(enabled)
   Elysian.state.deathSoundEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   if not enabled then
     self:StopSound()

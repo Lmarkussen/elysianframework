@@ -96,7 +96,7 @@ end
 function KeystoneReminder:SetEnabled(enabled)
   Elysian.state.keystoneReminderEnabled = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -105,7 +105,7 @@ end
 function KeystoneReminder:SetTestEnabled(enabled)
   Elysian.state.keystoneReminderTest = enabled and true or false
   if Elysian.SaveState then
-    Elysian.SaveState()
+    Elysian.QueueSaveState()
   end
   self:EnsureFrame()
   self:UpdateVisibility(true)
@@ -135,7 +135,7 @@ function KeystoneReminder:EnsureFrame()
       if px and py and fx and fy then
         Elysian.state.keystoneReminderPos = { "CENTER", "CENTER", fx - px, fy - py }
       end
-      Elysian.SaveState()
+      Elysian.QueueSaveState()
     end
   end)
 
@@ -196,6 +196,13 @@ function KeystoneReminder:ApplyColors()
 end
 
 function KeystoneReminder:UpdateVisibility(force)
+  if UnitIsDeadOrGhost("player") then
+    if self.frame then
+      self.frame:Hide()
+    end
+    self.shown = false
+    return
+  end
   if not self.frame then
     return
   end
