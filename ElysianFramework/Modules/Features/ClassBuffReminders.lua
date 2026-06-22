@@ -36,49 +36,43 @@ local function HasBuff(name, spellId)
   return false
 end
 
-local function HasPoisonAuraById(spellId)
+local ROGUE_POISONS = {
+  { name = "Deadly Poison", spellId = 2823 },
+  { name = "Wound Poison", spellId = 8679 },
+  { name = "Instant Poison", spellId = 315584 },
+  { name = "Crippling Poison", spellId = 3408 },
+  { name = "Numbing Poison", spellId = 5761 },
+  { name = "Atrophic Poison", spellId = 381637 },
+  { name = "Amplifying Poison", spellId = 381664 },
+}
+
+local function HasPlayerAura(spellId)
   if not spellId then
     return false
   end
   if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
-    if C_UnitAuras.GetPlayerAuraBySpellID(spellId) then
-      return true
-    end
+    return C_UnitAuras.GetPlayerAuraBySpellID(spellId) ~= nil
   end
   if AuraUtil and AuraUtil.FindAuraBySpellId then
-    if AuraUtil.FindAuraBySpellId(spellId, "player") then
-      return true
-    end
+    return AuraUtil.FindAuraBySpellId(spellId, "player", "HELPFUL") ~= nil
   end
   return false
 end
 
-local function GetPoisonHandState()
-  local lethal = {
-    2818,   -- Deadly Poison
-    315584, -- Instant Poison (DF)
-    8680,   -- Wound Poison
-  }
-  local nonLethal = {
-    3408,   -- Crippling Poison
-    5760,   -- Numbing Poison
-    381637, -- Atrophic Poison
-  }
-  local hasLethal = false
-  for _, spellId in ipairs(lethal) do
-    if HasPoisonAuraById(spellId) then
-      hasLethal = true
-      break
+local function HasAnyPoison()
+  for _, poison in ipairs(ROGUE_POISONS) do
+    local spellId = poison.spellId
+    if C_Spell and C_Spell.GetSpellInfo then
+      local info = C_Spell.GetSpellInfo(poison.name)
+      if info and info.spellID then
+        spellId = info.spellID
+      end
+    end
+    if HasPlayerAura(spellId) or (spellId ~= poison.spellId and HasPlayerAura(poison.spellId)) then
+      return true
     end
   end
-  local hasNonLethal = false
-  for _, spellId in ipairs(nonLethal) do
-    if HasPoisonAuraById(spellId) then
-      hasNonLethal = true
-      break
-    end
-  end
-  return hasLethal, hasNonLethal
+  return false
 end
 
 local function GetPlayerClass()
@@ -259,20 +253,12 @@ function ClassBuffReminders:UpdatePoison()
     return
   end
   if Elysian.state[keys.test] then
-    self:UpdateFrameText("rogue", "MISSING POISONS: MH, OH")
+    self:UpdateFrameText("rogue", "MISSING POISONS")
     frame:Show()
     return
   end
-  local missing = {}
-  local hasLethal, hasNonLethal = GetPoisonHandState()
-  if not hasLethal then
-    table.insert(missing, "MH")
-  end
-  if not hasNonLethal then
-    table.insert(missing, "OH")
-  end
-  if #missing > 0 then
-    self:UpdateFrameText("rogue", "MISSING POISONS: " .. table.concat(missing, ", "))
+  if not HasAnyPoison() then
+    self:UpdateFrameText("rogue", "MISSING POISONS")
     frame:Show()
   else
     frame:Hide()
@@ -343,6 +329,7 @@ function ClassBuffReminders:EnsureEvents()
   local events = CreateFrame("Frame")
   events:RegisterEvent("PLAYER_ENTERING_WORLD")
   events:RegisterEvent("UNIT_AURA")
+  events:RegisterEvent("UNIT_INVENTORY_CHANGED")
   events:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
   events:RegisterEvent("PLAYER_REGEN_ENABLED")
   events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
@@ -354,7 +341,7 @@ function ClassBuffReminders:EnsureEvents()
     elseif event == "CHALLENGE_MODE_RESET" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
       self.runActive = false
     end
-    if event == "UNIT_AURA" and unit ~= "player" then
+    if (event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED") and unit ~= "player" then
       return
     end
     self:UpdateVisibility()
