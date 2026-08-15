@@ -1583,7 +1583,12 @@ function Elysian.SaveState()
   local defaults = Elysian.GetDefaultState()
   local out = {}
   for key, def in pairs(defaults) do
-    local v = Elysian.state and Elysian.state[key] or nil
+    -- Do not use `state and state[key] or nil` here: false is a valid saved
+    -- preference and must remain distinguishable from an absent value.
+    local v
+    if Elysian.state then
+      v = Elysian.state[key]
+    end
     if def == nil then
       local vt = type(v)
       if vt == "number" or vt == "string" or vt == "boolean" then
