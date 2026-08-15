@@ -12,10 +12,10 @@ Elysian.PortalData = {
     "Shadowlands",
     "Dragonflight",
     "The War Within",
-    "Midnight",
+    "Midnight Season 1",
   },
   expansionToMapIDs = {
-    ["Current Season"] = { 901, 902, 903, 904, 704, 1, 407, 305 },
+    ["Current Season"] = {},
     ["Wrath of the Lich King"] = { 1 },
     ["Cataclysm"] = { 101, 102, 103 },
     ["Mists of Pandaria"] = { 201, 202, 203, 204, 205, 206, 207, 208, 209 },
@@ -25,7 +25,31 @@ Elysian.PortalData = {
     ["Shadowlands"] = { 601, 602, 603, 604, 605, 606, 607, 608, 609 },
     ["Dragonflight"] = { 701, 702, 703, 704, 705, 706, 707, 708, 709 },
     ["The War Within"] = { 801, 802, 803, 804, 805, 806, 807, 808, 809, 811 },
-    ["Midnight"] = { 901, 902, 903, 904, 905, 906, 907, 908 },
+    ["Midnight Season 1"] = {},
+  },
+  -- Explicit entries keep the season order stable while allowing entries to
+  -- reuse the authoritative spell data below.
+  expansionEntries = {
+    ["Current Season"] = {
+      { label = "Altar of Fangs" },
+      { label = "Den of Nalorakk" },
+      { label = "Murder Row" },
+      { label = "The Blinding Vale" },
+      { label = "Voidscar Arena" },
+      { label = "King's Rest" },
+      { label = "Ruby Life Pools", mapID = 701 },
+      { label = "Temple of Sethraliss" },
+    },
+    ["Midnight Season 1"] = {
+      { label = "Magisters' Terrace", mapID = 901 },
+      { label = "Maisara Caverns", mapID = 902 },
+      { label = "Nexus-Point Xenas", mapID = 903 },
+      { label = "Windrunner Spire", mapID = 904 },
+      { label = "Algeth'ar Academy", mapID = 704 },
+      { label = "The Seat of the Triumvirate", mapID = 407 },
+      { label = "Skyreach", mapID = 305 },
+      { label = "Pit of Saron", mapID = 1 },
+    },
   },
   mapIDToName = {
     [1] = "Pit of Saron",
@@ -164,5 +188,8 @@ Elysian.PortalData = {
     [902] = 1254559,
     [903] = 1254563,
     [904] = 1254400,
+  },
+  mapIDToSpellNameOverride = {
+    [305] = "Path of the Skies",
   },
 }
